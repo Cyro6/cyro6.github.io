@@ -53,3 +53,4 @@
   * Memeless
 
 ![Trip Photo](/assets/images/BenOct2025.jpg)
+[October 2025 YouTube Playlist](https://www.youtube.com/playlist?list=PLcbBncgGuhvtat-eyRcWhiAiaWLFwkugs) 
