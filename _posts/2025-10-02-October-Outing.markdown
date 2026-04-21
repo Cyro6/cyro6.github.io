@@ -1,56 +1,47 @@
 # October 2025
 
-* **General Notes from Trip**
-
+**General Notes from Trip**
   * Initially the goal was to find a big brown, then the goal was to find trout, then the goal was to catch fish and reach our limit. We did eventually manage that.
-* **Camping**
-
+  
+**Camping**
   * Eau Galle Highland Ridge
-* **Trip Cost** - $225
 
+**Trip Cost** - $225
   * Gas - $75
   * Grocery - $75
   * Campsite - $72
-* **Day 1**
 
+
+
+**Day 1**
   * Weather - Clear, Sunny, Hot
-  * Scouting -
-  * Spot 1 - Gilbert Creek
-
-    * [https://maps.app.goo.gl/t6WBAjeJmuhM1xkZ6](https://maps.app.goo.gl/t6WBAjeJmuhM1xkZ6)
+  * Spot 1 - [Gilbert Creek](https://maps.app.goo.gl/t6WBAjeJmuhM1xkZ6){:target="_blank"}
     * We only managed a few Trout here. 3 hours of fishing, one nice 15” Brown.
-* **Day 2**
 
+**Day 2**
   * Weather - Clear, Sunny, Hot
-  * Spot 1 - Eau Galle River
-
-    * [https://maps.app.goo.gl/vbTcjazqyoXju9AC6](https://maps.app.goo.gl/vbTcjazqyoXju9AC6)
+  * Spot 1 - [Eau Galle River](https://maps.app.goo.gl/vbTcjazqyoXju9AC6){:target="_blank"}
     * Not much here, maybe 2 fish
-  * Spot 2 - Isabelle Creek
-
-    * [https://maps.app.goo.gl/Hqw7qXvarS7YKuXN9](https://maps.app.goo.gl/Hqw7qXvarS7YKuXN9)
+  * Spot 2 - [Isabelle Creek](https://maps.app.goo.gl/Hqw7qXvarS7YKuXN9){:target="_blank"}
     * Caught a keeper here, a few fish on but they were not particularly active.
-  * Spot 3 - Trimbelle River
-
-    * [https://maps.app.goo.gl/BHY2PHW2FDWDrAWB7](https://maps.app.goo.gl/BHY2PHW2FDWDrAWB7)
+  * Spot 3 - [Trimbelle River](https://maps.app.goo.gl/BHY2PHW2FDWDrAWB7){:target="_blank"}
     * Again, caught a couple here but no keepers.
-* **Day 3**
 
+**Day 3**
   * Weather - Clear, Sunny, Hot
-  * Spot 1 - Elk Creek (Big)
+  * Spot 1 - [Elk Creek "Big"](https://maps.app.goo.gl/io7ps8CqssK5LQdu8){:target="_blank"}
+    * Once again we went to the “ol standby” as this stream has produced an insane amount of fish for me this year. We had a great day and caught our limit. We divided this up by walking back to the car at a section that brushes the road near the cemetery, then walked back to the car for lunch and parked by the cemetery and fished the next section to the bridge. 50+ trout for the day. Ended up filleting fish in the moonlight.
 
-    * [https://maps.app.goo.gl/io7ps8CqssK5LQdu8](https://maps.app.goo.gl/io7ps8CqssK5LQdu8)
-    * Once again we went to the “ol standby” as this stream has produced an insane amount of fish for me this year. We had a great day and caught our limit. We divided this up by walking back to the car at a section that brushes the road near the cemetery, then walked back to the car for lunch and parked by the cemetery and fished the next section to the bridge. 50+ trout for the day. Ended up flaying fish in the moonlight.
-* **Day 4**
 
+**Day 4**
   * Weather - Cloudy, scattered showers.
-  * Spot 1 - Gilbert Creek
-
-    * [https://maps.app.goo.gl/5ZRQJ9Utcvh46SGs6](https://maps.app.goo.gl/5ZRQJ9Utcvh46SGs6)
+  * Spot 1 - [Gilbert Creek](https://maps.app.goo.gl/5ZRQJ9Utcvh46SGs6){:target="_blank"}
     * Saw a lot of fish, saw some really nice sized browns, managed to catch one nice brown, it was a slog for so few fish. This stream clearly holds big boys but it’s a tough fish.
-* **Trip Meme(s)**
+{% comment %}  
 
-  * Memeless
+**Trip Meme(s)**
 
+ * Memeless
+{% endcomment %}  
 ![Trip Photo](/assets/images/BenOct2025.jpg)
-[October 2025 YouTube Playlist](https://www.youtube.com/playlist?list=PLcbBncgGuhvtat-eyRcWhiAiaWLFwkugs) 
+[October 2025 YouTube Playlist](https://www.youtube.com/playlist?list=PLcbBncgGuhvtat-eyRcWhiAiaWLFwkugs){:target="_blank"}
