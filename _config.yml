@@ -9,6 +9,9 @@ github_username: Cyro6
 youtube_username: "@DeVrouTroutFishing"
 youtube_url: https://www.youtube.com/channel/UC2pdP7GsKvLWVEXqHY61bnQ
 
+logo: /assets/images/DTF_Logo.png
+favicon: /assets/images/DTF_Logo.png
+
 remote_theme: daviddarnes/alembic
 plugins:
   - jekyll-feed

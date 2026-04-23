@@ -23,17 +23,29 @@ title: Driftless Trout Fishing Trip Log
   object-position: center;
   border-radius: 4px;
 }
+.post-card__body {
+  padding: 0;
+}
 @media (max-width: 640px) {
   .post-card {
     flex-direction: column;
+    gap: 0;
+    padding-left: 0;
+    padding-right: 0;
+    padding-bottom: 1.5rem;
   }
   .post-card__thumb {
     flex: none;
-    width: 100%;
+    width: calc(100% + 2rem);
+    margin-bottom: 0.75rem;
   }
   .post-card__thumb img {
     width: 100%;
-    height: 200px;
+    height: 220px;
+    border-radius: 0;
+  }
+  .post-card__body {
+    padding: 0 0.25rem;
   }
 }
 </style>
@@ -55,13 +67,12 @@ title: Driftless Trout Fishing Trip Log
     </a>
   </div>
   {% endif %}
-  <div>
+  <div class="post-card__body">
     <h3 style="margin-bottom: 0.25rem;"><a href="{{ post.url }}">{{ post.title }}</a></h3>
     <small>{{ post.date | date: "%B %d, %Y" }}</small>
-
-{% if post.summary %}
-<p style="margin: 0.5rem 0 0; color: #666; font-size: 0.9rem;">{{ post.summary }}</p>
-{% endif %}
+    {% if post.summary %}
+    <p style="margin: 0.5rem 0 0; color: #666; font-size: 0.9rem;">{{ post.summary }}</p>
+    {% endif %}
   </div>
 </div>
 {% endfor %}

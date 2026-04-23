@@ -455,3 +455,17 @@ pre code {
     overflow-x: scroll;
   }
 }
+@media screen and (max-width: 640px) {
+  .content {
+    padding: 0 1rem;
+  }
+  .typeset {
+    padding: 0 1rem;
+  }
+  .typeset img {
+    display: block;
+    position: relative;
+    width: calc(100vw - 0px);
+    max-width: none;
+  }
+}
