@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {% seo %}
+    <link rel="manifest" href="{{ "/manifest.json" | relative_url }}">
+    <meta name="theme-color" content="#242e2b"/>
+    <link rel="stylesheet" href="{{ "/assets/styles.css" | relative_url }}">
+    {% include site-fonts.html %}
+  </head>
+  <body class="layout-{{ page.layout }} {{ page.title | slugify }}">
+    {% include site-icons.svg %}
+    <header class="header" role="banner">
+      <div class="container">
+        {% include site-logo.html %}
+        {% include nav-header.html %}
+      </div>
+    </header>
+    <main class="main" role="main">
+      <div class="content typeset">
+        {{ content }}
+      </div>
+    </main>
+    <footer class="footer" role="contentinfo">
+      {% include nav-footer.html %}
+    </footer>
+    {% if site.service_worker != false %}{% include site-sw.html %}{% endif %}
+  </body>
+</html>

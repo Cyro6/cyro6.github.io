@@ -1,3 +1,16 @@
+---
+summary: "This trip was filled with success, we caught around 70 fish in the 4 days we fished. The weather was both cold and hot. The last day was the most challenging."
+images:
+  - /assets/images/4-25-2025 - DeVrou Trout Fishing Thumbnail.jpg
+  - /assets/images/4-26-2025 Thumbnail.jpg
+  - /assets/images/4-27-2025 Thumbnail.jpg
+layout: post
+title: April Trip
+date: 2025-04-24
+youtube:
+  - title: April 2025 Playlist
+    url: https://www.youtube.com/playlist?list=PLcbBncgGuhvsCQ-zoz4IiwTHI_u6_ViPs
+---
 # April 2025
 
 **General Notes from Trip**
@@ -60,8 +73,3 @@
   * Spot 2 - [Bear Creek Trib Access](https://maps.app.goo.gl/obCeKbUxur5GanbaA){:target="_blank"}
     * If the fish are in Timber this spot could be insane, BUT they were in pools, thus this spot was a slog and only resulted in 4 fish, 3 of which came out of the same hole. I could see late season, hitting this spot up but I won't be revisiting this one.
   * Tough day, this felt similar to day 2, we made the wrong call by going too far up stream in order to find clear water, I think we would have been better off from a time management perspective if we had just stuck with either the middle spot, sticking it out when it was muddy and waiting for the sun or moving on to a different stream. In a way this was a scouting mission and that was a success.
-
-{% comment %}  **Trip Meme(s)**
-
-* Nothing particularly notable on this one. We did make a lot of jokes but nothing stuck as a consistent joke that I can remember.
-{% endcomment %}

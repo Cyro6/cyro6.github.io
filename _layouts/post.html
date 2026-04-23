@@ -1,0 +1,55 @@
+---
+layout: default
+---
+{{ content }}
+{% if page.memes %}
+<div style="margin-top: 2rem; padding: 1.5rem; background: #f0ebe0; border-radius: 6px; border-left: 4px solid #05bf85;">
+  <h4 style="margin: 0 0 1rem;">😂 Trip Meme(s)</h4>
+  {% for meme in page.memes %}
+  <blockquote style="margin: 0.5rem 0; font-style: italic; color: #555;">{{ meme }}</blockquote>
+  {% endfor %}
+</div>
+{% endif %}
+{% if page.youtube %}
+<div style="margin-top: 2rem; padding: 1.5rem; background: #f0ebe0; border-radius: 6px; border-left: 4px solid #05bf85;">
+  {% for video in page.youtube %}
+  <a href="{{ video.url }}" target="_blank" class="button" style="margin-right: 0.5rem; margin-bottom: 0.5rem;">{{ video.title }}</a>
+  {% endfor %}
+</div>
+{% endif %}
+{% if page.images %}
+<div style='position: relative; margin-top: 2rem; overflow: hidden; background: #000;'>
+  <div id='carousel' style='display: flex; transition: transform 0.3s ease;'>
+    {% for img in page.images %}
+    <div style='min-width: 100%; text-align: center;'>
+      <img src='{{ img }}' style='max-height: 500px; max-width: 100%; width: auto; height: auto; display: inline-block;' alt='Trip photo'>
+    </div>
+    {% endfor %}
+  </div>
+  <button onclick='moveCarousel(-1)' style='position: absolute; left: 0; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; padding: 1rem; cursor: pointer; font-size: 1.5rem;'>&#8249;</button>
+  <button onclick='moveCarousel(1)' style='position: absolute; right: 0; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; padding: 1rem; cursor: pointer; font-size: 1.5rem;'>&#8250;</button>
+  <div style='text-align: center; padding: 0.5rem;' id='dots'>
+    {% for img in page.images %}
+    <span onclick='goToSlide({{ forloop.index0 }})' style='cursor: pointer; font-size: 1.2rem; color: #ccc;'>&#9679;</span>
+    {% endfor %}
+  </div>
+</div>
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('#carousel div');
+  const dots = document.querySelectorAll('#dots span');
+  function updateCarousel() {
+    document.getElementById('carousel').style.transform = 'translateX(-' + (current * 100) + '%)';
+    dots.forEach((d, i) => d.style.color = i === current ? '#05bf85' : '#ccc');
+  }
+  function moveCarousel(dir) {
+    current = (current + dir + slides.length) % slides.length;
+    updateCarousel();
+  }
+  function goToSlide(n) {
+    current = n;
+    updateCarousel();
+  }
+  updateCarousel();
+</script>
+{% endif %}

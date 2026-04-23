@@ -1,3 +1,18 @@
+---
+summary: "This trip will arguably be one of the best fishing trips I will have ever had in a 4 day period. We caught a total of roughly 150 fish."
+images:
+  - /assets/images/20250508_201040.jpg
+  - /assets/images/20250509_103058.jpg
+  - /assets/images/20250509_103110.jpg
+  - /assets/images/20250509_133204.jpg
+  - /assets/images/20250511_190353.jpg
+layout: post
+title: May Trip
+date: 2025-05-08
+youtube:
+  - title: May 2025 Playlist
+    url: https://www.youtube.com/playlist?list=PLcbBncgGuhvufF8FLGHh_itidTvwGwgEk
+---
 # May 2025
 
 **General Notes from Trip**
@@ -46,7 +61,3 @@
   * Weather - Clear and sunny, hot. Probably 80 degrees. Windy
   * Spot 1 - [Elk Creek Big](https://maps.app.goo.gl/hRPgtUsfmbuVLzZY8){:target="_blank"}
     * Caught over 30 trout, this was a great day fishing. We started at the spot we ended at on Friday evening.
-
-**Trip Meme(s)**
-
-  * Respect - Nothing specific but we tended to say this a lot.

@@ -1,3 +1,24 @@
+---
+summary: "Beau and I went on this trip and I knew there was rain recently in the forecast. Barometric pressure was falling during this trip, it was cooler than normal due to the rain and overcast skies."
+images:
+  - /assets/images/20250606_175432.jpg
+  - /assets/images/20250606_175511.jpg
+  - /assets/images/20250607_165041.jpg
+  - /assets/images/20250607_165113.jpg
+  - /assets/images/Beau+ChaseJune2025.jpg
+  - /assets/images/20250608_112956.jpg
+  - /assets/images/20250608_113034.jpg
+  - /assets/images/20250608_192308.jpg
+  - /assets/images/BeauJune2025.jpg
+thumbnail: /assets/images/20250607_165113.jpg
+layout: post
+title: June Trip
+date: 2025-06-06
+youtube:
+  - title: June 2025 YouTube Playlist
+    url: https://www.youtube.com/playlist?list=PLcbBncgGuhvsXZJJqu87rSoM9jYhsfdzE
+memes: We'll fix that in post
+---
 # June 2025
 
 **General Notes from Trip**
@@ -39,12 +60,3 @@
   * Weather - Thunderstorm early in the morning 5-7 AM
   * Spot 1 - [Harvey Creek](https://maps.app.goo.gl/VoPZiP3Z7eTudX8X9){:target="_blank"}
     * Caught probably 15 fish, however, they were all large Brook Trout. All between 12 and 14". Got my PB at 14.25". Absolutely wild.
-
-**Trip Meme(s)**
-
-* We'll fix that in post
-
-![Trip Photo](/assets/images/BeauJune2025.jpg)
-![Trip Photo](/assets/images/Beau+ChaseJune2025.jpg)
-
-[June 2025 YouTube Playlist](https://www.youtube.com/playlist?list=PLcbBncgGuhvsXZJJqu87rSoM9jYhsfdzE){:target="_blank"}

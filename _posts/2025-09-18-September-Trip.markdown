@@ -1,3 +1,11 @@
+---
+summary: "This trip was a consistent one, probably 2-3 trout per hour with a total fishing time of 16 or so hours, a lot of work."
+images:
+  - /assets/images/20250921_162342.jpg
+layout: post
+title: September Jack Trip
+date: 2025-09-18
+---
 **General Notes from Trip**  
   * This trip was a consistent one, probably 2-3 trout per hour with a total fishing time of 16 or so hours, a lot of work. 
  
@@ -26,11 +34,6 @@
 **Day 3**  
   * Weather - Mostly Cloudy  
   * Spot 1 - [Elk Creek "Big"](https://maps.app.goo.gl/nVnFQbbzHBp6RxQo8)  
-    * A short section of Elk Creek here, we found a good amount of Brookies but it was not holding anything bigger than 12 inches, I never even saw a big boy. 20 or so to hand.  
-{% comment %}  
-**Trip Meme(s)**  
-  * Memeless
-{% endcomment %}  
-![Trip Pic](/assets/images/JackSep2025.jpg)
+    * A short section of Elk Creek here, we found a good amount of Brookies but it was not holding anything bigger than 12 inches, I never even saw a big boy. 20 or so to hand. 
 
 All footage of this trip was useless as my GoPro was tilted to far down. There was a lot of fun footage that could have been.

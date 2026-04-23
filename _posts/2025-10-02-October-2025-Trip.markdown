@@ -1,3 +1,23 @@
+---
+summary: "Initially the goal was to find a big brown, then the goal was to find trout, then the goal was to catch fish and reach our limit. We did eventually manage that."
+images:
+  - /assets/images/20251002_180439.jpg
+  - /assets/images/20251004_135706.jpg
+  - /assets/images/20251004_165118.jpg
+  - /assets/images/20251004_165639.jpg
+  - /assets/images/20251004_165738.jpg
+  - /assets/images/20251004_171752.jpg
+  - /assets/images/20251004_183100.jpg
+  - /assets/images/20251004_183105.jpg
+  - /assets/images/BenOct2025.jpg
+thumbnail: /assets/images/20251004_171752.jpg
+layout: post
+title: October Trip
+date: 2025-10-02
+youtube:
+  - title: October 2025 YouTube Playlist
+    url: https://www.youtube.com/playlist?list=PLcbBncgGuhvtat-eyRcWhiAiaWLFwkugs
+---
 # October 2025
 
 **General Notes from Trip**
@@ -37,11 +57,3 @@
   * Weather - Cloudy, scattered showers.
   * Spot 1 - [Gilbert Creek](https://maps.app.goo.gl/5ZRQJ9Utcvh46SGs6){:target="_blank"}
     * Saw a lot of fish, saw some really nice sized browns, managed to catch one nice brown, it was a slog for so few fish. This stream clearly holds big boys but it’s a tough fish.
-{% comment %}  
-
-**Trip Meme(s)**
-
- * Memeless
-{% endcomment %}  
-![Trip Photo](/assets/images/BenOct2025.jpg)
-[October 2025 YouTube Playlist](https://www.youtube.com/playlist?list=PLcbBncgGuhvtat-eyRcWhiAiaWLFwkugs){:target="_blank"}

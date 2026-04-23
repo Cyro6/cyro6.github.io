@@ -1,3 +1,20 @@
+---
+summary: "Given the past challenges with fishing up north I tried a few different strategies to get on fish for this trip."
+images:
+  - /assets/images/20250523_172225.jpg
+  - /assets/images/20250523_172232.jpg
+  - /assets/images/20250523_173927.jpg
+layout: post
+title: May Up North Trip
+date: 2025-05-23
+youtube:
+  - title: May Part 17 Up-North Trout Fishing
+    url: https://youtu.be/PCnHLeSnAzQ
+  - title: May Part 18 Up-North Trout Fishing
+    url: https://youtu.be/NHgM-IPXDWE
+  - title: May Part 19 Up-North Trout Fishing
+    url: https://youtu.be/gnnr0Rp2Gvs
+---
 # May 2025
 
 **General Notes from Trip**
@@ -40,8 +57,3 @@
   * Weather - Clear and sunny
   * Spot 1 - [At Camp](https://maps.app.goo.gl/pZrsZorRYzgiuxpn9){:target="_blank"}
     * Jack and I took the canoe downstream, there are some pretty serious rapids further down that we avoided. With Jack I didn't want to risk having any problems so we didn't even approach the rapids. There was a spot where it narrowed with some rocks where I managed a nice Brook trout and missed out on like 4-5 other chances.
-
-{% comment %}  **Trip Meme(s)**
-
-* Memeless
-{% endcomment %}
