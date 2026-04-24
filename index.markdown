@@ -48,6 +48,7 @@ title: Driftless Trout Fishing Trip Log
   .post-card__thumb {
     flex: none;
     width: calc(100% + 2rem);
+    margin-left: -1rem;
     margin-bottom: 0.75rem;
     padding-top: 0;
   }
@@ -62,6 +63,58 @@ title: Driftless Trout Fishing Trip Log
   .post-card__map {
     display: none;
   }
+}
+.cost-badge {
+  position: relative;
+  cursor: default;
+  user-select: none;
+}
+.cost-tooltip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0;
+  background: #f0ebe0;
+  border-radius: 6px;
+  padding: 0.6rem 0.85rem;
+  min-width: 170px;
+  z-index: 100;
+  font-size: 0.8rem;
+  color: #333;
+  flex-direction: column;
+  gap: 0.2rem;
+  pointer-events: none;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.22);
+}
+.cost-tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: -7px;
+  left: 12px;
+  width: 12px;
+  height: 12px;
+  background: #f0ebe0;
+  transform: rotate(45deg);
+  box-shadow: 3px 3px 6px rgba(0,0,0,0.1);
+}
+.cost-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+.cost-total {
+  border-top: 1px solid #d8d2c6;
+  margin-top: 0.1rem;
+  padding-top: 0.3rem;
+  font-weight: 600;
+  color: #05bf85;
+}
+.cost-badge:hover .cost-tooltip,
+.cost-badge.open .cost-tooltip {
+  display: flex;
+}
+.cost-badge:focus {
+  outline: none;
 }
 </style>
 
@@ -100,15 +153,22 @@ title: Driftless Trout Fishing Trip Log
       <span style="font-size: 0.78rem; background: #f0ebe0; padding: 0.2rem 0.6rem; border-radius: 4px; color: #555; border-left: 3px solid #2596be;">{{ post.days | size }} days</span>
       {% endif %}
       {% if post.campsite.name %}
+      {% if post.campsite.url %}
+      <a href="{{ post.campsite.url }}" target="_blank" rel="noopener" style="font-size: 0.78rem; background: #f0ebe0; padding: 0.2rem 0.6rem; border-radius: 4px; color: #555; border-left: 3px solid #39b831; text-decoration: none;">{{ post.campsite.name }}</a>
+      {% else %}
       <span style="font-size: 0.78rem; background: #f0ebe0; padding: 0.2rem 0.6rem; border-radius: 4px; color: #555; border-left: 3px solid #39b831;">{{ post.campsite.name }}</span>
+      {% endif %}
       {% endif %}
       {% if post.cost %}
       {% assign total = 0 %}
       {% for item in post.cost.items %}{% assign total = total | plus: item.amount %}{% endfor %}
-      <span style="font-size: 0.78rem; background: #f0ebe0; padding: 0.2rem 0.6rem; border-radius: 4px; color: #555; border-left: 3px solid #05bf85;">${{ total }}</span>
+      <span class="cost-badge" tabindex="0" style="font-size: 0.78rem; background: #f0ebe0; padding: 0.2rem 0.6rem; border-radius: 4px; color: #555; border-left: 3px solid #05bf85;">
+        ${{ total }}
+        <span class="cost-tooltip">{% for item in post.cost.items %}<span class="cost-row"><span>{{ item.name }}</span><span>${{ item.amount }}</span></span>{% endfor %}<span class="cost-row cost-total"><span>Total</span><span>${{ total }}</span></span></span>
+      </span>
       {% endif %}
       {% if post.youtube %}
-      <span style="font-size: 0.78rem; background: #cc2c3f; padding: 0.2rem 0.6rem; border-radius: 4px; color: white;">YouTube</span>
+      <a href="{{ post.youtube[0].url }}" target="_blank" rel="noopener" style="font-size: 0.78rem; background: #cc2c3f; padding: 0.2rem 0.6rem; border-radius: 4px; color: white; text-decoration: none;">YouTube</a>
       {% endif %}
     </div>
     {% endif %}
@@ -147,3 +207,16 @@ title: Driftless Trout Fishing Trip Log
 {% endif %}
 {% endfor %}
 </div>
+<script>
+if (!window.matchMedia('(hover: hover)').matches) {
+  document.querySelectorAll('.cost-badge').forEach(function(badge) {
+    badge.addEventListener('click', function(e) {
+      e.stopPropagation();
+      badge.classList.toggle('open');
+    });
+  });
+  document.addEventListener('click', function() {
+    document.querySelectorAll('.cost-badge.open').forEach(function(b) { b.classList.remove('open'); });
+  });
+}
+</script>
