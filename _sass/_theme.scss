@@ -472,3 +472,9 @@ pre code {
     grid-template-columns: 1fr !important;
   }
 }
+
+.leaflet-container img {
+  width: auto !important;
+  position: absolute !important;
+  display: inline !important;
+}
