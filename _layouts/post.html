@@ -138,6 +138,8 @@ layout: default
     if (bounds.length > 0) {
       map.fitBounds(bounds, { padding: [40, 40] });
     }
+
+    new ResizeObserver(() => map.invalidateSize()).observe(document.getElementById('trip-map'));
     </script>
     <div style="margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; font-size: 0.85rem; color: #666;">
       <span><span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:#39b831; margin-right:4px;"></span>Campsite</span>
