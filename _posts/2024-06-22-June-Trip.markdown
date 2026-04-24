@@ -1,5 +1,66 @@
 ---
 summary: "Trip with a rough start on Saturday due to recent heavy rain but the weather and conditions improved as the weekend went on."
+
+campsite:
+  name: Hipcamp Site
+  url: https://maps.app.goo.gl/LaUDryEQfLcFNHRa8
+  lat: 43.589316
+  lng: -90.978927
+
+cost:
+  items:
+    - name: Gas
+      amount: 60
+    - name: Grocery
+      amount: 40
+    - name: Campsite
+      amount: 122
+
+days:
+  - day: Day 1
+    date: June 21, 2024
+    weather: Drive in, rained overnight, expecting a thunderstorm Saturday
+  - day: Day 2
+    date: June 22, 2024
+    weather: Hot and there has been a ton of rain over the week leading into the weekend. It was going to be tough.
+    spots:
+      - name: Rullands Coulee Creek
+        url: https://maps.app.goo.gl/W2tsXbbPYdtFWqp27
+        notes: This was one of the only spots that we could find that had decently clear water. We landed 4 trout right around 12" and the limit was 5 under 12. A thunderstorm came in after this and ended our evening.
+        lat: 43.724684
+        lng: -90.905783
+  - day: Day 3
+    date: June 23, 2024
+    weather: Rained all night, challenging day with water clarity. Manageable and we had a great day fishing.
+    spots:
+      - name: Coon Creek
+        url: https://maps.app.goo.gl/gMyQNhMbZcCNPWBR7
+        notes: Acceptably clear water. Caught 10 or so to keep, probably 20 plus for such a short section. Really liked this stream, it must have a massive amount of trout but also pressure.
+        lat: 43.730038
+        lng: -90.967379
+      - name: Coon Creek
+        url: https://maps.app.goo.gl/gHmJHU87L5hwJWKP9
+        notes: Had to go pretty far up to get away from other anglers. Managed a few more on the stringer here. More enclosed but access is probably less often here. Basically fishing small pools and timber.
+        lat: 43.765842
+        lng: -90.948172
+      - name: Springville Branch Bad Axe River
+        url: https://maps.app.goo.gl/GizSpD3ebPKWspUYA
+        notes: This spot is basically impossible to get to, needless to say I burned the bridge with the property owner. That being said the fishing was good, I would have no issue putting in at the bridge below this spot. Good fishing. They were in the riffles/rapids.
+        lat: 43.590260
+        lng: -90.976238
+  - day: Day 4
+    date: June 24, 2024
+    weather: Clear and hot
+    spots:
+      - name: Little Lacrosse River
+        url: https://maps.app.goo.gl/9std7qZv4urhbhKcA
+        notes: Further up was narrow and hard to fish, this spot in the past was an absolute slog due to log jams, some have cleared since then and this section proved to be pretty fruitful. The easement to the west allows you to get all the way to the open area if you want to skip the log jams, however they hold trout so probably don't skip.
+        lat: 43.827642
+        lng: -90.760787
+
+memes:
+  - First of all repent and seek absolution.
+
 images:
   - /assets/images/20240622_180755.jpg
   - /assets/images/20240622_180857.jpg
@@ -8,50 +69,11 @@ images:
   - /assets/images/20240623_180646.jpg
   - /assets/images/20240623_180650.jpg
   - /assets/images/20240623_231243.jpg
+
 layout: post
 title: June Trip
 date: 2024-06-22
-memes:
-  - First of all repent and seek absolution.
 ---
 # June 2024
 
-**General Notes from Trip**
-
-  * Trip with a rough start on Saturday due to recent heavy rain but the weather and conditions improved as the weekend went on.
-
-**Camping**
-
-  * [Hipcamp Site](https://maps.app.goo.gl/LaUDryEQfLcFNHRa8){:target="_blank"}
-  * Can never use this site again.
-
-**Trip Cost** - $220
-
-  * Gas - $60
-  * Grocery - $40
-  * Campsite - $122
-
-**Day 1**
-  * Left Friday night, had extra room in the car, even with the rain cover Dad let us borrow.
-  * Rained overnight a bit, expecting a Thunderstorm on Saturday.
-
-**Day 2**
-  * Weather - Hot and there has been a ton of rain over the week leading into the weekend. It was going to be tough.
-  * Spot 1 - [Rullands Coulee Creek](https://maps.app.goo.gl/W2tsXbbPYdtFWqp27){:target="_blank"}
-    * This was one of the only spots that we could find that had decently clear water. We landed 4 trout right around 12" and the limit was 5 under 12.
-  * A thunderstorm came in after Spot 1 and ended our evening.
-
-**Day 3**
-  * Weather - Rained all night, making this a challenging day with water clarity. It was manageable and we had a great day fishing.
-  * Spot 1 - [Coon Creek](https://maps.app.goo.gl/gMyQNhMbZcCNPWBR7){:target="_blank"}
-    * Acceptably clear water.
-    * Caught 10 or so to keep, probably 20 plus for such a short section. Really liked this stream, it must have a massive amount of trout but also pressure.
-  * Spot 2 - [Coon Creek](https://maps.app.goo.gl/gHmJHU87L5hwJWKP9){:target="_blank"}
-    * Had to go pretty far up to get away from other anglers. Managed a few more on the stringer here. More enclosed but access is probably less often here. You're basically fishing small pools and timber.
-  * Spot 3 - [Springville Branch Bad Axe River](https://maps.app.goo.gl/GizSpD3ebPKWspUYA){:target="_blank"}
-    * This spot is basically impossible to get to, needless to say I burned the bridge with the property owner. That being said the fishing was good, I would have no issue putting in at the bridge below this spot. Good fishing. They were in the riffles/rapids.
-
-**Day 4**
-  * Weather - Clear and hot
-  * Spot 1 - [Little Lacrosse River](https://maps.app.goo.gl/9std7qZv4urhbhKcA){:target="_blank"}
-    * Further up was narrow and hard to fish, this spot in the past was an absolute slog due to log jams, some have cleared since then and this section proved to be pretty fruitful. The easement to the west allows you to get all the way to the open area if you want to skip the log jams, however they hold trout so probably don't skip.
+Note: Cannot use the Hipcamp campsite again.

@@ -468,4 +468,7 @@ pre code {
     width: calc(100vw - 0px);
     max-width: none;
   }
+  .post-grid {
+    grid-template-columns: 1fr !important;
+  }
 }

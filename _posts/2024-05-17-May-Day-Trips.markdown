@@ -1,38 +1,51 @@
 ---
 summary: "Two solo day trips on consecutive days in mid-May."
+
+cost:
+  items:
+    - name: Gas
+      amount: 60
+
+days:
+  - day: Day 1
+    date: May 17, 2024
+    weather: Clear and hot, got up to 80 degrees. On stream by 8, 7 would have been better.
+    spots:
+      - name: Mecan River
+        url: https://maps.app.goo.gl/KrypH9pjbwB25ZUT7
+        notes: I love the structure of this location but I could not see anything decent. Never spotted a trout more than 6 inches. Felt like I was too low in the river to get into the trout. Would have been nice to temp the stream.
+        lat: 43.993625
+        lng: -89.367392
+      - name: Mecan River
+        url: https://maps.app.goo.gl/yW2Xd6VzH3hvbu447
+        notes: Given my thoughts on location I decided to head further upstream. Saw more trout but couldn't connect, felt like a better section. In hindsight perhaps should have gone further upstream.
+        lat: 44.022353
+        lng: -89.425565
+      - name: Chaffee
+        url: https://maps.app.goo.gl/KrY97uGrudHtGRwd6
+        notes: Hard to fish, it'd be better lower in the river. No luck, did see fish though.
+        lat: 43.955772
+        lng: -89.390455
+  - day: Day 2
+    date: May 18, 2024
+    weather: Clear and hot, got up to 80 degrees. On stream by 7:45, an hour earlier would have been better.
+    spots:
+      - name: North Branch Little Wolf River
+        url: https://maps.app.goo.gl/4rhuprh2DPUJ8Bbp9
+        notes: Caught over 20 trout. In the main river only caught smaller fish. When heading back went up Flume Creek and caught 2 browns. Fish must have been further upstream, which is where I was going to head until I bagged a few trout and hit the stream limit.
+        lat: 44.620823
+        lng: -89.133317
+      - name: Middle Embarrass River
+        url: https://maps.app.goo.gl/FUomZMcvaZ6CUNtB8
+        notes: Decent but the water seemed warm. Should have headed further upstream, a trib would have been a good call but didn't have time.
+        lat: 44.855935
+        lng: -89.164545
+
 images:
   - /assets/images/20240518_190453.jpg
+
 layout: post
 title: May Day Trips
 date: 2024-05-17
 ---
 # May 2024
-
-**General Notes from Trip**
-
-  * Two solo day trips on consecutive days in mid-May.
-
-**Camping**
-
-  * Two Day Trips, no camping
-
-**Trip Cost** - $60
-
-  * Gas - $60
-
-**Day 1**
-  * Weather - Clear and hot, got up to 80 degrees. I was in the stream by 8 but that may have been a bit late, I think 7 would have been better.
-  * Spot 1 - [Mecan River](https://maps.app.goo.gl/KrypH9pjbwB25ZUT7){:target="_blank"}
-    * I love the structure of this location but I could not see anything decent. I never spotted a trout more than 6 inches. I felt like perhaps I was too low in the river to get into the trout. It would have been nice to be able to take a temp of the stream.
-  * Spot 2 - [Mecan River](https://maps.app.goo.gl/yW2Xd6VzH3hvbu447){:target="_blank"}
-    * Given my thoughts on location I decided to head further up stream. I saw more trout but couldn't connect, I felt like this was a better section. In hindsight perhaps I should have gone further upstream.
-  * Spot 3 - [Chaffee](https://maps.app.goo.gl/KrY97uGrudHtGRwd6){:target="_blank"}
-    * Hard to fish, it'd be better lower in the river. No luck, did see fish though.
-
-**Day 2**
-  * Weather - Clear and hot, got up to 80 degrees. I was on stream by 7:45 but I think I should have been on stream about an hour earlier.
-  * Spot 1 - [North Branch Little Wolf River](https://maps.app.goo.gl/4rhuprh2DPUJ8Bbp9){:target="_blank"}
-    * I caught over 20 trout, in the main river I only caught smaller fish. When I headed back I went up Flume Creek and caught 2 browns.
-    * Fish must have been further upstream, which is where I was going to head until I bagged a few trout and hit the stream limit.
-  * Spot 2 - [Middle Embarrass River](https://maps.app.goo.gl/FUomZMcvaZ6CUNtB8){:target="_blank"}
-    * This spot was decent but the water seemed warm. I should have headed up even further upstream, a trib would have been a good call here but I didn't have time.

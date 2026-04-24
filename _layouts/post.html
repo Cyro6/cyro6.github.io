@@ -2,72 +2,224 @@
 layout: default
 ---
 {{ content }}
-{% if page.memes %}
-<div style="margin-top: 2rem; padding: 1.5rem; background: #f0ebe0; border-radius: 6px; border-left: 4px solid #05bf85;">
-  <h4 style="margin: 0 0 1rem;">😂 Trip Meme(s)</h4>
-  {% for meme in page.memes %}
-  <blockquote style="margin: 0.5rem 0; font-style: italic; color: #555;">{{ meme }}</blockquote>
+
+
+{% if page.summary %}
+<div style="margin-top: 1rem; padding: 1.25rem; background: #f0ebe0; border-radius: 6px; border-left: 4px solid #05bf85;">
+  <h4 style="margin: 0 0 0.5rem;">Summary</h4>
+  <p style="margin: 0;">{{ page.summary }}</p>
+</div>
+{% endif %}
+
+
+{% if page.campsite or page.cost %}
+<div class="post-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 2rem;">
+  {% if page.campsite %}
+  <div style="padding: 1.25rem; background: #f0ebe0; border-radius: 6px; border-left: 4px solid #39b831;">
+    <h4 style="margin: 0 0 0.75rem;">Campsite</h4>
+    {% if page.campsite.url %}
+    <a href="{{ page.campsite.url }}" target="_blank">{{ page.campsite.name }}</a>
+    {% else %}
+    {{ page.campsite.name }}
+    {% endif %}
+  </div>
+  {% endif %}
+  {% if page.cost %}
+  {% assign total = 0 %}
+  {% for item in page.cost.items %}
+    {% assign total = total | plus: item.amount %}
+  {% endfor %}
+  <div style="padding: 1.25rem; background: #f0ebe0; border-radius: 6px; border-left: 4px solid #05bf85;">
+    <h4 style="margin: 0 0 0.75rem;">Trip Cost &mdash; ${{ total }}</h4>
+    <ul style="margin: 0; padding-left: 1.25rem;">
+      {% for item in page.cost.items %}
+      <li>{{ item.name }} &mdash; ${{ item.amount }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+
+{% if page.days %}
+<div class="post-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 2rem;">
+  {% for day in page.days %}
+  {% assign di = forloop.index0 %}
+  {% if di == 0 %}{% assign dayColor = '#2596be' %}{% endif %}
+  {% if di == 1 %}{% assign dayColor = '#cc2c3f' %}{% endif %}
+  {% if di == 2 %}{% assign dayColor = '#cc852b' %}{% endif %}
+  {% if di == 3 %}{% assign dayColor = '#ccc62b' %}{% endif %}
+  {% if di == 4 %}{% assign dayColor = '#9b29cb' %}{% endif %}
+  <div style="padding: 1.25rem; background: #f0ebe0; border-radius: 6px; border-left: 4px solid {{ dayColor }};">
+    <h4 style="margin: 0 0 0.25rem;">{% if day.day %}{{ day.day }}{% if day.date %} &mdash; {{ day.date }}{% endif %}{% elsif day.date %}{{ day.date }}{% endif %}</h4>
+    {% if day.weather %}<small style="color: #888;">{{ day.weather }}</small>{% endif %}
+    {% if day.spots %}
+    <ul style="margin: 0.75rem 0 0; padding-left: 1.25rem;">
+      {% for spot in day.spots %}
+      <li style="margin-bottom: 0.5rem;">
+        {% if spot.url %}<a href="{{ spot.url }}" target="_blank">{{ spot.name }}</a>{% else %}{{ spot.name }}{% endif %}
+        {% if spot.notes %} &mdash; {{ spot.notes }}{% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </div>
   {% endfor %}
 </div>
 {% endif %}
-{% if page.youtube %}
-<div style="margin-top: 2rem; padding: 1.5rem; background: #f0ebe0; border-radius: 6px; border-left: 4px solid #05bf85;">
-  {% for video in page.youtube %}
-  <a href="{{ video.url }}" target="_blank" class="button" style="margin-right: 0.5rem; margin-bottom: 0.5rem;">{{ video.title }}</a>
+
+{% assign has_map = false %}
+{% for day in page.days %}
+  {% for spot in day.spots %}
+    {% if spot.lat %}
+      {% assign has_map = true %}
+    {% endif %}
   {% endfor %}
-</div>
+{% endfor %}
+{% if page.campsite.lat %}
+  {% assign has_map = true %}
 {% endif %}
-{% if page.images %}
-<div style='position: relative; margin-top: 2rem; overflow: hidden; background: #000;'>
-  <div id='carousel' style='display: flex; transition: transform 0.3s ease;'>
-    {% for img in page.images %}
-    <div style='min-width: 100%; text-align: center;'>
-      <img src='{{ img }}' style='max-height: 500px; max-width: 100%; width: auto; height: auto; display: inline-block;' alt='Trip photo'>
-    </div>
-    {% endfor %}
-  </div>
-  <button onclick='moveCarousel(-1)' style='position: absolute; left: 0; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; padding: 1rem; cursor: pointer; font-size: 1.5rem;'>&#8249;</button>
-  <button onclick='moveCarousel(1)' style='position: absolute; right: 0; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; padding: 1rem; cursor: pointer; font-size: 1.5rem;'>&#8250;</button>
-  <div style='text-align: center; padding: 0.5rem;' id='dots'>
-    {% for img in page.images %}
-    <span onclick='goToSlide({{ forloop.index0 }})' style='cursor: pointer; font-size: 1.2rem; color: #ccc;'>&#9679;</span>
-    {% endfor %}
-  </div>
-</div>
-<script>
-  let current = 0;
-  let touchStartX = 0;
-  let touchEndX = 0;
-  const slides = document.querySelectorAll('#carousel div');
-  const dots = document.querySelectorAll('#dots span');
-  
-  function updateCarousel() {
-    document.getElementById('carousel').style.transform = 'translateX(-' + (current * 100) + '%)';
-    dots.forEach((d, i) => d.style.color = i === current ? '#05bf85' : '#ccc');
-  }
-  function moveCarousel(dir) {
-    current = (current + dir + slides.length) % slides.length;
-    updateCarousel();
-  }
-  function goToSlide(n) {
-    current = n;
-    updateCarousel();
-  }
 
-  const carousel = document.getElementById('carousel');
-  carousel.addEventListener('touchstart', (e) => {
-    touchStartX = e.changedTouches[0].screenX;
-  }, { passive: true });
+{% if has_map or page.images %}
+<div class="post-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 2rem; align-items: start;">
+  {% if has_map %}
+  <div>
+    <div id="trip-map" style="height: 400px; border-radius: 6px; border: 1px solid #ddd;"></div>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+    var map = L.map('trip-map');
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
 
-  carousel.addEventListener('touchend', (e) => {
-    touchEndX = e.changedTouches[0].screenX;
-    const diff = touchStartX - touchEndX;
-    if (Math.abs(diff) > 50) {
-      moveCarousel(diff > 0 ? 1 : -1);
+    var greenIcon = new L.Icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+      iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+    });
+
+    var dayIcons = [
+      new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png', iconSize: [25,41], iconAnchor: [12,41], popupAnchor: [1,-34], shadowSize: [41,41] }),
+      new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png', iconSize: [25,41], iconAnchor: [12,41], popupAnchor: [1,-34], shadowSize: [41,41] }),
+      new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png', iconSize: [25,41], iconAnchor: [12,41], popupAnchor: [1,-34], shadowSize: [41,41] }),
+      new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-yellow.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png', iconSize: [25,41], iconAnchor: [12,41], popupAnchor: [1,-34], shadowSize: [41,41] }),
+      new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png', iconSize: [25,41], iconAnchor: [12,41], popupAnchor: [1,-34], shadowSize: [41,41] }),
+    ];
+
+    var bounds = [];
+
+    {% if page.campsite.lat %}
+    var campsiteMarker = L.marker([{{ page.campsite.lat }}, {{ page.campsite.lng }}], { icon: greenIcon }).addTo(map);
+    campsiteMarker.bindPopup("<strong>Campsite</strong><br>{{ page.campsite.name }}");
+    campsiteMarker.bindTooltip({{ page.campsite.name | jsonify }}, { permanent: false, direction: 'top' });
+    bounds.push([{{ page.campsite.lat }}, {{ page.campsite.lng }}]);
+    {% endif %}
+
+    {% for day in page.days %}
+      {% assign dayIndex = forloop.index0 %}
+      {% for spot in day.spots %}
+        {% if spot.lat %}
+        var marker = L.marker([{{ spot.lat }}, {{ spot.lng }}], { icon: dayIcons[{{ dayIndex }}] }).addTo(map);
+        marker.bindPopup(
+          "<strong>" + {{ spot.name | jsonify }} + "</strong><br>" +
+          "<em>{% if day.day %}{{ day.day }}{% if day.date %} - {{ day.date }}{% endif %}{% elsif day.date %}{{ day.date }}{% endif %}</em><br>" +
+          {{ spot.notes | default: "" | jsonify }}
+        );
+        marker.bindTooltip({{ spot.name | jsonify }}, { permanent: false, direction: 'top' });
+        bounds.push([{{ spot.lat }}, {{ spot.lng }}]);
+        {% endif %}
+      {% endfor %}
+    {% endfor %}
+
+    if (bounds.length > 0) {
+      map.fitBounds(bounds, { padding: [40, 40] });
     }
-  }, { passive: true });
+    </script>
+    <div style="margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; font-size: 0.85rem; color: #666;">
+      <span><span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:#39b831; margin-right:4px;"></span>Campsite</span>
+      <span><span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:#2596be; margin-right:4px;"></span>Day 1</span>
+      <span><span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:#cc2c3f; margin-right:4px;"></span>Day 2</span>
+      <span><span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:#cc852b; margin-right:4px;"></span>Day 3</span>
+      <span><span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:#ccc62b; margin-right:4px;"></span>Day 4</span>
+      <span><span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:#9b29cb; margin-right:4px;"></span>Day 5</span>
+    </div>
+  </div>
+  {% endif %}
+  {% if page.images %}
+  <div style="position: relative; overflow: hidden; background: #000; border-radius: 6px; height: 400px;">
+    <div id="carousel" style="display: flex; height: 100%; transition: transform 0.3s ease;">
+      {% for img in page.images %}
+      <div style="min-width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+        <img src="{{ img }}" style="max-height: 100%; max-width: 100%; width: auto; height: auto; display: block;" alt="Trip photo">
+      </div>
+      {% endfor %}
+    </div>
+    <button onclick="moveCarousel(-1)" style="position: absolute; left: 0; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; padding: 1rem; cursor: pointer; font-size: 1.5rem;">&#8249;</button>
+    <button onclick="moveCarousel(1)" style="position: absolute; right: 0; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; padding: 1rem; cursor: pointer; font-size: 1.5rem;">&#8250;</button>
+    <div id="dots" style="position: absolute; bottom: 0; left: 0; right: 0; text-align: center; padding: 0.4rem; background: linear-gradient(transparent, rgba(0,0,0,0.4));">
+      {% for img in page.images %}
+      <span onclick="goToSlide({{ forloop.index0 }})" style="cursor: pointer; font-size: 1.2rem; color: #ccc;">&#9679;</span>
+      {% endfor %}
+    </div>
+  </div>
+  <script>
+    let current = 0;
+    let touchStartX = 0;
+    let touchEndX = 0;
+    const slides = document.querySelectorAll('#carousel div');
+    const dots = document.querySelectorAll('#dots span');
 
-  updateCarousel();
-</script>
+    function updateCarousel() {
+      document.getElementById('carousel').style.transform = 'translateX(-' + (current * 100) + '%)';
+      dots.forEach((d, i) => d.style.color = i === current ? '#05bf85' : '#ccc');
+    }
+    function moveCarousel(dir) {
+      current = (current + dir + slides.length) % slides.length;
+      updateCarousel();
+    }
+    function goToSlide(n) {
+      current = n;
+      updateCarousel();
+    }
 
+    const carousel = document.getElementById('carousel');
+    carousel.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    carousel.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      const diff = touchStartX - touchEndX;
+      if (Math.abs(diff) > 50) {
+        moveCarousel(diff > 0 ? 1 : -1);
+      }
+    }, { passive: true });
+
+    updateCarousel();
+  </script>
+  {% endif %}
+</div>
+{% endif %}
+
+{% if page.memes or page.youtube %}
+<div class="post-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 2rem;">
+  {% if page.memes %}
+  <div style="padding: 1.5rem; background: #f0ebe0; border-radius: 6px; border-left: 4px solid #05bf85;">
+    <h4 style="margin: 0 0 1rem;">Trip Meme(s)</h4>
+    {% for meme in page.memes %}
+    <blockquote style="margin: 0.5rem 0; font-style: italic; color: #555;">{{ meme }}</blockquote>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% if page.youtube %}
+  <div style="padding: 1.5rem; background: #f0ebe0; border-radius: 6px; border-left: 4px solid #05bf85;">
+    <h4 style="margin: 0 0 1rem;">Watch on YouTube</h4>
+    {% for video in page.youtube %}
+    <a href="{{ video.url }}" target="_blank" class="button" style="margin-right: 0.5rem; margin-bottom: 0.5rem;">{{ video.title }}</a>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
 {% endif %}
