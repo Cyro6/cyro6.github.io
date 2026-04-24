@@ -457,10 +457,10 @@ pre code {
 }
 @media screen and (max-width: 640px) {
   .content {
-    padding: 0 1rem;
+    padding: 0rem;
   }
   .typeset {
-    padding: 0 1rem;
+    padding: 0rem;
   }
   .typeset img {
     display: block;
@@ -470,6 +470,9 @@ pre code {
   }
   .post-grid {
     grid-template-columns: 1fr !important;
+  }
+  .post-card_body {
+    padding: 0 1rem;
   }
 }
 
