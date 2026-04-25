@@ -481,3 +481,64 @@ pre code {
   position: absolute !important;
   display: inline !important;
 }
+
+// Site-wide dark mode toggle button in nav
+.site-theme-toggle {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.1rem 0.3rem;
+  line-height: 1;
+  border-radius: 4px;
+  transition: background 0.15s;
+  &:hover { background: rgba(255,255,255,0.12); }
+}
+
+// Site-wide dark mode
+body.dark-theme {
+  background: #1e2722;
+  color: #d4cfc7;
+
+  .header,
+  .footer {
+    background: #141d1a;
+    a { color: #d4cfc7; &:hover { color: #05bf85; } }
+  }
+
+  .nav a { color: #d4cfc7; &:hover { color: #05bf85; } }
+
+  // Inline-styled light badges and boxes on index/post pages
+  [style*="background: #f0ebe0"],
+  [style*="background:#f0ebe0"] {
+    background: #2a3530 !important;
+    color: #d4cfc7 !important;
+  }
+  [style*="color: #555"],
+  [style*="color: #666"] { color: #a8adac !important; }
+  [style*="color: white"] { color: #fff !important; }
+  [style*="border-bottom: 1px solid #eee"] { border-bottom-color: #2a3530 !important; }
+
+  // Banner overlay on index page
+  [style*="background: rgba(0,0,0"] { /* keep as-is, already dark */ }
+
+  // Analytics page dark mode (driven by body class now)
+  .analytics-page {
+    --bg-primary: #1f2937;
+    --bg-secondary: #374151;
+    --card-bg: #2d3748;
+    --text-primary: #e5e7eb;
+    --text-secondary: #9ca3af;
+    --error-bg: #4b5563;
+    --table-even-row-bg: #374151;
+    --table-hover-bg: #1a3a30;
+    --footer-bg: #2d3748;
+    --shadow-color: rgba(0,0,0,0.5);
+    --shadow-hover-color: rgba(0,0,0,0.7);
+    --link-color: #05bf85;
+    --link-hover-color: #34d399;
+    background: linear-gradient(135deg, #1f2937, #2d3748);
+    border-radius: 8px;
+    padding: 20px;
+  }
+}

@@ -13,6 +13,9 @@
         <a href="{{ url }}">{{ item.title }}</a>
       </li>
     {% endfor %}
+    <li class="item  item--nav">
+      <button id="site-theme-toggle" class="site-theme-toggle" title="Toggle dark mode">🌙</button>
+    </li>
   </ul>
   <button class="button  button--nav" aria-label="Menu toggle">
     {% include icon.html id="nav" title="Menu" %}
@@ -50,5 +53,18 @@
   // Check on resize if to collapse nav
   window.addEventListener('resize', () => {
     collapseNav()
+  })
+
+  // Site-wide dark mode toggle
+  const themeToggle = document.getElementById('site-theme-toggle')
+  const applyTheme = (dark) => {
+    document.body.classList.toggle('dark-theme', dark)
+    themeToggle.textContent = dark ? '☀️' : '🌙'
+  }
+  applyTheme(localStorage.getItem('site-theme') === 'dark')
+  themeToggle.addEventListener('click', () => {
+    const isDark = !document.body.classList.contains('dark-theme')
+    applyTheme(isDark)
+    localStorage.setItem('site-theme', isDark ? 'dark' : 'light')
   })
 </script>

@@ -30,7 +30,7 @@ title: Analytics
     position: relative;
     margin-top: 1rem;
 }
-.analytics-page.dark-theme {
+body.dark-theme .analytics-page {
     --bg-primary: #1f2937;
     --bg-secondary: #374151;
     --card-bg: #2d3748;
@@ -55,14 +55,6 @@ title: Analytics
 .analytics-page *, .analytics-page *::before, .analytics-page *::after {
     box-sizing: border-box;
 }
-.analytics-page .analytics-header-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-}
 .analytics-page h1 {
     font-size: 2.2rem;
     font-weight: 700;
@@ -70,39 +62,6 @@ title: Analytics
     margin: 0;
     text-shadow: 0 2px 6px var(--shadow-color);
     animation: ap-fadeIn 1s ease-in;
-}
-.analytics-page .theme-toggle-btn {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: #f0ebe0;
-    border: 1px solid #d8d2c6;
-    border-radius: 20px;
-    padding: 0.35rem 0.9rem;
-    font-size: 0.82rem;
-    font-family: inherit;
-    cursor: pointer;
-    color: #384743;
-    box-shadow: none;
-    transition: background 0.2s ease, border-color 0.2s ease;
-    white-space: nowrap;
-}
-.analytics-page .theme-toggle-btn:hover,
-.analytics-page .theme-toggle-btn:focus {
-    background: #e5dfd5;
-    border-color: #c5bfb5;
-    box-shadow: none;
-    color: #242e2b;
-}
-.analytics-page.dark-theme .theme-toggle-btn {
-    background: #374151;
-    border-color: #4b5563;
-    color: #e5e7eb;
-}
-.analytics-page.dark-theme .theme-toggle-btn:hover {
-    background: #4b5563;
-    border-color: #6b7280;
-    color: #f9fafb;
 }
 .analytics-page h2 {
     font-size: 1.5rem;
@@ -308,8 +267,7 @@ title: Analytics
 
 @media screen and (max-width: 600px) {
     .analytics-page { padding: 12px; }
-    .analytics-page .theme-toggle { top: 12px; right: 12px; }
-    .analytics-page h1 { font-size: 1.6rem; }
+.analytics-page h1 { font-size: 1.6rem; }
     .analytics-page h2 { font-size: 1.3rem; }
     .analytics-page .card { padding: 15px; margin: 15px auto; }
     .analytics-page .filter-section { padding: 12px; }
@@ -345,10 +303,7 @@ title: Analytics
 </style>
 
 <div class="analytics-page">
-    <div class="analytics-header-row">
-        <h1>Fishing Trip Planner Dashboard</h1>
-        <button id="theme-toggle-btn" class="theme-toggle-btn" title="Toggle dark mode">🌙 Dark</button>
-    </div>
+    <h1>Fishing Trip Planner Dashboard</h1>
 
     <div id="trip-plan" class="tab-content card">
         <h2>Fishing Trip Plan</h2>
@@ -554,15 +509,6 @@ function toggleStreamTable() {
     isStreamTableVisible = !isStreamTableVisible;
     streamTable.style.display = isStreamTableVisible ? 'table' : 'none';
     toggleButton.textContent = isStreamTableVisible ? 'Hide Stream Data' : 'Show Stream Data';
-}
-
-function toggleTheme() {
-    const wrapper = document.querySelector('.analytics-page');
-    const themeButton = document.getElementById('theme-toggle-btn');
-    wrapper.classList.toggle('dark-theme');
-    const isDark = wrapper.classList.contains('dark-theme');
-    themeButton.textContent = isDark ? '☀️ Light' : '🌙 Dark';
-    localStorage.setItem('analytics-theme', isDark ? 'dark' : 'light');
 }
 
 async function fetchSourceData() {
@@ -1086,18 +1032,6 @@ function displayData({ headers, rows }, prefix) {
 
 document.addEventListener('DOMContentLoaded', async () => {
     const isMobile = window.matchMedia('(max-width: 600px)').matches;
-    const wrapper = document.querySelector('.analytics-page');
-    const themeButton = document.getElementById('theme-toggle-btn');
-
-    const savedTheme = localStorage.getItem('analytics-theme');
-    if (savedTheme === 'dark') {
-        wrapper.classList.add('dark-theme');
-        themeButton.textContent = '☀️ Light';
-    } else {
-        themeButton.textContent = '🌙 Dark';
-    }
-
-    themeButton.addEventListener('click', toggleTheme);
 
     await fetchSourceData();
 
