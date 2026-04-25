@@ -1,519 +1,327 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fishing Trip Planner Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-primary: #D9ECEC;
-            --bg-secondary: #e5e7eb;
-            --card-bg: white;
-            --text-primary: #1f2937;
-            --text-secondary: #6b7280;
-            --header-bg: #008080;
-            --header-hover-bg: #00A0A0;
-            --button-bg: #008080;
-            --button-hover-bg: #00A0A0;
-            --link-color: #008080;
-            --link-hover-color: #00A0A0;
-            --error-bg: #d6dcf4;
-            --table-even-row-bg: #f9fafb;
-            --table-hover-bg: #dbeafe;
-            --footer-bg: #f8fafc;
-            --shadow-color: rgba(0, 0, 0, 0.12);
-            --shadow-hover-color: rgba(0, 0, 0, 0.2);
-        }
-
-        .dark-theme {
-            --bg-primary: #1f2937;
-            --bg-secondary: #374151;
-            --card-bg: #2d3748;
-            --text-primary: #e5e7eb;
-            --text-secondary: #9ca3af;
-            --header-bg: #3a3c5a;
-            --header-hover-bg: #45476b;
-            --button-bg: linear-gradient(90deg, #4b5563, #6b7280);
-            --button-hover-bg: linear-gradient(90deg, #374151, #4b5563);
-            --link-color: #60a5fa;
-            --link-hover-color: #93c5fd;
-            --error-bg: #4b5563;
-            --table-even-row-bg: #374151;
-            --table-hover-bg: #4b5563;
-            --footer-bg: #2d3748;
-            --shadow-color: rgba(0, 0, 0, 0.5);
-            --shadow-hover-color: rgba(0, 0, 0, 0.7);
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
-            min-height: 100vh;
-            padding: 20px;
-            color: var(--text-primary);
-            transition: background 0.3s ease, color 0.3s ease;
-        }
-
-        .back-link {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            z-index: 10;
-        }
-
-        .back-link a {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--link-color);
-            text-decoration: none;
-            transition: color 0.2s ease;
-        }
-
-        .back-link a:hover {
-            color: var(--link-hover-color);
-            text-decoration: underline;
-        }
-
-        .theme-toggle {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            z-index: 10;
-        }
-
-        .theme-toggle button {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--text-primary);
-            transition: color 0.2s ease, transform 0.2s ease;
-        }
-
-        .theme-toggle button:hover {
-            transform: scale(1.1);
-            color: var(--link-hover-color);
-        }
-
-        h1 {
-            text-align: center;
-            font-size: 2.8rem;
-            font-weight: 700;
-            color: var(--link-color);
-            margin-bottom: 1.5rem;
-            text-shadow: 0 2px 6px var(--shadow-color);
-            animation: fadeIn 1s ease-in;
-        }
-
-        h2 {
-            font-size: 2rem;
-            font-weight: 600;
-            color: var(--link-color);
-            margin-bottom: 1.2rem;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .card {
-            background: var(--card-bg);
-            border-radius: 14px;
-            box-shadow: 0 6px 25px var(--shadow-color);
-            padding: 25px;
-            margin: 25px auto;
-            max-width: 1200px;
-            transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 12px 40px var(--shadow-hover-color);
-        }
-
-        .filter-section {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            background: var(--footer-bg);
-            border-radius: 10px;
-            padding: 20px;
-            border: 1px solid var(--text-secondary);
-        }
-
-        .filter-row {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        .filter-section label {
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-right: 10px;
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .filter-section label .icon {
-            font-size: 1.2rem;
-        }
-
-        .filter-section select,
-        .filter-section input {
-            padding: 10px;
-            border: 2px solid var(--text-secondary);
-            border-radius: 8px;
-            font-size: 0.95rem;
-            background: var(--card-bg);
-            color: var(--text-primary);
-            transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
-        }
-
-        .filter-section select:focus,
-        .filter-section input:focus {
-            outline: none;
-            border-color: var(--link-color);
-            box-shadow: 0 0 0 4px rgba(30, 64, 175, 0.25);
-            transform: scale(1.02);
-        }
-
-        .filter-section input[type="text"] {
-            width: 140px;
-        }
-
-        .filter-section input[type="number"] {
-            width: 90px;
-        }
-
-        .filter-section select {
-            width: 140px;
-        }
-
-        .filter-section button,
-        #toggle-stream-table {
-            padding: 10px 20px;
-            background: var(--button-bg);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.95rem;
-            font-weight: 600;
-            transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-            margin-bottom: 20px;
-        }
-
-        .filter-section button:hover,
-        #toggle-stream-table:hover {
-            background: var(--button-hover-bg);
-            transform: translateY(-3px);
-            box-shadow: 0 4px 15px var(--shadow-hover-color);
-        }
-
-        .month-table-container,
-        .trip-plan-container {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: var(--card-bg);
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        th, td {
-            padding: 14px;
-            text-align: left;
-            border-bottom: 1px solid var(--text-secondary);
-            transition: background-color 0.3s ease;
-        }
-
-        th {
-            background: var(--header-bg);
-            color: white;
-            font-weight: 700;
-            cursor: pointer;
-            position: relative;
-            transition: background 0.3s ease;
-        }
-
-        th:hover {
-            background: var(--header-hover-bg);
-        }
-
-        th.sort-asc::after {
-            content: ' ↑';
-            font-size: 0.9rem;
-        }
-
-        th.sort-desc::after {
-            content: ' ↓';
-            font-size: 0.9rem;
-        }
-
-        th .header-content {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 6px;
-        }
-
-        th .header-icon {
-            font-size: 1.2rem;
-        }
-
-        tr {
-            transition: background 0.2s ease, transform 0.2s ease;
-            animation: slideIn 0.3s ease;
-        }
-
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(-20px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-
-        tr:nth-child(even) {
-            background: var(--table-even-row-bg);
-        }
-
-        tr:hover {
-            background: var(--table-hover-bg);
-            transform: scale(1.01);
-        }
-
-        td a {
-            color: var(--link-color);
-            text-decoration: none;
-            font-weight: 600;
-            transition: color 0.2s ease;
-        }
-
-        td a:hover {
-            color: var(--link-hover-color);
-            text-decoration: none;
-        }
-
-        .loading {
-            text-align: center;
-            font-size: 1.2rem;
-            color: var(--text-secondary);
-            padding: 25px;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
-
-        .error {
-            text-align: center;
-            color: #dc2626;
-            font-weight: 600;
-            padding: 25px;
-            background: var(--error-bg);
-            border-radius: 8px;
-        }
-
-        #month-error, #trip-plan-error {
-            display: none;
-        }
-
-        .no-results {
-            text-align: center;
-            color: var(--text-secondary);
-            font-size: 1.2rem;
-            padding: 25px;
-            background: var(--footer-bg);
-            border-radius: 8px;
-        }
-
-        footer {
-            text-align: center;
-            margin-top: 3rem;
-            padding: 1.5rem;
-            background: var(--footer-bg);
-            border-radius: 10px;
-            box-shadow: 0 4px 15px var(--shadow-color);
-        }
-
-        footer a {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--link-color);
-            transition: color 0.2s ease;
-        }
-
-        footer a:hover {
-            color: var(--link-hover-color);
-        }
-
-        th.precipitation, td.precipitation {
-            text-align: center;
-            min-width: 120px;
-        }
-
-        th.midpoint, td.midpoint {
-            text-align: center;
-            width: 80px;
-        }
-
-        td.midpoint a {
-            font-size: 1.2rem;
-            display: inline-block;
-        }
-
-        td.midpoint a:hover {
-            color: var(--link-hover-color);
-        }
-
-        @media screen and (max-width: 600px) {
-            body {
-                padding: 12px;
-            }
-
-            .back-link, .theme-toggle {
-                top: 12px;
-                left: 12px;
-            }
-
-            .theme-toggle {
-                left: auto;
-                right: 12px;
-            }
-
-            .back-link a, .theme-toggle button {
-                font-size: 0.9rem;
-            }
-
-            h1 {
-                font-size: 2rem;
-            }
-
-            h2 {
-                font-size: 1.5rem;
-            }
-
-            .card {
-                padding: 15px;
-                margin: 15px auto;
-            }
-
-            .filter-section {
-                padding: 12px;
-            }
-
-            .filter-row {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 12px;
-            }
-
-            .filter-section select,
-            .filter-section input {
-                width: 100%;
-                font-size: 0.9rem;
-            }
-
-            .filter-section input[type="text"],
-            .filter-section input[type="number"],
-            .filter-section select {
-                width: 100%;
-            }
-
-            .filter-section button,
-            #toggle-stream-table {
-                width: 100%;
-                padding: 12px;
-                margin-bottom: 12px;
-            }
-
-            th, td {
-                padding: 8px;
-                font-size: 0.85rem;
-                text-align: left;
-                white-space: normal;
-                min-width: 80px;
-                overflow-wrap: break-word;
-            }
-
-            th.precipitation, td.precipitation {
-                min-width: 100px;
-                text-align: center;
-            }
-
-            th.midpoint, td.midpoint {
-                width: 60px;
-                text-align: center;
-            }
-
-            th .header-content {
-                flex-direction: column;
-                align-items: center;
-                gap: 4px;
-            }
-
-            th .header-icon {
-                font-size: 1.1rem;
-            }
-        }
-
-        @media screen and (max-width: 360px) {
-            .month-table-container, .trip-plan-container {
-                max-width: 360px;
-                overflow-x: auto;
-            }
-
-            table {
-                width: auto;
-            }
-
-            th, td {
-                padding: 6px;
-                font-size: 0.75rem;
-                text-align: left;
-                white-space: normal;
-                min-width: 60px;
-                overflow-wrap: break-word;
-            }
-
-            th.precipitation, td.precipitation {
-                min-width: 80px;
-            }
-
-            th.midpoint, td.midpoint {
-                width: 50px;
-            }
-
-            th .header-content {
-                flex-direction: column;
-                align-items: center;
-                gap: 2px;
-            }
-
-            th .header-icon {
-                font-size: 1.0rem;
-            }
-        }
-    </style>
-</head>
-<body>
+---
+layout: default
+title: Analytics
+---
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+.analytics-page {
+    --bg-primary: #D9ECEC;
+    --bg-secondary: #e5e7eb;
+    --card-bg: white;
+    --text-primary: #1f2937;
+    --text-secondary: #6b7280;
+    --header-bg: #008080;
+    --header-hover-bg: #00A0A0;
+    --button-bg: #008080;
+    --button-hover-bg: #00A0A0;
+    --link-color: #008080;
+    --link-hover-color: #00A0A0;
+    --error-bg: #d6dcf4;
+    --table-even-row-bg: #f9fafb;
+    --table-hover-bg: #dbeafe;
+    --footer-bg: #f8fafc;
+    --shadow-color: rgba(0, 0, 0, 0.12);
+    --shadow-hover-color: rgba(0, 0, 0, 0.2);
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
+    padding: 20px;
+    color: var(--text-primary);
+    transition: background 0.3s ease, color 0.3s ease;
+    position: relative;
+    border-radius: 8px;
+    margin-top: 1rem;
+}
+.analytics-page.dark-theme {
+    --bg-primary: #1f2937;
+    --bg-secondary: #374151;
+    --card-bg: #2d3748;
+    --text-primary: #e5e7eb;
+    --text-secondary: #9ca3af;
+    --header-bg: #3a3c5a;
+    --header-hover-bg: #45476b;
+    --link-color: #60a5fa;
+    --link-hover-color: #93c5fd;
+    --error-bg: #4b5563;
+    --table-even-row-bg: #374151;
+    --table-hover-bg: #4b5563;
+    --footer-bg: #2d3748;
+    --shadow-color: rgba(0, 0, 0, 0.5);
+    --shadow-hover-color: rgba(0, 0, 0, 0.7);
+    background: linear-gradient(135deg, #1f2937, #374151);
+}
+.analytics-page *, .analytics-page *::before, .analytics-page *::after {
+    box-sizing: border-box;
+}
+.analytics-page .theme-toggle {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 10;
+}
+.analytics-page .theme-toggle button {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-primary);
+    box-shadow: none;
+    transition: transform 0.2s ease;
+}
+.analytics-page .theme-toggle button:hover,
+.analytics-page .theme-toggle button:focus {
+    box-shadow: none;
+    transform: scale(1.1);
+}
+.analytics-page h1 {
+    text-align: center;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--link-color);
+    margin: 0 0 1.5rem;
+    text-shadow: 0 2px 6px var(--shadow-color);
+    animation: ap-fadeIn 1s ease-in;
+}
+.analytics-page h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--link-color);
+    margin: 0 0 1.2rem;
+}
+@keyframes ap-fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes ap-slideIn {
+    from { opacity: 0; transform: translateX(-20px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes ap-pulse {
+    0%   { opacity: 1; }
+    50%  { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+.analytics-page .card {
+    background: var(--card-bg);
+    border-radius: 14px;
+    box-shadow: 0 6px 25px var(--shadow-color);
+    padding: 25px;
+    margin: 25px auto;
+    max-width: 1200px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+}
+.analytics-page .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px var(--shadow-hover-color);
+}
+.analytics-page .filter-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    background: var(--footer-bg);
+    border-radius: 10px;
+    padding: 20px;
+    border: 1px solid var(--text-secondary);
+}
+.analytics-page .filter-row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+.analytics-page .filter-section label {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-right: 10px;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 0;
+}
+.analytics-page .filter-section label .icon {
+    font-size: 1.2rem;
+}
+.analytics-page .filter-section select,
+.analytics-page .filter-section input {
+    padding: 10px;
+    border: 2px solid var(--text-secondary);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    background: var(--card-bg);
+    color: var(--text-primary);
+    box-shadow: none;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+}
+.analytics-page .filter-section select:focus,
+.analytics-page .filter-section input:focus {
+    outline: none;
+    border-color: var(--link-color);
+    box-shadow: 0 0 0 4px rgba(0, 128, 128, 0.2);
+    transform: scale(1.02);
+}
+.analytics-page .filter-section input[type="text"] { width: 140px; }
+.analytics-page .filter-section input[type="number"] { width: 90px; }
+.analytics-page .filter-section select { width: 140px; }
+.analytics-page .filter-section button,
+.analytics-page #toggle-stream-table {
+    padding: 10px 20px;
+    background: var(--button-bg);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    box-shadow: none;
+    margin-bottom: 20px;
+    transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+}
+.analytics-page .filter-section button:hover,
+.analytics-page #toggle-stream-table:hover,
+.analytics-page .filter-section button:focus,
+.analytics-page #toggle-stream-table:focus {
+    background: var(--button-hover-bg);
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 4px 15px var(--shadow-hover-color);
+}
+.analytics-page .month-table-container,
+.analytics-page .trip-plan-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.analytics-page table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--card-bg);
+    border-radius: 10px;
+    overflow: hidden;
+}
+.analytics-page th,
+.analytics-page td {
+    padding: 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--text-secondary);
+    transition: background-color 0.3s ease;
+}
+.analytics-page th {
+    background: var(--header-bg);
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+.analytics-page th:hover { background: var(--header-hover-bg); }
+.analytics-page th.sort-asc::after  { content: ' ↑'; font-size: 0.9rem; }
+.analytics-page th.sort-desc::after { content: ' ↓'; font-size: 0.9rem; }
+.analytics-page th .header-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+}
+.analytics-page th .header-icon { font-size: 1.2rem; }
+.analytics-page tr {
+    transition: background 0.2s ease, transform 0.2s ease;
+    animation: ap-slideIn 0.3s ease;
+}
+.analytics-page tr:nth-child(even) { background: var(--table-even-row-bg); }
+.analytics-page tr:hover {
+    background: var(--table-hover-bg);
+    transform: scale(1.01);
+}
+.analytics-page td a {
+    color: var(--link-color);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s ease;
+}
+.analytics-page td a:hover { color: var(--link-hover-color); }
+.analytics-page .loading {
+    text-align: center;
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    padding: 25px;
+    animation: ap-pulse 1.5s infinite;
+}
+.analytics-page .error {
+    text-align: center;
+    color: #dc2626;
+    font-weight: 600;
+    padding: 25px;
+    background: var(--error-bg);
+    border-radius: 8px;
+}
+.analytics-page #month-error,
+.analytics-page #trip-plan-error { display: none; }
+.analytics-page .no-results {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    padding: 25px;
+    background: var(--footer-bg);
+    border-radius: 8px;
+}
+.analytics-page footer {
+    text-align: center;
+    margin-top: 3rem;
+    padding: 1.5rem;
+    background: var(--footer-bg);
+    border-radius: 10px;
+    box-shadow: 0 4px 15px var(--shadow-color);
+}
+.analytics-page footer a {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--link-color);
+    transition: color 0.2s ease;
+}
+.analytics-page footer a:hover { color: var(--link-hover-color); }
+.analytics-page th.precipitation,
+.analytics-page td.precipitation { text-align: center; min-width: 120px; }
+.analytics-page th.midpoint,
+.analytics-page td.midpoint { text-align: center; width: 80px; }
+.analytics-page td.midpoint a { font-size: 1.2rem; display: inline-block; }
+
+@media screen and (max-width: 600px) {
+    .analytics-page { padding: 12px; }
+    .analytics-page .theme-toggle { top: 12px; right: 12px; }
+    .analytics-page h1 { font-size: 1.6rem; }
+    .analytics-page h2 { font-size: 1.3rem; }
+    .analytics-page .card { padding: 15px; margin: 15px auto; }
+    .analytics-page .filter-section { padding: 12px; }
+    .analytics-page .filter-row { flex-direction: column; align-items: stretch; gap: 12px; }
+    .analytics-page .filter-section select,
+    .analytics-page .filter-section input,
+    .analytics-page .filter-section input[type="text"],
+    .analytics-page .filter-section input[type="number"] { width: 100%; font-size: 0.9rem; }
+    .analytics-page .filter-section button,
+    .analytics-page #toggle-stream-table { width: 100%; padding: 12px; margin-bottom: 12px; }
+    .analytics-page th,
+    .analytics-page td { padding: 8px; font-size: 0.85rem; white-space: normal; min-width: 80px; overflow-wrap: break-word; }
+    .analytics-page th.precipitation,
+    .analytics-page td.precipitation { min-width: 100px; }
+    .analytics-page th.midpoint,
+    .analytics-page td.midpoint { width: 60px; }
+    .analytics-page th .header-content { flex-direction: column; gap: 4px; }
+    .analytics-page th .header-icon { font-size: 1.1rem; }
+}
+@media screen and (max-width: 360px) {
+    .analytics-page .month-table-container,
+    .analytics-page .trip-plan-container { max-width: 360px; overflow-x: auto; }
+    .analytics-page table { width: auto; }
+    .analytics-page th,
+    .analytics-page td { padding: 6px; font-size: 0.75rem; min-width: 60px; }
+    .analytics-page th.precipitation,
+    .analytics-page td.precipitation { min-width: 80px; }
+    .analytics-page th.midpoint,
+    .analytics-page td.midpoint { width: 50px; }
+    .analytics-page th .header-content { flex-direction: column; gap: 2px; }
+    .analytics-page th .header-icon { font-size: 1rem; }
+}
+</style>
+
+<div class="analytics-page">
     <div class="theme-toggle">
         <button id="theme-toggle-btn" title="Toggle Theme">☀️</button>
     </div>
@@ -654,10 +462,10 @@ const DRIVING_DISTANCE_FACTOR = 1.5;
 const MAX_DRIVING_DISTANCE = 30;
 let isStreamTableVisible = false;
 const precipitationCache = new Map();
-const REQUEST_DELAY = 100; // Delay between requests in ms
-const RETRY_DELAY = 1000; // Delay for retries in ms
-const MAX_RETRIES = 3; // Maximum number of retry attempts
-const BATCH_SIZE = 5; // Process 5 requests at a time
+const REQUEST_DELAY = 100;
+const RETRY_DELAY = 1000;
+const MAX_RETRIES = 3;
+const BATCH_SIZE = 5;
 
 function haversineDistance(lat1, lon1, lat2, lon2) {
     const R = 3958.8;
@@ -697,7 +505,6 @@ async function fetchPrecipitationData(lat, lon, retryCount = 0) {
         const response = await fetch(url);
         if (response.status === 429) {
             if (retryCount < MAX_RETRIES) {
-                console.warn(`Rate limit hit for ${key}, retrying (${retryCount + 1}/${MAX_RETRIES})...`);
                 await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * (retryCount + 1)));
                 return fetchPrecipitationData(lat, lon, retryCount + 1);
             } else {
@@ -712,7 +519,6 @@ async function fetchPrecipitationData(lat, lon, retryCount = 0) {
         precipitationCache.set(key, result);
         return result;
     } catch (error) {
-        console.error(`Error fetching precipitation for ${key}: ${error.message}`);
         precipitationCache.set(key, { past: 'Error', future: 'Error' });
         return { past: 'Error', future: 'Error' };
     }
@@ -721,22 +527,19 @@ async function fetchPrecipitationData(lat, lon, retryCount = 0) {
 function toggleStreamTable() {
     const streamTable = document.getElementById('month-table');
     const toggleButton = document.getElementById('toggle-stream-table');
-    if (!streamTable || !toggleButton) {
-        console.error('Stream table or toggle button not found');
-        return;
-    }
+    if (!streamTable || !toggleButton) return;
     isStreamTableVisible = !isStreamTableVisible;
     streamTable.style.display = isStreamTableVisible ? 'table' : 'none';
     toggleButton.textContent = isStreamTableVisible ? 'Hide Stream Data' : 'Show Stream Data';
 }
 
 function toggleTheme() {
-    const body = document.body;
+    const wrapper = document.querySelector('.analytics-page');
     const themeButton = document.getElementById('theme-toggle-btn');
-    body.classList.toggle('dark-theme');
-    const isDark = body.classList.contains('dark-theme');
+    wrapper.classList.toggle('dark-theme');
+    const isDark = wrapper.classList.contains('dark-theme');
     themeButton.textContent = isDark ? '☀️' : '🌙';
-    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    localStorage.setItem('analytics-theme', isDark ? 'dark' : 'light');
 }
 
 async function fetchSourceData() {
@@ -771,7 +574,6 @@ async function fetchSourceData() {
     }
 }
 
-
 function processSourceData() {
     if (!sourceData || !campsiteData) return;
 
@@ -799,8 +601,6 @@ function processSourceData() {
             return [month, stream, rating, section, lat, lon];
         });
 
-    console.log('Valid data rows:', validData.length);
-
     const groupedDataByMonth = {};
     validData.forEach(([month, stream, rating, section, lat, lon]) => {
         const key = `${month}|${stream}`;
@@ -816,30 +616,21 @@ function processSourceData() {
 
     processedData = Object.values(groupedDataByMonth).map(({ month, stream, ratings, sections, spots }) => {
         const visits = ratings.length;
-        const avgRating = ratings.length > 0 ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length : 0;
+        const avgRating = ratings.reduce((sum, r) => sum + r, 0) / ratings.length;
         const roundedAvg = Math.round(avgRating * 100) / 100;
-
         const counts = { LOWER: 0, MIDDLE: 0, UPPER: 0, UNKNOWN: 0 };
-        sections.forEach(section => {
-            counts[section] = (counts[section] || 0) + 1;
-        });
+        sections.forEach(s => { counts[s] = (counts[s] || 0) + 1; });
         const maxCount = Math.max(counts.LOWER, counts.MIDDLE, counts.UPPER);
-        const tieCheck = (counts.LOWER === maxCount ? 1 : 0) +
-                         (counts.MIDDLE === maxCount ? 1 : 0) +
-                         (counts.UPPER === maxCount ? 1 : 0);
+        const tieCheck = (counts.LOWER === maxCount ? 1 : 0) + (counts.MIDDLE === maxCount ? 1 : 0) + (counts.UPPER === maxCount ? 1 : 0);
         let sectionResult = 'MX';
-        if (maxCount > 0) {
-            if (tieCheck === 1) {
-                if (counts.LOWER === maxCount) sectionResult = 'L';
-                else if (counts.MIDDLE === maxCount) sectionResult = 'M';
-                else if (counts.UPPER === maxCount) sectionResult = 'U';
-            }
+        if (maxCount > 0 && tieCheck === 1) {
+            if (counts.LOWER === maxCount) sectionResult = 'L';
+            else if (counts.MIDDLE === maxCount) sectionResult = 'M';
+            else if (counts.UPPER === maxCount) sectionResult = 'U';
         }
-
         const avgLat = spots.length > 0 ? spots.reduce((sum, spot) => sum + spot.lat, 0) / spots.length : null;
         const avgLon = spots.length > 0 ? spots.reduce((sum, spot) => sum + spot.lon, 0) / spots.length : null;
         const midpoint = avgLat && avgLon ? { lat: avgLat, lon: avgLon } : null;
-
         return { month, stream, visits, rating: roundedAvg, section: sectionResult, midpoint };
     });
 
@@ -857,72 +648,45 @@ function processSourceData() {
 
     allData = Object.values(groupedDataAll).map(({ stream, ratings, sections, spots }) => {
         const visits = ratings.length;
-        const avgRating = ratings.length > 0 ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length : 0;
+        const avgRating = ratings.reduce((sum, r) => sum + r, 0) / ratings.length;
         const roundedAvg = Math.round(avgRating * 100) / 100;
-
         const counts = { LOWER: 0, MIDDLE: 0, UPPER: 0, UNKNOWN: 0 };
-        sections.forEach(section => {
-            counts[section] = (counts[section] || 0) + 1;
-        });
+        sections.forEach(s => { counts[s] = (counts[s] || 0) + 1; });
         const maxCount = Math.max(counts.LOWER, counts.MIDDLE, counts.UPPER);
-        const tieCheck = (counts.LOWER === maxCount ? 1 : 0) +
-                         (counts.MIDDLE === maxCount ? 1 : 0) +
-                         (counts.UPPER === maxCount ? 1 : 0);
+        const tieCheck = (counts.LOWER === maxCount ? 1 : 0) + (counts.MIDDLE === maxCount ? 1 : 0) + (counts.UPPER === maxCount ? 1 : 0);
         let sectionResult = 'MX';
-        if (maxCount > 0) {
-            if (tieCheck === 1) {
-                if (counts.LOWER === maxCount) sectionResult = 'L';
-                else if (counts.MIDDLE === maxCount) sectionResult = 'M';
-                else if (counts.UPPER === maxCount) sectionResult = 'U';
-            }
+        if (maxCount > 0 && tieCheck === 1) {
+            if (counts.LOWER === maxCount) sectionResult = 'L';
+            else if (counts.MIDDLE === maxCount) sectionResult = 'M';
+            else if (counts.UPPER === maxCount) sectionResult = 'U';
         }
-
         const avgLat = spots.length > 0 ? spots.reduce((sum, spot) => sum + spot.lat, 0) / spots.length : null;
         const avgLon = spots.length > 0 ? spots.reduce((sum, spot) => sum + spot.lon, 0) / spots.length : null;
         const midpoint = avgLat && avgLon ? { lat: avgLat, lon: avgLon } : null;
-
         return { stream, visits, rating: roundedAvg, section: sectionResult, midpoint };
     });
 }
 
 function populateMonthDropdown() {
     if (!processedData) return;
-
-    const monthOrder = [
-        'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December', 'Unknown'
-    ];
+    const monthOrder = ['January','February','March','April','May','June','July','August','September','October','November','December','Unknown'];
     const currentMonth = new Date().toLocaleString('default', { month: 'long' });
-
     const monthSelect = document.getElementById('month-select');
-    if (!monthSelect) {
-        console.error('Month select element not found');
-        return;
-    }
-
-    const months = [...new Set(processedData.map(row => row.month))]
-        .sort((a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
-
+    if (!monthSelect) return;
+    const months = [...new Set(processedData.map(row => row.month))].sort((a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
     months.forEach(month => {
         const option = document.createElement('option');
         option.value = month;
         option.textContent = month;
-        if (month === currentMonth) {
-            option.selected = true;
-        }
+        if (month === currentMonth) option.selected = true;
         monthSelect.appendChild(option);
     });
 }
 
 function populateCampsiteDropdown() {
     if (!campsiteData) return;
-
     const campsiteSelect = document.getElementById('campsite-select');
-    if (!campsiteSelect) {
-        console.error('Campsite select element not found');
-        return;
-    }
-
+    if (!campsiteSelect) return;
     campsiteData.rows.forEach(row => {
         const name = row[0]?.trim();
         const gps = row[1]?.trim();
@@ -943,17 +707,7 @@ function generateTripPlan(filteredStreams, allStreams, numDays, maxDistance) {
         let availablePrimaryStreams = filteredStreams.filter(stream => !usedStreams.has(stream.stream) && stream.midpoint);
 
         if (availablePrimaryStreams.length === 0) {
-            tripPlan.push({
-                day,
-                primary: { stream: 'None', gps: 'N/A' },
-                primaryPrecipitationPast: 'N/A',
-                primaryPrecipitationFuture: 'N/A',
-                backup: { stream: 'None', gps: 'N/A' },
-                backupPrecipitationPast: 'N/A',
-                backupPrecipitationFuture: 'N/A',
-                straightDistance: 'N/A',
-                drivingDistance: 'N/A'
-            });
+            tripPlan.push({ day, primary: { stream: 'None', gps: 'N/A' }, primaryPrecipitationPast: 'N/A', primaryPrecipitationFuture: 'N/A', backup: { stream: 'None', gps: 'N/A' }, backupPrecipitationPast: 'N/A', backupPrecipitationFuture: 'N/A', straightDistance: 'N/A', drivingDistance: 'N/A' });
             continue;
         }
 
@@ -964,12 +718,7 @@ function generateTripPlan(filteredStreams, allStreams, numDays, maxDistance) {
         const backupCandidates = allStreams
             .map(stream => {
                 if (!usedStreams.has(stream.stream) && stream.midpoint && stream.rating >= MIN_RATING) {
-                    const distance = haversineDistance(
-                        primaryStream.midpoint.lat,
-                        primaryStream.midpoint.lon,
-                        stream.midpoint.lat,
-                        stream.midpoint.lon
-                    );
+                    const distance = haversineDistance(primaryStream.midpoint.lat, primaryStream.midpoint.lon, stream.midpoint.lat, stream.midpoint.lon);
                     const drivingDistance = distance * DRIVING_DISTANCE_FACTOR;
                     if (distance <= maxDistance && drivingDistance <= MAX_DRIVING_DISTANCE) {
                         return { ...stream, distance, drivingDistance };
@@ -994,16 +743,10 @@ function generateTripPlan(filteredStreams, allStreams, numDays, maxDistance) {
 
         tripPlan.push({
             day,
-            primary: {
-                stream: primaryStream.stream,
-                gps: primaryStream.midpoint ? `${primaryStream.midpoint.lat.toFixed(4)}, ${primaryStream.midpoint.lon.toFixed(4)}` : 'N/A'
-            },
+            primary: { stream: primaryStream.stream, gps: primaryStream.midpoint ? `${primaryStream.midpoint.lat.toFixed(4)}, ${primaryStream.midpoint.lon.toFixed(4)}` : 'N/A' },
             primaryPrecipitationPast: primaryStream.midpoint ? 'Loading...' : 'N/A',
             primaryPrecipitationFuture: primaryStream.midpoint ? 'Loading...' : 'N/A',
-            backup: {
-                stream: backupStream.stream,
-                gps: backupStream.midpoint ? `${backupStream.midpoint.lat.toFixed(4)}, ${backupStream.midpoint.lon.toFixed(4)}` : 'N/A'
-            },
+            backup: { stream: backupStream.stream, gps: backupStream.midpoint ? `${backupStream.midpoint.lat.toFixed(4)}, ${backupStream.midpoint.lon.toFixed(4)}` : 'N/A' },
             backupPrecipitationPast: backupStream.midpoint ? 'Loading...' : 'N/A',
             backupPrecipitationFuture: backupStream.midpoint ? 'Loading...' : 'N/A',
             straightDistance,
@@ -1018,13 +761,7 @@ function displayTripPlan(tripPlan) {
     const tableBody = document.getElementById('trip-plan-body');
     const table = document.getElementById('trip-plan-table');
     const errorDiv = document.getElementById('trip-plan-error');
-
-    if (!tableBody || !table || !errorDiv) {
-        console.error('Trip plan table elements not found');
-        errorDiv.textContent = 'Error: Table elements missing';
-        errorDiv.style.display = 'block';
-        return;
-    }
+    if (!tableBody || !table || !errorDiv) return;
 
     tableBody.innerHTML = '';
 
@@ -1039,31 +776,20 @@ function displayTripPlan(tripPlan) {
     errorDiv.style.display = 'none';
     tripPlan.forEach(plan => {
         const tr = document.createElement('tr');
-        [
-            plan.day,
-            plan.primary.stream,
-            plan.primaryPrecipitationPast,
-            plan.primaryPrecipitationFuture,
-            plan.backup.stream,
-            plan.backupPrecipitationPast,
-            plan.backupPrecipitationFuture,
-            plan.straightDistance,
-            plan.drivingDistance
-        ].forEach((cell, index) => {
-            const td = document.createElement('td');
-            if (index === 2 || index === 3 || index === 5 || index === 6) {
-                td.classList.add('precipitation');
-            }
-            if (index === 1 || index === 4) {
-                const link = document.createElement('a');
-                link.href = `stream-details.html?stream=${encodeURIComponent(cell)}`;
-                link.textContent = cell;
-                td.appendChild(link);
-            } else {
-                td.textContent = cell;
-            }
-            tr.appendChild(td);
-        });
+        [plan.day, plan.primary.stream, plan.primaryPrecipitationPast, plan.primaryPrecipitationFuture, plan.backup.stream, plan.backupPrecipitationPast, plan.backupPrecipitationFuture, plan.straightDistance, plan.drivingDistance]
+            .forEach((cell, index) => {
+                const td = document.createElement('td');
+                if (index === 2 || index === 3 || index === 5 || index === 6) td.classList.add('precipitation');
+                if (index === 1 || index === 4) {
+                    const link = document.createElement('a');
+                    link.href = `stream-details.html?stream=${encodeURIComponent(cell)}`;
+                    link.textContent = cell;
+                    td.appendChild(link);
+                } else {
+                    td.textContent = cell;
+                }
+                tr.appendChild(td);
+            });
         tableBody.appendChild(tr);
     });
 
@@ -1079,7 +805,6 @@ async function processBatch(batch) {
                 row.precipitationPast = precip.past;
                 row.precipitationFuture = precip.future;
             } catch (error) {
-                console.error(`Failed to fetch precipitation for ${row.stream}: ${error.message}`);
                 row.precipitationPast = 'Error';
                 row.precipitationFuture = 'Error';
             }
@@ -1102,14 +827,7 @@ async function applyFilters() {
     const monthError = document.getElementById('month-error');
     const tripPlanError = document.getElementById('trip-plan-error');
 
-    if (!monthSelect || !streamFilter || !visitsFilter || !ratingFilter || !sectionFilter || !campsiteSelect || !radiusSelect || !backupDistanceSelect || !tripDaysSelect) {
-        console.error('One or more filter elements not found');
-        monthError.textContent = 'Error: Filter elements missing';
-        monthError.style.display = 'block';
-        tripPlanError.textContent = 'Error: Filter elements missing';
-        tripPlanError.style.display = 'block';
-        return;
-    }
+    if (!monthSelect || !streamFilter || !visitsFilter || !ratingFilter || !sectionFilter || !campsiteSelect || !radiusSelect || !backupDistanceSelect || !tripDaysSelect) return;
 
     monthError.textContent = '';
     monthError.style.display = 'none';
@@ -1143,7 +861,6 @@ async function applyFilters() {
         const rating = parseFloat(row.rating);
         const section = row.section;
         const distance = row.distance === 'N/A' ? null : parseFloat(row.distance);
-
         return stream.includes(streamFilterValue) &&
                (visitsFilterValue === '' || visits >= parseFloat(visitsFilterValue)) &&
                (ratingFilterValue === '' || rating >= parseFloat(ratingFilterValue)) &&
@@ -1156,14 +873,12 @@ async function applyFilters() {
         const visits = parseFloat(row.visits);
         const rating = parseFloat(row.rating);
         const section = row.section;
-
         return stream.includes(streamFilterValue) &&
                (visitsFilterValue === '' || visits >= parseFloat(visitsFilterValue)) &&
                (ratingFilterValue === '' || rating >= parseFloat(ratingFilterValue)) &&
                (sectionFilterValue === 'All' || section === sectionFilterValue);
     });
 
-    // Process precipitation data in batches
     const batches = [];
     for (let i = 0; i < filteredData.length; i += BATCH_SIZE) {
         batches.push(filteredData.slice(i, i + BATCH_SIZE));
@@ -1172,17 +887,10 @@ async function applyFilters() {
     try {
         const batchResults = [];
         for (const batch of batches) {
-            const result = await processBatch(batch);
-            batchResults.push(...result);
+            batchResults.push(...await processBatch(batch));
         }
         filteredData = batchResults;
-        console.log('Filtered data with precipitation:', filteredData.map(row => ({
-            stream: row.stream,
-            precipitationPast: row.precipitationPast,
-            precipitationFuture: row.precipitationFuture
-        })));
     } catch (error) {
-        console.error('Error processing precipitation batches:', error);
         filteredData.forEach(row => {
             if (row.precipitationPast === 'Loading...') {
                 row.precipitationPast = 'Error';
@@ -1191,22 +899,12 @@ async function applyFilters() {
         });
     }
 
-    const columnMap = {
-        'Stream': 'stream',
-        'Visits': 'visits',
-        'Rating': 'rating',
-        'Section': 'section',
-        'Midpoint': 'midpoint',
-        'Distance': 'distance',
-        'Precipitation (Past 3 Days)': 'precipitationPast',
-        'Precipitation (Next 4 Days)': 'precipitationFuture'
-    };
+    const columnMap = { 'Stream': 'stream', 'Visits': 'visits', 'Rating': 'rating', 'Section': 'section', 'Midpoint': 'midpoint', 'Distance': 'distance', 'Precipitation (Past 3 Days)': 'precipitationPast', 'Precipitation (Next 4 Days)': 'precipitationFuture' };
 
     filteredData.sort((a, b) => {
         const prop = columnMap[sortColumn];
         let valueA = a[prop];
         let valueB = b[prop];
-
         if (prop === 'stream' || prop === 'section') {
             return sortDirection * (valueA || '').localeCompare(valueB || '');
         } else if (prop === 'visits' || prop === 'rating' || prop === 'distance') {
@@ -1225,27 +923,12 @@ async function applyFilters() {
         return 0;
     });
 
-    const headers = selectedMonth === 'ALL'
-        ? ['Stream', 'Visits', 'Rating', 'Section', 'Midpoint', 'Distance', 'Precipitation (Past 3 Days)', 'Precipitation (Next 4 Days)']
-        : ['Stream', 'Visits', 'Rating', 'Section', 'Midpoint', 'Distance', 'Precipitation (Past 3 Days)', 'Precipitation (Next 4 Days)'];
-
-    const rows = filteredData.map(row => [
-        row.stream,
-        row.visits,
-        row.rating,
-        row.section,
-        row.midpoint ? `${row.midpoint.lat.toFixed(4)}, ${row.midpoint.lon.toFixed(4)}` : 'N/A',
-        row.distance,
-        row.precipitationPast,
-        row.precipitationFuture
-    ]);
-
-    console.log('Rows for displayData:', rows);
+    const headers = ['Stream', 'Visits', 'Rating', 'Section', 'Midpoint', 'Distance', 'Precipitation (Past 3 Days)', 'Precipitation (Next 4 Days)'];
+    const rows = filteredData.map(row => [row.stream, row.visits, row.rating, row.section, row.midpoint ? `${row.midpoint.lat.toFixed(4)}, ${row.midpoint.lon.toFixed(4)}` : 'N/A', row.distance, row.precipitationPast, row.precipitationFuture]);
 
     displayData({ headers, rows }, 'month');
 
     const tripPlan = generateTripPlan(filteredData, backupStreamCandidates, numDays, maxBackupDistance);
-
     const tripPlanBatches = [];
     for (let i = 0; i < tripPlan.length; i += BATCH_SIZE) {
         tripPlanBatches.push(tripPlan.slice(i, i + BATCH_SIZE));
@@ -1253,7 +936,7 @@ async function applyFilters() {
 
     const updatedTripPlan = [];
     for (const batch of tripPlanBatches) {
-        const batchPromises = batch.map(async plan => {
+        const batchResults = await Promise.all(batch.map(async plan => {
             if (plan.primary.gps !== 'N/A') {
                 const [lat, lon] = plan.primary.gps.split(',').map(coord => parseFloat(coord.trim()));
                 const precip = await fetchPrecipitationData(lat, lon);
@@ -1267,8 +950,7 @@ async function applyFilters() {
                 plan.backupPrecipitationFuture = precip.future;
             }
             return plan;
-        });
-        const batchResults = await Promise.all(batchPromises);
+        }));
         updatedTripPlan.push(...batchResults);
     }
 
@@ -1276,24 +958,10 @@ async function applyFilters() {
 }
 
 function clearFilters() {
-    const streamFilter = document.getElementById('stream-filter');
-    const visitsFilter = document.getElementById('visits-filter');
-    const ratingFilter = document.getElementById('rating-filter');
-    const sectionFilter = document.getElementById('section-filter');
-    const campsiteSelect = document.getElementById('campsite-select');
-    const radiusSelect = document.getElementById('radius-select');
-    const backupDistanceSelect = document.getElementById('backup-distance-select');
-    const tripDaysSelect = document.getElementById('trip-days-select');
-
-    if (streamFilter) streamFilter.value = '';
-    if (visitsFilter) visitsFilter.value = '';
-    if (ratingFilter) ratingFilter.value = '';
-    if (sectionFilter) sectionFilter.value = 'All';
-    if (campsiteSelect) campsiteSelect.value = 'ALL';
-    if (radiusSelect) radiusSelect.value = '30';
-    if (backupDistanceSelect) backupDistanceSelect.value = '20';
-    if (tripDaysSelect) tripDaysSelect.value = '3';
-
+    const ids = { 'stream-filter': '', 'visits-filter': '', 'rating-filter': '' };
+    Object.entries(ids).forEach(([id, val]) => { const el = document.getElementById(id); if (el) el.value = val; });
+    const selects = { 'section-filter': 'All', 'campsite-select': 'ALL', 'radius-select': '30', 'backup-distance-select': '20', 'trip-days-select': '3' };
+    Object.entries(selects).forEach(([id, val]) => { const el = document.getElementById(id); if (el) el.value = val; });
     applyFilters();
 }
 
@@ -1302,68 +970,32 @@ function displayData({ headers, rows }, prefix) {
     const tableBody = document.getElementById(`${prefix}-body`);
     const table = document.getElementById(`${prefix}-table`);
     const noResultsDiv = document.getElementById('no-results');
-
-    if (!tableHeader || !tableBody || !table || !noResultsDiv) {
-        console.error('Table elements not found');
-        document.getElementById(`${prefix}-error`).textContent = 'Error: Table elements missing';
-        document.getElementById(`${prefix}-error`).style.display = 'block';
-        return;
-    }
+    if (!tableHeader || !tableBody || !table || !noResultsDiv) return;
 
     tableHeader.innerHTML = '';
     tableBody.innerHTML = '';
 
-    const iconMap = {
-        'Month': '📅',
-        'Stream': '🌊',
-        'Visits': '👣',
-        'Rating': '⭐',
-        'Section': '📍',
-        'Midpoint': '🗺️',
-        'Distance': '📏',
-        'Precipitation (Past 3 Days)': '💧',
-        'Precipitation (Next 4 Days)': '🌦️',
-        'Day': '🗓️',
-        'Primary Stream': '🌊',
-        'Primary Precipitation (Past 3 Days)': '💧',
-        'Primary Precipitation (Next 4 Days)': '🌦️',
-        'Backup Stream': '🌊',
-        'Backup Precipitation (Past 3 Days)': '💧',
-        'Backup Precipitation (Next 4 Days)': '🌦️',
-        'Straight-Line Distance (miles)': '📏',
-        'Est. Driving Distance (miles)': '🚗'
-    };
+    const iconMap = { 'Stream': '🌊', 'Visits': '👣', 'Rating': '⭐', 'Section': '📍', 'Midpoint': '🗺️', 'Distance': '📏', 'Precipitation (Past 3 Days)': '💧', 'Precipitation (Next 4 Days)': '🌦️' };
 
-    headers.forEach((header, index) => {
+    headers.forEach(header => {
         const th = document.createElement('th');
         th.setAttribute('title', header);
-        if (header.includes('Precipitation')) {
-            th.classList.add('precipitation');
-        } else if (header === 'Midpoint') {
-            th.classList.add('midpoint');
-        }
+        if (header.includes('Precipitation')) th.classList.add('precipitation');
+        else if (header === 'Midpoint') th.classList.add('midpoint');
         const contentDiv = document.createElement('div');
         contentDiv.className = 'header-content';
-
         const iconSpan = document.createElement('span');
         iconSpan.className = 'header-icon';
         iconSpan.textContent = iconMap[header] || '';
-
         contentDiv.appendChild(iconSpan);
         th.appendChild(contentDiv);
-
         th.onclick = () => {
-            if (sortColumn === header) {
-                sortDirection = -sortDirection;
-            } else {
-                sortColumn = header;
-                sortDirection = -1;
-            }
+            sortColumn = sortColumn === header ? sortColumn : header;
+            sortDirection = sortColumn === header ? -sortDirection : -1;
+            sortColumn = header;
             applyFilters();
         };
-        if (sortColumn === header) {
-            th.classList.add(sortDirection === 1 ? 'sort-asc' : 'sort-desc');
-        }
+        if (sortColumn === header) th.classList.add(sortDirection === 1 ? 'sort-asc' : 'sort-desc');
         tableHeader.appendChild(th);
     });
 
@@ -1385,19 +1017,19 @@ function displayData({ headers, rows }, prefix) {
                 td.classList.add('midpoint');
                 if (cell !== 'N/A') {
                     const [lat, lon] = cell.split(',').map(coord => parseFloat(coord.trim()));
-                    const i = document.createElement('a');
-                    i.href = `https://www.google.com/maps?q=${lat},${lon}`;
-                    i.target = '_blank';
-                    i.textContent = '🗺️';
-                    td.appendChild(i);
+                    const a = document.createElement('a');
+                    a.href = `https://www.google.com/maps?q=${lat},${lon}`;
+                    a.target = '_blank';
+                    a.textContent = '🗺️';
+                    td.appendChild(a);
                 } else {
                     td.textContent = '-';
                 }
             } else if (prefix === 'month' && index === 0) {
-                const i = document.createElement('a');
-                i.href = `stream-details.html?stream=${encodeURIComponent(cell)}`;
-                i.textContent = cell;
-                td.appendChild(i);
+                const a = document.createElement('a');
+                a.href = `stream-details.html?stream=${encodeURIComponent(cell)}`;
+                a.textContent = cell;
+                td.appendChild(a);
             } else {
                 td.textContent = cell;
             }
@@ -1408,21 +1040,13 @@ function displayData({ headers, rows }, prefix) {
                         td.style.backgroundColor = '#dc2626';
                     } else if (rating <= 2.5) {
                         const ratio = (rating - 1) / 1.5;
-                        const r = Math.round(220 + (234 - 220) * ratio);
-                        const g = Math.round(38 + (179 - 38) * ratio);
-                        const b = Math.round(38 + (8 - 38) * ratio);
-                        td.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+                        td.style.backgroundColor = `rgb(${Math.round(220 + (234 - 220) * ratio)}, ${Math.round(38 + (179 - 38) * ratio)}, ${Math.round(38 + (8 - 38) * ratio)})`;
                     } else if (rating <= 4.2) {
                         const ratio = (rating - 2.5) / 1.7;
-                        const r = Math.round(234 + (34 - 234) * ratio);
-                        const g = Math.round(179 + (197 - 179) * ratio);
-                        const b = Math.round(8 + (94 - 8) * ratio);
-                        td.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+                        td.style.backgroundColor = `rgb(${Math.round(234 + (34 - 234) * ratio)}, ${Math.round(179 + (197 - 179) * ratio)}, ${Math.round(8 + (94 - 8) * ratio)})`;
                     } else {
                         td.style.backgroundColor = '#22c55e';
                     }
-                } else {
-                    console.warn('Invalid rating value:', { cell, parsedRating: rating, row });
                 }
             }
             tr.appendChild(td);
@@ -1438,13 +1062,13 @@ function displayData({ headers, rows }, prefix) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const isMobile = window.matchMedia("(max-width: 600px)").matches;
-    console.log('Mobile detected:', isMobile, 'Initial isStreamTableVisible:', isStreamTableVisible);
-
-    const savedTheme = localStorage.getItem('theme');
+    const isMobile = window.matchMedia('(max-width: 600px)').matches;
+    const wrapper = document.querySelector('.analytics-page');
     const themeButton = document.getElementById('theme-toggle-btn');
+
+    const savedTheme = localStorage.getItem('analytics-theme');
     if (savedTheme === 'dark') {
-        document.body.classList.add('dark-theme');
+        wrapper.classList.add('dark-theme');
         themeButton.textContent = '☀️';
     } else {
         themeButton.textContent = '🌙';
@@ -1460,13 +1084,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         isStreamTableVisible = !isMobile;
         streamTable.style.display = isStreamTableVisible ? 'table' : 'none';
         toggleButton.textContent = isStreamTableVisible ? 'Hide Stream Data' : 'Show Stream Data';
-        console.log('Post-fetch: isStreamTableVisible:', isStreamTableVisible, 'Table display:', streamTable.style.display);
-    } else {
-        console.error('Stream table or toggle button not found');
     }
 
     toggleButton.addEventListener('click', toggleStreamTable);
 });
     </script>
-</body>
-</html>
+</div>
