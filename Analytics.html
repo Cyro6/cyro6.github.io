@@ -52,34 +52,43 @@ title: Analytics
 .analytics-page *, .analytics-page *::before, .analytics-page *::after {
     box-sizing: border-box;
 }
-.analytics-page .theme-toggle {
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    z-index: 10;
-}
-.analytics-page .theme-toggle button {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    color: var(--text-primary);
-    box-shadow: none;
-    transition: transform 0.2s ease;
-}
-.analytics-page .theme-toggle button:hover,
-.analytics-page .theme-toggle button:focus {
-    box-shadow: none;
-    transform: scale(1.1);
+.analytics-page .analytics-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
 }
 .analytics-page h1 {
-    text-align: center;
     font-size: 2.2rem;
     font-weight: 700;
     color: var(--link-color);
-    margin: 0 0 1.5rem;
+    margin: 0;
     text-shadow: 0 2px 6px var(--shadow-color);
     animation: ap-fadeIn 1s ease-in;
+}
+.analytics-page .theme-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(0,0,0,0.08);
+    border: 1px solid rgba(0,0,0,0.12);
+    border-radius: 20px;
+    padding: 0.35rem 0.9rem;
+    font-size: 0.85rem;
+    font-family: inherit;
+    cursor: pointer;
+    color: var(--text-primary);
+    box-shadow: none;
+    transition: background 0.2s ease;
+    white-space: nowrap;
+}
+.analytics-page .theme-toggle-btn:hover,
+.analytics-page .theme-toggle-btn:focus {
+    background: rgba(0,0,0,0.14);
+    box-shadow: none;
+    color: var(--text-primary);
 }
 .analytics-page h2 {
     font-size: 1.5rem;
@@ -322,10 +331,10 @@ title: Analytics
 </style>
 
 <div class="analytics-page">
-    <div class="theme-toggle">
-        <button id="theme-toggle-btn" title="Toggle Theme">☀️</button>
+    <div class="analytics-header-row">
+        <h1>Fishing Trip Planner Dashboard</h1>
+        <button id="theme-toggle-btn" class="theme-toggle-btn" title="Toggle dark mode">🌙 Dark</button>
     </div>
-    <h1>Fishing Trip Planner Dashboard</h1>
 
     <div id="trip-plan" class="tab-content card">
         <h2>Fishing Trip Plan</h2>
@@ -538,7 +547,7 @@ function toggleTheme() {
     const themeButton = document.getElementById('theme-toggle-btn');
     wrapper.classList.toggle('dark-theme');
     const isDark = wrapper.classList.contains('dark-theme');
-    themeButton.textContent = isDark ? '☀️' : '🌙';
+    themeButton.textContent = isDark ? '☀️ Light' : '🌙 Dark';
     localStorage.setItem('analytics-theme', isDark ? 'dark' : 'light');
 }
 
@@ -1069,9 +1078,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const savedTheme = localStorage.getItem('analytics-theme');
     if (savedTheme === 'dark') {
         wrapper.classList.add('dark-theme');
-        themeButton.textContent = '☀️';
+        themeButton.textContent = '☀️ Light';
     } else {
-        themeButton.textContent = '🌙';
+        themeButton.textContent = '🌙 Dark';
     }
 
     themeButton.addEventListener('click', toggleTheme);

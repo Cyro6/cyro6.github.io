@@ -24,6 +24,8 @@ navigation_pages:
 navigation_header:
   - title: Home
     url: /
+  - title: Analytics
+    url: /Analytics
   - title: YouTube
     url: /youtube
   - title: About
