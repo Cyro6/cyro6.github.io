@@ -1,0 +1,1364 @@
+---
+layout: default
+title: Stream Details
+---
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+.sd-page {
+    --bg-primary: #f5f0e8;
+    --bg-secondary: #ede8de;
+    --card-bg: #ffffff;
+    --text-primary: #384743;
+    --text-secondary: #a8adac;
+    --header-bg: #242e2b;
+    --header-hover-bg: #384743;
+    --button-bg: #05bf85;
+    --button-hover-bg: #008000;
+    --link-color: #05bf85;
+    --link-hover-color: #008000;
+    --error-bg: #f8fafc;
+    --table-even-row-bg: #f5f0e8;
+    --table-hover-bg: #e8f5f0;
+    --footer-bg: #f0ebe0;
+    --shadow-color: rgba(0, 0, 0, 0.09);
+    --shadow-hover-color: rgba(0, 0, 0, 0.16);
+    --youtube-red: #FF0000;
+    font-family: 'Inter', sans-serif;
+    background: transparent;
+    padding: 20px 0;
+    color: var(--text-primary);
+    transition: color 0.3s ease;
+    position: relative;
+    margin-top: 1rem;
+}
+body.dark-theme .sd-page {
+    --bg-primary: #1f2937;
+    --bg-secondary: #374151;
+    --card-bg: #2d3748;
+    --text-primary: #e5e7eb;
+    --text-secondary: #9ca3af;
+    --header-bg: #242e2b;
+    --header-hover-bg: #384743;
+    --button-bg: #05bf85;
+    --button-hover-bg: #008000;
+    --link-color: #05bf85;
+    --link-hover-color: #34d399;
+    --error-bg: #4b5563;
+    --table-even-row-bg: #374151;
+    --table-hover-bg: #1a3a30;
+    --footer-bg: #2d3748;
+    --shadow-color: rgba(0, 0, 0, 0.5);
+    --shadow-hover-color: rgba(0, 0, 0, 0.7);
+}
+.sd-page *, .sd-page *::before, .sd-page *::after {
+    box-sizing: border-box;
+}
+.sd-page .back-link {
+    margin-bottom: 1.2rem;
+}
+.sd-page .back-link a {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--link-color);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+.sd-page .back-link a:hover {
+    color: var(--link-hover-color);
+    text-decoration: underline;
+}
+.sd-page h1 {
+    text-align: center;
+    font-size: 2.8rem;
+    font-weight: 700;
+    color: var(--link-color);
+    margin-bottom: 1.5rem;
+    text-shadow: 0 2px 6px var(--shadow-color);
+    animation: sd-fadeIn 1s ease-in;
+}
+.sd-page h2 {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--link-color);
+    margin-bottom: 1.2rem;
+}
+@keyframes sd-fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.sd-page .card {
+    background: var(--card-bg);
+    border-radius: 14px;
+    box-shadow: 0 6px 25px var(--shadow-color);
+    padding: 25px;
+    margin: 25px 0;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+}
+.sd-page .card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 40px var(--shadow-hover-color);
+}
+.sd-page .stats,
+.sd-page .month-stats,
+.sd-page .top-outings,
+.sd-page .stream-info,
+.sd-page .widnr-map-section,
+.sd-page .weather-section,
+.sd-page .spots-section {
+    margin: 20px 0;
+    padding: 15px;
+    background: var(--card-bg);
+    border-radius: 14px;
+    box-shadow: 0 6px 25px var(--shadow-color);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+}
+.sd-page .stream-info p,
+.sd-page .weather-section p,
+.sd-page .stats p {
+    margin: 5px 0;
+    color: var(--text-primary);
+}
+.sd-page .widnr-map-section .toggle-button,
+.sd-page .past-weather-toggle,
+.sd-page .stream-info-toggle,
+.sd-page .month-stats-toggle,
+.sd-page .top-outings-toggle,
+.sd-page .stats-toggle,
+.sd-page .weather-toggle,
+.sd-page .spots-toggle {
+    padding: 10px 20px;
+    background: var(--button-bg);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+    margin-bottom: 20px;
+    display: inline-block;
+}
+.sd-page .widnr-map-section .toggle-button:hover,
+.sd-page .past-weather-toggle:hover,
+.sd-page .stream-info-toggle:hover,
+.sd-page .month-stats-toggle:hover,
+.sd-page .top-outings-toggle:hover,
+.sd-page .stats-toggle:hover,
+.sd-page .weather-toggle:hover,
+.sd-page .spots-toggle:hover {
+    background: var(--button-hover-bg);
+    transform: translateY(-3px);
+    box-shadow: 0 4px 15px var(--shadow-hover-color);
+}
+.sd-page .widnr-map-section .iframe-container {
+    position: relative;
+    padding-bottom: 56.25%;
+    height: 0;
+    overflow: hidden;
+    display: none;
+}
+.sd-page .widnr-map-section .iframe-container.active {
+    display: block;
+}
+.sd-page .widnr-map-section .iframe-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+.sd-page .widnr-map-section .iframe-fallback {
+    margin-top: 10px;
+    color: var(--text-secondary);
+    display: none;
+}
+.sd-page .widnr-map-section .iframe-fallback.active {
+    display: block;
+}
+.sd-page .spots-table,
+.sd-page .top-outings-table,
+.sd-page .month-outing-table,
+.sd-page .weather-table {
+    width: 100%;
+    margin: 20px 0;
+    border-collapse: collapse;
+    background: var(--card-bg);
+    border-radius: 10px;
+    overflow: hidden;
+}
+.sd-page .spots-table th,
+.sd-page .spots-table td,
+.sd-page .top-outings-table th,
+.sd-page .top-outings-table td,
+.sd-page .month-outing-table th,
+.sd-page .month-outing-table td,
+.sd-page .weather-table th,
+.sd-page .weather-table td {
+    padding: 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--text-secondary);
+    transition: background-color 0.3s ease;
+}
+.sd-page .spots-table th,
+.sd-page .top-outings-table th,
+.sd-page .month-outing-table th,
+.sd-page .weather-table th {
+    background: var(--header-bg);
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+.sd-page .spots-table th:hover,
+.sd-page .top-outings-table th:hover,
+.sd-page .month-outing-table th:hover,
+.sd-page .weather-table th:hover {
+    background: var(--header-hover-bg);
+}
+.sd-page .spots-table th .header-content,
+.sd-page .top-outings-table th .header-content,
+.sd-page .month-outing-table th .header-content,
+.sd-page .weather-table th .header-content {
+    display: flex;
+    justify-content: left;
+    align-items: center;
+    gap: 6px;
+}
+.sd-page .spots-table th .header-icon,
+.sd-page .top-outings-table th .header-icon,
+.sd-page .month-outing-table th .header-icon,
+.sd-page .weather-table th .header-icon {
+    font-size: 1.2rem;
+}
+.sd-page .spots-table th.sort-asc::after,
+.sd-page .top-outings-table th.sort-asc::after,
+.sd-page .month-outing-table th.sort-asc::after,
+.sd-page .weather-table th.sort-asc::after {
+    content: ' ↑';
+    font-size: 0.9rem;
+}
+.sd-page .spots-table th.sort-desc::after,
+.sd-page .top-outings-table th.sort-desc::after,
+.sd-page .month-outing-table th.sort-desc::after,
+.sd-page .weather-table th.sort-desc::after {
+    content: ' ↓';
+    font-size: 0.9rem;
+}
+.sd-page .spots-table tr:nth-child(even),
+.sd-page .top-outings-table tr:nth-child(even),
+.sd-page .month-outing-table tr:nth-child(even),
+.sd-page .weather-table tr:nth-child(even) {
+    background: var(--table-even-row-bg);
+}
+.sd-page .spots-table tr:hover,
+.sd-page .top-outings-table tr:hover,
+.sd-page .month-outing-table tr:hover,
+.sd-page .weather-table tr:hover {
+    background: var(--table-hover-bg);
+    transform: scale(1.01);
+}
+.sd-page .link-icon {
+    font-size: 1.2rem;
+    color: var(--link-color);
+    text-decoration: none;
+    transition: color 0.2s ease, transform 0.2s ease;
+    display: inline-block;
+}
+.sd-page .link-icon:hover {
+    color: var(--link-hover-color);
+    transform: scale(1.1);
+}
+.sd-page .youtube-icon {
+    width: 24px;
+    height: 24px;
+    vertical-align: middle;
+    transition: transform 0.2s ease;
+    fill: var(--youtube-red);
+}
+.sd-page .youtube-icon:hover {
+    transform: scale(1.1);
+}
+.sd-page .youtube-header-icon {
+    width: 20px;
+    height: 20px;
+    fill: var(--youtube-red);
+    vertical-align: middle;
+    transition: transform 0.2s ease;
+}
+.sd-page .youtube-header-icon:hover {
+    transform: scale(1.1);
+}
+.sd-page .loading,
+.sd-page .weather-loading {
+    text-align: center;
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    padding: 25px;
+    animation: sd-pulse 1.5s infinite;
+}
+@keyframes sd-pulse {
+    0%   { opacity: 1; }
+    50%  { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+.sd-page .error,
+.sd-page .weather-error {
+    text-align: center;
+    color: #dc2626;
+    font-weight: 600;
+    padding: 25px;
+    background: var(--error-bg);
+    border-radius: 8px;
+}
+.sd-page .filter-section {
+    margin: 20px 0;
+    padding: 20px;
+    background: var(--footer-bg);
+    border-radius: 10px;
+    border: 1px solid var(--text-secondary);
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.sd-page .filter-section label {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-right: 10px;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.sd-page .filter-section label .icon {
+    font-size: 1.2rem;
+}
+.sd-page .filter-section select,
+.sd-page .filter-section input {
+    padding: 10px;
+    border: 2px solid var(--text-secondary);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    background: var(--card-bg);
+    color: var(--text-primary);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+}
+.sd-page .filter-section select:focus,
+.sd-page .filter-section input:focus {
+    outline: none;
+    border-color: var(--link-color);
+    box-shadow: 0 0 0 4px rgba(5, 191, 133, 0.2);
+    transform: scale(1.02);
+}
+.sd-page .filter-section select { width: 140px; }
+.sd-page .filter-section input  { width: 90px; }
+.sd-page .filter-section button {
+    padding: 10px 20px;
+    background: var(--button-bg);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+}
+.sd-page .filter-section button:hover {
+    background: var(--button-hover-bg);
+    transform: translateY(-3px);
+    box-shadow: 0 4px 15px var(--shadow-hover-color);
+}
+.sd-page .no-results {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    padding: 25px;
+    background: var(--footer-bg);
+    border-radius: 8px;
+}
+.sd-page .month-stats .stats-row {
+    display: block;
+    overflow: hidden;
+}
+.sd-page .month-stats .stats-row p {
+    margin: 0 0 10px 0;
+}
+.sd-page .weather-section .current-weather,
+.sd-page .weather-section .total-rainfall {
+    margin-bottom: 20px;
+    padding: 10px;
+    background: var(--error-bg);
+    border-radius: 8px;
+}
+.sd-page .weather-section .current-weather p {
+    margin: 5px 0;
+}
+.sd-page .weather-section .weather-location {
+    margin: 10px 0;
+}
+.sd-page .past-weather-container {
+    display: none;
+}
+.sd-page .past-weather-container.active {
+    display: block;
+}
+
+/* Widescreen Layout */
+@media screen and (min-width: 1200px) {
+    .sd-page .stream-details {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        gap: 2%;
+    }
+    .sd-page .stream-details .left-column {
+        flex: 0 0 40% !important;
+        width: 40% !important;
+        box-sizing: border-box;
+    }
+    .sd-page .stream-details .right-column {
+        flex: 0 0 58% !important;
+        width: 58% !important;
+        box-sizing: border-box;
+    }
+    .sd-page .info-stats-container {
+        display: flex;
+        gap: 20px;
+    }
+    .sd-page .stream-info,
+    .sd-page .stats {
+        flex: 1;
+        min-width: 200px;
+    }
+    .sd-page .weather-section,
+    .sd-page .widnr-map-section {
+        width: 100%;
+    }
+    .sd-page .spots-section,
+    .sd-page .month-stats,
+    .sd-page .top-outings {
+        flex: 1;
+        min-width: 300px;
+    }
+    .sd-page .spots-table,
+    .sd-page .month-outing-table,
+    .sd-page .top-outings-table {
+        width: 100%;
+    }
+    .sd-page .filter-section {
+        width: 100%;
+    }
+}
+
+/* Mobile and Narrow Screens */
+@media screen and (max-width: 1199px) {
+    .sd-page .left-column,
+    .sd-page .right-column,
+    .sd-page .stream-info,
+    .sd-page .stats,
+    .sd-page .weather-section,
+    .sd-page .widnr-map-section,
+    .sd-page .spots-section,
+    .sd-page .month-stats,
+    .sd-page .top-outings {
+        width: 100%;
+        float: none;
+    }
+    .sd-page .info-stats-container {
+        display: block;
+    }
+}
+
+@media screen and (max-width: 600px) {
+    .sd-page { padding: 12px 0; }
+    .sd-page h1 { font-size: 2rem; }
+    .sd-page h2 { font-size: 1.5rem; }
+    .sd-page .card { padding: 0; }
+    .sd-page .card:hover { transform: translateY(0); box-shadow: 0 6px 25px var(--shadow-color); }
+    .sd-page .stats,
+    .sd-page .month-stats,
+    .sd-page .top-outings,
+    .sd-page .stream-info,
+    .sd-page .widnr-map-section,
+    .sd-page .weather-section,
+    .sd-page .spots-section {
+        padding: 15px;
+        margin: 15px 0;
+    }
+    .sd-page .widnr-map-section .iframe-container { padding-bottom: 75%; }
+    .sd-page .filter-section {
+        flex-direction: column;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 12px;
+        align-items: stretch;
+    }
+    .sd-page .filter-section .filter-row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: nowrap;
+        width: auto;
+    }
+    .sd-page .filter-section .filter-row.button-row {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    .sd-page .filter-section label { font-size: 0.9rem; margin-right: 4px; }
+    .sd-page .filter-section select { width: 100%; font-size: 0.9rem; padding: 8px; }
+    .sd-page .filter-section input  { width: 100%; font-size: 0.9rem; padding: 8px; }
+    .sd-page .filter-section button { width: 100%; font-size: 0.9rem; padding: 12px; }
+    .sd-page .spots-table,
+    .sd-page .top-outings-table,
+    .sd-page .month-outing-table,
+    .sd-page .weather-table { box-shadow: none; margin: 15px 0; }
+    .sd-page .spots-table {
+        display: table !important;
+        width: 100%;
+        table-layout: fixed;
+        font-size: 0.85rem;
+    }
+    .sd-page .spots-table thead,
+    .sd-page .spots-table tbody,
+    .sd-page .spots-table tr {
+        display: table !important;
+        width: 100%;
+        table-layout: fixed;
+    }
+    .sd-page .spots-table th,
+    .sd-page .spots-table td {
+        display: table-cell !important;
+        padding: 8px;
+        text-align: left;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .sd-page .spots-table th:nth-child(1), .sd-page .spots-table td:nth-child(1) { width: 15%; }
+    .sd-page .spots-table th:nth-child(2), .sd-page .spots-table td:nth-child(2) { width: 15%; }
+    .sd-page .spots-table th:nth-child(3), .sd-page .spots-table td:nth-child(3) { width: 20%; }
+    .sd-page .spots-table th:nth-child(4), .sd-page .spots-table td:nth-child(4) { width: 20%; }
+    .sd-page .spots-table th:nth-child(5), .sd-page .spots-table td:nth-child(5) { width: 30%; }
+    .sd-page .top-outings-table thead,
+    .sd-page .month-outing-table thead,
+    .sd-page .weather-table thead { display: none; }
+    .sd-page .top-outings-table tr,
+    .sd-page .month-outing-table tr,
+    .sd-page .weather-table tr {
+        display: block;
+        margin-bottom: 10px;
+        border: 1px solid var(--text-secondary);
+        border-radius: 8px;
+    }
+    .sd-page .top-outings-table td,
+    .sd-page .month-outing-table td,
+    .sd-page .weather-table td {
+        display: block;
+        text-align: right;
+        padding: 8px;
+        border: none;
+        border-bottom: 1px solid var(--text-secondary);
+        position: relative;
+    }
+    .sd-page .top-outings-table td::before,
+    .sd-page .month-outing-table td::before,
+    .sd-page .weather-table td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 8px;
+        width: 45%;
+        text-align: left;
+        font-weight: bold;
+        color: var(--text-primary);
+    }
+    .sd-page .top-outings-table td:last-child,
+    .sd-page .month-outing-table td:last-child,
+    .sd-page .weather-table td:last-child { border-bottom: none; }
+    .sd-page .top-outings-table tr:hover,
+    .sd-page .month-outing-table tr:hover,
+    .sd-page .weather-table tr:hover { background: var(--card-bg); }
+    .sd-page .stream-info .stream-info-content,
+    .sd-page .stats .stats-content,
+    .sd-page .weather-section .weather-content,
+    .sd-page .month-stats .month-stats-content,
+    .sd-page .top-outings .top-outings-content,
+    .sd-page .spots-section .spots-content { display: none !important; }
+    .sd-page .stream-info .stream-info-content.active,
+    .sd-page .stats .stats-content.active,
+    .sd-page .weather-section .weather-content.active,
+    .sd-page .month-stats .month-stats-content.active,
+    .sd-page .top-outings .top-outings-content.active,
+    .sd-page .spots-section .spots-content.active { display: block !important; }
+    .sd-page .stream-info-toggle,
+    .sd-page .stats-toggle,
+    .sd-page .weather-toggle,
+    .sd-page .month-stats-toggle,
+    .sd-page .top-outings-toggle,
+    .sd-page .spots-toggle { display: block !important; }
+    .sd-page .spots-table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+@media screen and (min-width: 601px) {
+    .sd-page .stream-info .stream-info-content,
+    .sd-page .stats .stats-content,
+    .sd-page .weather-section .weather-content,
+    .sd-page .month-stats .month-stats-content,
+    .sd-page .top-outings .top-outings-content,
+    .sd-page .spots-section .spots-content { display: block !important; }
+    .sd-page .stream-info-toggle,
+    .sd-page .stats-toggle,
+    .sd-page .weather-toggle,
+    .sd-page .month-stats-toggle,
+    .sd-page .top-outings-toggle,
+    .sd-page .spots-toggle { display: none !important; }
+    .sd-page .spots-table { font-size: 0.95rem; }
+    .sd-page .filter-section select { width: 140px; }
+    .sd-page .filter-section input  { width: 90px; }
+    .sd-page .filter-section .filter-row { display: flex; gap: 20px; flex-wrap: wrap; }
+    .sd-page .filter-section .filter-row.button-row { display: none; }
+}
+</style>
+
+<div class="sd-page">
+    <div class="back-link">
+        <a href="/Analytics">← Back to Dashboard</a>
+    </div>
+    <h1 id="stream-title">Stream Details</h1>
+    <div id="loading" class="loading">Loading Stream Details...</div>
+    <div id="error" class="error" style="display: none;"></div>
+
+    <div id="stream-details" class="stream-details card" style="display: none;">
+        <div class="left-column">
+            <div class="info-stats-container">
+                <div class="stream-info">
+                    <h2>Stream Information</h2>
+                    <button class="stream-info-toggle" data-toggle="stream-info-content" onclick="toggleSection('stream-info-content')">Expand</button>
+                    <div class="stream-info-content" id="stream-info-content">
+                        <p><strong>Regulation:</strong> <span id="stream-regulation"></span></p>
+                        <p id="stream-special-regulations-container"><strong>Special Regulations:</strong> <span id="stream-special-regulations"></span></p>
+                        <p id="stream-gear-restrictions-container"><strong>Gear Restrictions:</strong> <span id="stream-gear-restrictions"></span></p>
+                        <p><strong>Season Information:</strong> <span id="stream-season-info"></span></p>
+                        <p><strong>Early Season:</strong> <span id="stream-early-season"></span></p>
+                        <p id="stream-widnr-link-container"><strong>WIDNR Map:</strong> <span id="stream-widnr-link"></span> | <span id="stream-widnr-external-link"></span></p>
+                    </div>
+                </div>
+                <div class="stats">
+                    <h2>Overall Statistics</h2>
+                    <button class="stats-toggle" data-toggle="stats-content" onclick="toggleSection('stats-content')">Collapse</button>
+                    <div class="stats-content" id="stats-content">
+                        <p><strong>Total Visits:</strong> <span id="total-visits"></span></p>
+                        <p><strong>Average Rating:</strong> <span id="avg-rating"></span></p>
+                        <p><strong>Most Fished Section (Overall):</strong> <span id="most-fished-section"></span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="weather-section">
+                <h2 id="weather-title">Weather</h2>
+                <button class="weather-toggle" data-toggle="weather-content" onclick="toggleSection('weather-content')">Collapse</button>
+                <div class="weather-content" id="weather-content">
+                    <div id="weather-loading" class="weather-loading">Loading weather data...</div>
+                    <div id="weather-error" class="weather-error" style="display: none;"></div>
+                    <div class="total-rainfall" id="total-rainfall"></div>
+                    <div class="current-weather" id="current-weather"></div>
+                    <p class="weather-location" id="weather-location"></p>
+                    <button class="past-weather-toggle" data-toggle="past-weather-container" onclick="toggleSection('past-weather-container')">Show Past Weather</button>
+                    <div class="past-weather-container" id="past-weather-container">
+                        <h3>Past 3 Days Weather</h3>
+                        <table class="weather-table" id="past-weather-table">
+                            <thead>
+                                <tr>
+                                    <th title="Date"><div class="header-content"><span class="header-icon">📅</span></div></th>
+                                    <th title="Min Temp (°F)"><div class="header-content"><span class="header-icon">🌡️</span></div></th>
+                                    <th title="Max Temp (°F)"><div class="header-content"><span class="header-icon">🌡️</span></div></th>
+                                    <th title="Precipitation (in)"><div class="header-content"><span class="header-icon">💧</span></div></th>
+                                    <th title="Max Surface Pressure (hPa)"><div class="header-content"><span class="header-icon">🌬️</span></div></th>
+                                    <th title="Wind Direction"><div class="header-content"><span class="header-icon">🧭</span></div></th>
+                                    <th title="Pressure Trend"><div class="header-content"><span class="header-icon">📈</span></div></th>
+                                    <th title="Weather"><div class="header-content"><span class="header-icon">⛅</span></div></th>
+                                </tr>
+                            </thead>
+                            <tbody id="past-weather-body"></tbody>
+                        </table>
+                    </div>
+                    <h3>Forecast (Today and Next 4 Days)</h3>
+                    <table class="weather-table" id="forecast-table">
+                        <thead>
+                            <tr>
+                                <th title="Date"><div class="header-content"><span class="header-icon">📅</span></div></th>
+                                <th title="Min Temp (°F)"><div class="header-content"><span class="header-icon">🌡️</span></div></th>
+                                <th title="Max Temp (°F)"><div class="header-content"><span class="header-icon">🌡️</span></div></th>
+                                <th title="Precipitation (in)"><div class="header-content"><span class="header-icon">💧</span></div></th>
+                                <th title="Max Surface Pressure (hPa)"><div class="header-content"><span class="header-icon">🌬️</span></div></th>
+                                <th title="Wind Direction"><div class="header-content"><span class="header-icon">🧭</span></div></th>
+                                <th title="Pressure Trend"><div class="header-content"><span class="header-icon">📈</span></div></th>
+                                <th title="Weather"><div class="header-content"><span class="header-icon">⛅</span></div></th>
+                            </tr>
+                        </thead>
+                        <tbody id="forecast-body"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="widnr-map-section" id="widnr-map-section">
+                <h2>WIDNR Map</h2>
+                <button class="toggle-button" onclick="toggleMap()">Expand Map</button>
+                <div id="stream-widnr-iframe" class="iframe-container"></div>
+                <div id="stream-widnr-fallback" class="iframe-fallback"></div>
+            </div>
+        </div>
+
+        <div class="right-column">
+            <div class="spots-section">
+                <h2>Fishing Spots (Downstream to Upstream)</h2>
+                <button class="spots-toggle" data-toggle="spots-content" onclick="toggleSection('spots-content')">Collapse</button>
+                <div class="spots-content" id="spots-content">
+                    <div class="filter-section">
+                        <div class="filter-row">
+                            <div>
+                                <label for="section-filter"><span class="icon">📍</span> Section:</label>
+                                <select id="section-filter" onchange="applyFilters()">
+                                    <option value="All">All</option>
+                                    <option value="L">L</option>
+                                    <option value="M">M</option>
+                                    <option value="U">U</option>
+                                    <option value="UNK">UNK</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="visits-filter"><span class="icon">👣</span> Visits:</label>
+                                <input type="number" id="visits-filter" min="0" value="" placeholder="Min Visits" oninput="applyFilters()">
+                            </div>
+                            <div>
+                                <label for="rating-filter"><span class="icon">⭐</span> AR:</label>
+                                <input type="number" id="rating-filter" min="0" max="6" step="0.1" value="" placeholder="Min AR" oninput="applyFilters()">
+                            </div>
+                        </div>
+                        <div class="filter-row button-row">
+                            <button onclick="clearFilters()">Clear Filters</button>
+                        </div>
+                    </div>
+                    <div id="no-results" class="no-results" style="display: none;">No spots match the filters.</div>
+                    <div class="spots-table-container">
+                        <table class="spots-table" id="spots-table">
+                            <thead>
+                                <tr>
+                                    <th title="Spot" onclick="sortSpotsTable(0)"><div class="header-content"><span class="header-icon">🎣</span></div></th>
+                                    <th title="Section" onclick="sortSpotsTable(1)"><div class="header-content"><span class="header-icon">📍</span></div></th>
+                                    <th title="Visits" onclick="sortSpotsTable(2)"><div class="header-content"><span class="header-icon">👣</span></div></th>
+                                    <th title="AR" onclick="sortSpotsTable(3)"><div class="header-content"><span class="header-icon">⭐</span></div></th>
+                                    <th title="GML"><div class="header-content"><span class="header-icon">🗺️</span></div></th>
+                                </tr>
+                            </thead>
+                            <tbody id="spots-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="month-stats">
+                <h2 id="month-stats-title">Current Month Statistics</h2>
+                <button class="month-stats-toggle" data-toggle="month-stats-content" onclick="toggleSection('month-stats-content')">Expand</button>
+                <div class="month-stats-content" id="month-stats-content">
+                    <div class="stats-row">
+                        <p><strong>Typically Fished Section:</strong> <span id="current-month-section"></span></p>
+                        <table class="month-outing-table" id="month-outing-table">
+                            <thead>
+                                <tr>
+                                    <th title="Date"><div class="header-content"><span class="header-icon">📅</span></div></th>
+                                    <th title="Rating"><div class="header-content"><span class="header-icon">⭐</span></div></th>
+                                    <th title="Location"><div class="header-content"><span class="header-icon">🗺️</span></div></th>
+                                    <th title="Section"><div class="header-content"><span class="header-icon">📍</span></div></th>
+                                    <th title="YouTube Link"><div class="header-content">
+                                        <svg class="youtube-header-icon" viewBox="0 0 24 24">
+                                            <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0C.488 3.45.029 5.804 0 12c.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0C23.512 20.55 23.971 18.196 24 12c-.029-6.185-.484-8.54-4.385-8.816zM9 16V8l8 4-8 4z"/>
+                                        </svg>
+                                    </div></th>
+                                </tr>
+                            </thead>
+                            <tbody id="month-outing-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="top-outings">
+                <h2>Top 5 Highest Rated Outings</h2>
+                <button class="top-outings-toggle" data-toggle="top-outings-content" onclick="toggleSection('top-outings-content')">Expand</button>
+                <div class="top-outings-content" id="top-outings-content">
+                    <table class="top-outings-table" id="top-outings-table">
+                        <thead>
+                            <tr>
+                                <th title="Date"><div class="header-content"><span class="header-icon">📅</span></div></th>
+                                <th title="Rating"><div class="header-content"><span class="header-icon">⭐</span></div></th>
+                                <th title="Location"><div class="header-content"><span class="header-icon">🗺️</span></div></th>
+                                <th title="Section"><div class="header-content"><span class="header-icon">📍</span></div></th>
+                                <th title="YouTube Link"><div class="header-content">
+                                    <svg class="youtube-header-icon" viewBox="0 0 24 24">
+                                        <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0C.488 3.45.029 5.804 0 12c.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0C23.512 20.55 23.971 18.196 24 12c-.029-6.185-.484-8.54-4.385-8.816zM9 16V8l8 4-8 4z"/>
+                                    </svg>
+                                </div></th>
+                            </tr>
+                        </thead>
+                        <tbody id="top-outings-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const SHEET_ID = '1vRDZny6ZfKGXJOKIgoRo47knNJmmtDT2WTrNvOmQ0lwUiznaF1McQVgpTUa1kTMUpq5X6c3b888BGwz';
+    const SOURCE_GID = '491893533';
+    const STREAM_INFO_GID = '1772368131';
+    const SOURCE_URL = `https://docs.google.com/spreadsheets/d/e/2PACX-${SHEET_ID}/pub?gid=${SOURCE_GID}&single=true&output=csv`;
+    const STREAM_INFO_URL = `https://docs.google.com/spreadsheets/d/e/2PACX-${SHEET_ID}/pub?gid=${STREAM_INFO_GID}&single=true&output=csv`;
+
+    let sourceData = null;
+    let streamInfoData = null;
+    let spotsData = [];
+    let filteredSpotsData = [];
+    let sortSpotsColumn = 1;
+    let sortSpotsDirection = 1;
+    let widnrLink = '';
+    let weatherLatitude = null;
+    let weatherLongitude = null;
+
+    const sectionOrder = { 'UPPER': 1, 'MIDDLE': 2, 'LOWER': 3, 'UNKNOWN': 4 };
+    const sectionMap = {
+        'L': 'LOWER', 'M': 'MIDDLE', 'U': 'UPPER', 'UNK': 'UNKNOWN', 'All': 'All'
+    };
+    const sectionDisplayMap = {
+        'LOWER': 'L', 'MIDDLE': 'M', 'UPPER': 'U', 'UNKNOWN': 'UNK', 'Mixed': 'MX'
+    };
+    const urlParams = new URLSearchParams(window.location.search);
+    const streamName = urlParams.get('stream');
+
+    const weatherCodeMap = {
+        0: "Clear sky", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
+        45: "Fog", 48: "Depositing rime fog", 51: "Light drizzle", 53: "Moderate drizzle",
+        55: "Dense drizzle", 61: "Light rain", 63: "Moderate rain", 65: "Heavy rain",
+        71: "Light snow", 73: "Moderate snow", 75: "Heavy snow",
+        80: "Light rain showers", 81: "Moderate rain showers", 82: "Heavy rain showers",
+        95: "Thunderstorm", 96: "Thunderstorm with slight hail", 99: "Thunderstorm with heavy hail"
+    };
+
+    function degreesToCardinal(degrees) {
+        const directions = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
+        return directions[Math.round(degrees / 22.5) % 16];
+    }
+
+    function formatDate(isoDate) {
+        const [year, month, day] = isoDate.split('-');
+        return `${month}/${day}/${year}`;
+    }
+
+    function getPressureTrend(currentPressure, previousPressure) {
+        if (previousPressure === null) return "N/A";
+        const d = currentPressure - previousPressure;
+        if (d >= 5)  return "Significantly Rising";
+        if (d >= 1)  return "Rising";
+        if (d > -1)  return "Steady";
+        if (d > -5)  return "Falling";
+        return "Significantly Falling";
+    }
+
+    function calculateTotalRainfall(data) {
+        let total = 0;
+        for (let i = 1; i < 4; i++) total += data.daily.precipitation_sum[i];
+        return total.toFixed(2);
+    }
+
+    async function fetchWeatherData(latitude, longitude) {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=precipitation_sum,surface_pressure_max,temperature_2m_min,temperature_2m_max,weather_code,wind_direction_10m_dominant&current=temperature_2m,weather_code,surface_pressure,wind_direction_10m&timezone=America%2FChicago&past_days=4&forecast_days=5&wind_speed_unit=mph&temperature_unit=fahrenheit&precipitation_unit=inch`;
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            displayWeatherData(await response.json());
+        } catch (error) {
+            document.getElementById('weather-error').textContent = `Error loading weather data: ${error.message}`;
+            document.getElementById('weather-loading').style.display = 'none';
+        }
+    }
+
+    function displayWeatherData(data) {
+        document.getElementById('total-rainfall').innerText = `Total Rainfall (Past 3 Days): ${calculateTotalRainfall(data)} inches`;
+
+        const currentTemp = data.current.temperature_2m.toFixed(1);
+        const currentPressure = data.current.surface_pressure.toFixed(1);
+        const currentWindDir = degreesToCardinal(data.current.wind_direction_10m);
+        const currentWeatherDesc = weatherCodeMap[data.current.weather_code] || "Unknown";
+        document.getElementById('current-weather').innerHTML = `
+            <p><strong>Temperature:</strong> ${currentTemp}°F</p>
+            <p><strong>Pressure:</strong> ${currentPressure} hPa</p>
+            <p><strong>Wind Direction:</strong> ${currentWindDir}</p>
+            <p><strong>Weather:</strong> ${currentWeatherDesc}</p>
+        `;
+
+        const weatherLocation = document.getElementById('weather-location');
+        if (weatherLatitude && weatherLongitude) {
+            weatherLocation.innerHTML = `<strong>Location:</strong> <a href="https://www.google.com/maps?q=${weatherLatitude},${weatherLongitude}" target="_blank">View on Google Maps</a>`;
+        } else {
+            weatherLocation.innerText = 'Location: N/A';
+        }
+
+        const pastTableBody = document.getElementById('past-weather-body');
+        pastTableBody.innerHTML = '';
+        for (let i = 1; i < 4; i++) {
+            const pressureTrend = getPressureTrend(data.daily.surface_pressure_max[i], data.daily.surface_pressure_max[i - 1]);
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td data-label="Date">${formatDate(data.daily.time[i])}</td>
+                <td data-label="Min Temp (°F)">${data.daily.temperature_2m_min[i].toFixed(1)}</td>
+                <td data-label="Max Temp (°F)">${data.daily.temperature_2m_max[i].toFixed(1)}</td>
+                <td data-label="Precipitation (in)">${data.daily.precipitation_sum[i].toFixed(2)}</td>
+                <td data-label="Max Surface Pressure (hPa)">${data.daily.surface_pressure_max[i].toFixed(1)}</td>
+                <td data-label="Wind Direction">${degreesToCardinal(data.daily.wind_direction_10m_dominant[i])}</td>
+                <td data-label="Pressure Trend">${pressureTrend}</td>
+                <td data-label="Weather">${weatherCodeMap[data.daily.weather_code[i]] || "Unknown"}</td>
+            `;
+            pastTableBody.appendChild(row);
+        }
+
+        const forecastTableBody = document.getElementById('forecast-body');
+        forecastTableBody.innerHTML = '';
+        for (let i = 4; i < data.daily.time.length; i++) {
+            const pressureTrend = getPressureTrend(data.daily.surface_pressure_max[i], data.daily.surface_pressure_max[i - 1]);
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td data-label="Date">${formatDate(data.daily.time[i])}</td>
+                <td data-label="Min Temp (°F)">${data.daily.temperature_2m_min[i].toFixed(1)}</td>
+                <td data-label="Max Temp (°F)">${data.daily.temperature_2m_max[i].toFixed(1)}</td>
+                <td data-label="Precipitation (in)">${data.daily.precipitation_sum[i].toFixed(2)}</td>
+                <td data-label="Max Surface Pressure (hPa)">${data.daily.surface_pressure_max[i].toFixed(1)}</td>
+                <td data-label="Wind Direction">${degreesToCardinal(data.daily.wind_direction_10m_dominant[i])}</td>
+                <td data-label="Pressure Trend">${pressureTrend}</td>
+                <td data-label="Weather">${weatherCodeMap[data.daily.weather_code[i]] || "Unknown"}</td>
+            `;
+            forecastTableBody.appendChild(row);
+        }
+
+        document.getElementById('weather-loading').style.display = 'none';
+    }
+
+    function toggleSection(containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        const button = document.querySelector(`[data-toggle="${containerId}"]`);
+        if (!button) return;
+        const isExpanded = container.classList.contains('active');
+        if (isExpanded) {
+            container.classList.remove('active');
+            button.textContent = button.classList.contains('past-weather-toggle') ? 'Show Past Weather' : 'Expand';
+        } else {
+            container.classList.add('active');
+            button.textContent = button.classList.contains('past-weather-toggle') ? 'Hide Past Weather' : 'Collapse';
+        }
+    }
+
+    function toggleMap() {
+        const iframeContainer = document.getElementById('stream-widnr-iframe');
+        const fallback = document.getElementById('stream-widnr-fallback');
+        const toggleButton = document.querySelector('.toggle-button');
+        const isExpanded = iframeContainer.classList.contains('active');
+        if (isExpanded) {
+            iframeContainer.classList.remove('active');
+            fallback.classList.remove('active');
+            toggleButton.textContent = 'Expand Map';
+        } else {
+            iframeContainer.classList.add('active');
+            fallback.classList.add('active');
+            toggleButton.textContent = 'Collapse Map';
+        }
+    }
+
+    async function init() {
+        if (!streamName) {
+            document.getElementById('error').textContent = 'Error: No stream specified.';
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('loading').style.display = 'none';
+            return;
+        }
+
+        document.getElementById('stream-title').textContent = `${streamName} Details`;
+        await Promise.all([fetchData(), fetchStreamInfo()]);
+        displayStreamDetails();
+
+        if (window.innerWidth <= 600) {
+            document.getElementById('stats-content').classList.add('active');
+            document.getElementById('weather-content').classList.add('active');
+            document.getElementById('spots-content').classList.add('active');
+        }
+    }
+
+    async function fetchData() {
+        try {
+            const response = await fetch(SOURCE_URL);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const csvText = await response.text();
+            if (!csvText.trim()) throw new Error('Empty CSV data');
+            sourceData = parseCSV(csvText);
+        } catch (error) {
+            document.getElementById('error').textContent = `Error fetching spots data: ${error.message}`;
+            document.getElementById('error').style.display = 'block';
+        }
+    }
+
+    async function fetchStreamInfo() {
+        try {
+            const response = await fetch(STREAM_INFO_URL);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const csvText = await response.text();
+            if (!csvText.trim()) throw new Error('Empty stream info CSV data');
+            streamInfoData = parseCSV(csvText);
+        } catch (error) {
+            document.getElementById('error').textContent = `Error fetching stream info: ${error.message}`;
+            document.getElementById('error').style.display = 'block';
+        }
+    }
+
+    function parseCSV(csvText) {
+        const lines = csvText.split('\n').filter(line => line.trim() !== '');
+        const headers = lines[0].split(',').map(h => h.trim());
+        const rows = lines.slice(1).map(line => {
+            const values = [];
+            let current = '';
+            let insideQuotes = false;
+            for (let char of line) {
+                if (char === '"') {
+                    insideQuotes = !insideQuotes;
+                } else if (char === ',' && !insideQuotes) {
+                    values.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            values.push(current.trim());
+            return values;
+        });
+        return { headers, rows };
+    }
+
+    function applyFilters() {
+        const sectionFilter = sectionMap[document.getElementById('section-filter').value];
+        const visitsFilter = document.getElementById('visits-filter').value;
+        const ratingFilter = document.getElementById('rating-filter').value;
+
+        filteredSpotsData = spotsData.filter(spot => {
+            if (sectionFilter !== 'All' && spot.section !== sectionFilter) return false;
+            if (visitsFilter !== '' && spot.visits < parseInt(visitsFilter)) return false;
+            if (ratingFilter !== '' && (spot.avgRating === 'N/A' || spot.avgRating < parseFloat(ratingFilter))) return false;
+            return true;
+        });
+        sortFilteredSpots();
+    }
+
+    function clearFilters() {
+        document.getElementById('section-filter').value = 'All';
+        document.getElementById('visits-filter').value = '';
+        document.getElementById('rating-filter').value = '';
+        filteredSpotsData = [...spotsData];
+        sortFilteredSpots();
+    }
+
+    function sortSpotsTable(colIndex) {
+        if (sortSpotsColumn === colIndex) {
+            sortSpotsDirection = -sortSpotsDirection;
+        } else {
+            sortSpotsColumn = colIndex;
+            sortSpotsDirection = 1;
+        }
+        const headers = document.querySelectorAll('.spots-table th');
+        headers.forEach((th, index) => {
+            th.classList.remove('sort-asc', 'sort-desc');
+            if (index === colIndex) th.classList.add(sortSpotsDirection === 1 ? 'sort-asc' : 'sort-desc');
+        });
+        sortFilteredSpots();
+    }
+
+    function sortFilteredSpots() {
+        filteredSpotsData.sort((a, b) => {
+            if (sortSpotsColumn === 0) return sortSpotsDirection * (a.originalIndex - b.originalIndex);
+            if (sortSpotsColumn === 1) return sortSpotsDirection * ((sectionOrder[a.section] || 5) - (sectionOrder[b.section] || 5));
+            if (sortSpotsColumn === 2) return sortSpotsDirection * (a.visits - b.visits);
+            if (sortSpotsColumn === 3) {
+                const va = a.avgRating !== 'N/A' ? a.avgRating : -1;
+                const vb = b.avgRating !== 'N/A' ? b.avgRating : -1;
+                return sortSpotsDirection * (va - vb);
+            }
+            return 0;
+        });
+        filteredSpotsData.forEach((spot, idx) => { spot.index = idx + 1; });
+
+        const spotsBody = document.getElementById('spots-body');
+        const noResultsDiv = document.getElementById('no-results');
+        spotsBody.innerHTML = '';
+        if (filteredSpotsData.length === 0) {
+            noResultsDiv.style.display = 'block';
+        } else {
+            noResultsDiv.style.display = 'none';
+            filteredSpotsData.forEach(spot => {
+                const sectionAbbr = spot.section === 'LOWER' ? 'L' : spot.section === 'MIDDLE' ? 'M' : spot.section === 'UPPER' ? 'U' : 'UNK';
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td data-label="Spot">${spot.originalIndex}</td>
+                    <td data-label="Section">${sectionAbbr}</td>
+                    <td data-label="Visits">${spot.visits}</td>
+                    <td data-label="AR">${spot.avgRating}</td>
+                    <td data-label="GML"><a href="https://www.google.com/maps?q=${spot.lat},${spot.lon}" target="_blank" class="link-icon">🗺️</a></td>
+                `;
+                spotsBody.appendChild(tr);
+            });
+        }
+    }
+
+    function displayStreamDetails() {
+        const ratingMap = { 'E': 0, 'D': 1, 'C': 2, 'B': 3, 'A': 4, 'S': 5, 'S+': 6 };
+        const ratingReverseMap = { 0: 'E', 1: 'D', 2: 'C', 3: 'B', 4: 'A', 5: 'S', 6: 'S+' };
+        const excludedStreams = ['Unknown', 'Central Sands', 'Minnesota', 'Southern WI'];
+
+        const streamData = sourceData?.rows
+            .filter(row => {
+                if (row.length < 18) return false;
+                const date = new Date(row[0].replace(/(\d+)\/(\d+)\/(\d+)/, '$3-$1-$2'));
+                const stream = row[2]?.trim() || '';
+                const rating = row[17]?.toUpperCase();
+                const validRating = /^[SABCDE]|S+$/.test(rating);
+                const validStream = !excludedStreams.some(excluded => stream.includes(excluded));
+                return stream === streamName && validRating && validStream && !isNaN(date.getTime());
+            })
+            .map(row => {
+                const date = new Date(row[0].replace(/(\d+)\/(\d+)\/(\d+)/, '$3-$1-$2'));
+                return {
+                    month: date.toLocaleString('default', { month: 'long' }),
+                    stream: row[2]?.trim() || '',
+                    rating: ratingMap[row[17]?.toUpperCase()] ?? -1,
+                    section: row[15]?.trim().toUpperCase() || 'UNKNOWN',
+                    lat: parseFloat(row[12]),
+                    lon: parseFloat(row[13]),
+                    date,
+                    youtubeLink: row[1]?.trim() || ''
+                };
+            }) || [];
+
+        if (streamData.length === 0) {
+            document.getElementById('error').textContent = 'No data found for this stream.';
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('weather-error').textContent = 'No fishing spots available for weather data.';
+            document.getElementById('weather-error').style.display = 'block';
+            document.getElementById('weather-loading').style.display = 'none';
+            document.getElementById('weather-location').textContent = 'Location: N/A';
+            return;
+        }
+
+        if (streamInfoData) {
+            const streamInfoRow = streamInfoData.rows.find(row => row[0]?.trim() === streamName);
+            if (streamInfoRow) {
+                document.getElementById('stream-regulation').textContent = streamInfoRow[1] || 'N/A';
+                const specialRegulations = streamInfoRow[2] || 'None';
+                const specialRegContainer = document.getElementById('stream-special-regulations-container');
+                if (specialRegulations.toUpperCase() === 'N/A') {
+                    specialRegContainer.style.display = 'none';
+                } else {
+                    document.getElementById('stream-special-regulations').textContent = specialRegulations;
+                    specialRegContainer.style.display = 'block';
+                }
+                const gearRestrictions = streamInfoRow[3] || 'N/A';
+                const gearRestContainer = document.getElementById('stream-gear-restrictions-container');
+                if (gearRestrictions.toUpperCase() === 'N/A') {
+                    gearRestContainer.style.display = 'none';
+                } else {
+                    document.getElementById('stream-gear-restrictions').textContent = gearRestrictions;
+                    gearRestContainer.style.display = 'block';
+                }
+                document.getElementById('stream-season-info').textContent = streamInfoRow[4] || 'N/A';
+                document.getElementById('stream-early-season').textContent = streamInfoRow[5] || 'N/A';
+                widnrLink = streamInfoRow[6]?.trim();
+                const widnrLinkContainer = document.getElementById('stream-widnr-link-container');
+                if (widnrLink) {
+                    document.getElementById('stream-widnr-link').innerHTML = `<a href="#widnr-map-section" onclick="toggleMap()">View WIDNR Map</a>`;
+                    document.getElementById('stream-widnr-external-link').innerHTML = `<a href="${widnrLink}" target="_blank">View WIDNR Map External Link</a>`;
+                    widnrLinkContainer.style.display = 'block';
+                    document.getElementById('stream-widnr-iframe').innerHTML = `<iframe src="${widnrLink}" loading="lazy" allowfullscreen></iframe>`;
+                    document.getElementById('stream-widnr-fallback').innerHTML = `If the map doesn't load, <a href="${widnrLink}" target="_blank">view WIDNR details here</a>.`;
+                } else {
+                    widnrLinkContainer.style.display = 'none';
+                    document.getElementById('stream-widnr-iframe').innerHTML = '';
+                    document.getElementById('stream-widnr-fallback').textContent = 'N/A';
+                }
+            } else {
+                document.getElementById('stream-regulation').textContent = 'N/A';
+                document.getElementById('stream-special-regulations-container').style.display = 'none';
+                document.getElementById('stream-gear-restrictions-container').style.display = 'none';
+                document.getElementById('stream-season-info').textContent = 'N/A';
+                document.getElementById('stream-early-season').textContent = 'N/A';
+                document.getElementById('stream-widnr-link-container').style.display = 'none';
+            }
+        } else {
+            document.getElementById('stream-regulation').textContent = 'Error loading data';
+            document.getElementById('stream-special-regulations-container').style.display = 'none';
+            document.getElementById('stream-gear-restrictions-container').style.display = 'none';
+            document.getElementById('stream-season-info').textContent = 'Error loading data';
+            document.getElementById('stream-early-season').textContent = 'Error loading data';
+            document.getElementById('stream-widnr-link-container').style.display = 'none';
+        }
+
+        const totalVisits = streamData.length;
+        const avgRating = streamData.reduce((sum, e) => sum + e.rating, 0) / totalVisits;
+
+        const sectionCounts = { LOWER: 0, MIDDLE: 0, UPPER: 0, UNKNOWN: 0 };
+        streamData.forEach(e => { sectionCounts[e.section] = (sectionCounts[e.section] || 0) + 1; });
+        const maxCount = Math.max(sectionCounts.LOWER, sectionCounts.MIDDLE, sectionCounts.UPPER);
+        const tieCheck = [sectionCounts.LOWER, sectionCounts.MIDDLE, sectionCounts.UPPER].filter(c => c === maxCount).length;
+        let mostFishedSection = 'MX';
+        if (maxCount > 0 && tieCheck === 1) {
+            if (sectionCounts.LOWER === maxCount) mostFishedSection = 'L';
+            else if (sectionCounts.MIDDLE === maxCount) mostFishedSection = 'M';
+            else mostFishedSection = 'U';
+        }
+
+        const currentMonth = new Date().toLocaleString('default', { month: 'long' });
+        document.getElementById('month-stats-title').textContent = `${currentMonth} Statistics`;
+        const currentMonthData = streamData.filter(e => e.month === currentMonth);
+        const cmSectionCounts = { LOWER: 0, MIDDLE: 0, UPPER: 0, UNKNOWN: 0 };
+        currentMonthData.forEach(e => { cmSectionCounts[e.section] = (cmSectionCounts[e.section] || 0) + 1; });
+        const cmMax = Math.max(cmSectionCounts.LOWER, cmSectionCounts.MIDDLE, cmSectionCounts.UPPER);
+        const cmTie = [cmSectionCounts.LOWER, cmSectionCounts.MIDDLE, cmSectionCounts.UPPER].filter(c => c === cmMax).length;
+        let currentMonthSection = currentMonthData.length > 0 ? 'MX' : `No ${currentMonth} data`;
+        if (cmMax > 0 && cmTie === 1) {
+            if (cmSectionCounts.LOWER === cmMax) currentMonthSection = 'L';
+            else if (cmSectionCounts.MIDDLE === cmMax) currentMonthSection = 'M';
+            else currentMonthSection = 'U';
+        }
+
+        const bestMonth = currentMonthData.length > 0
+            ? currentMonthData.reduce((best, cur) => {
+                if (best.rating > cur.rating) return best;
+                if (best.rating < cur.rating) return cur;
+                return best.date > cur.date ? best : cur;
+              })
+            : null;
+        const monthOutingBody = document.getElementById('month-outing-body');
+        monthOutingBody.innerHTML = '';
+        if (bestMonth) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td data-label="Date">${bestMonth.date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</td>
+                <td data-label="Rating">${ratingReverseMap[bestMonth.rating] || 'N/A'}</td>
+                <td data-label="Location"><a href="https://www.google.com/maps?q=${bestMonth.lat},${bestMonth.lon}" target="_blank" class="link-icon">🗺️</a></td>
+                <td data-label="Section">${sectionDisplayMap[bestMonth.section] || 'UNK'}</td>
+                <td data-label="YouTube Link">${bestMonth.youtubeLink
+                    ? `<a href="${bestMonth.youtubeLink}" target="_blank" class="link-icon"><svg class="youtube-icon" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0C.488 3.45.029 5.804 0 12c.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0C23.512 20.55 23.971 18.196 24 12c-.029-6.185-.484-8.54-4.385-8.816zM9 16V8l8 4-8 4z"/></svg></a>`
+                    : 'N/A'}</td>
+            `;
+            monthOutingBody.appendChild(tr);
+        } else {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td colspan="5" data-label="Result">No ${currentMonth} outings found.</td>`;
+            monthOutingBody.appendChild(tr);
+        }
+
+        document.getElementById('total-visits').textContent = totalVisits;
+        document.getElementById('avg-rating').textContent = Math.round(avgRating * 100) / 100;
+        document.getElementById('most-fished-section').textContent = mostFishedSection;
+        document.getElementById('current-month-section').textContent = currentMonthSection;
+
+        const topOutingsBody = document.getElementById('top-outings-body');
+        topOutingsBody.innerHTML = '';
+        streamData.slice().sort((a, b) => b.rating - a.rating).slice(0, 5).forEach(outing => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td data-label="Date">${outing.date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</td>
+                <td data-label="Rating">${ratingReverseMap[outing.rating] || 'N/A'}</td>
+                <td data-label="Location"><a href="https://www.google.com/maps?q=${outing.lat},${outing.lon}" target="_blank" class="link-icon">🗺️</a></td>
+                <td data-label="Section">${sectionDisplayMap[outing.section] || 'UNK'}</td>
+                <td data-label="YouTube Link">${outing.youtubeLink
+                    ? `<a href="${outing.youtubeLink}" target="_blank" class="link-icon"><svg class="youtube-icon" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0C.488 3.45.029 5.804 0 12c.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0C23.512 20.55 23.971 18.196 24 12c-.029-6.185-.484-8.54-4.385-8.816zM9 16V8l8 4-8 4z"/></svg></a>`
+                    : 'N/A'}</td>
+            `;
+            topOutingsBody.appendChild(tr);
+        });
+
+        const spotsMap = new Map();
+        streamData.forEach(entry => {
+            if (!isNaN(entry.lat) && !isNaN(entry.lon)) {
+                const lat = Number(entry.lat.toFixed(5));
+                const lon = Number(entry.lon.toFixed(5));
+                const key = `${lat},${lon}`;
+                if (!spotsMap.has(key)) {
+                    spotsMap.set(key, { lat, lon, sections: [entry.section], visits: 1, ratings: [entry.rating] });
+                } else {
+                    const spot = spotsMap.get(key);
+                    spot.sections.push(entry.section);
+                    spot.visits += 1;
+                    spot.ratings.push(entry.rating);
+                }
+            }
+        });
+
+        spotsData = Array.from(spotsMap.values()).map(spot => {
+            const sc = { LOWER: 0, MIDDLE: 0, UPPER: 0, UNKNOWN: 0 };
+            spot.sections.forEach(s => { sc[s] = (sc[s] || 0) + 1; });
+            let maxC = 0, selectedSection = 'UNKNOWN';
+            for (const [section, count] of Object.entries(sc)) {
+                if (count > maxC || (count === maxC && (sectionOrder[section] || 5) < (sectionOrder[selectedSection] || 5))) {
+                    maxC = count;
+                    selectedSection = section;
+                }
+            }
+            const validRatings = spot.ratings.filter(r => r >= 0);
+            const avgR = validRatings.length > 0
+                ? Math.round((validRatings.reduce((s, r) => s + r, 0) / validRatings.length) * 100) / 100
+                : 'N/A';
+            return { lat: spot.lat, lon: spot.lon, section: selectedSection, visits: spot.visits, avgRating: avgR };
+        });
+
+        const lowerSpots  = spotsData.filter(s => s.section === 'LOWER');
+        const upperSpots  = spotsData.filter(s => s.section === 'UPPER');
+        const middleSpots = spotsData.filter(s => s.section === 'MIDDLE');
+        let latDir = 1;
+        const avgLat = arr => arr.reduce((s, sp) => s + sp.lat, 0) / arr.length;
+        if (lowerSpots.length > 0 && upperSpots.length > 0) {
+            if (avgLat(lowerSpots) > avgLat(upperSpots)) latDir = -1;
+        } else if (lowerSpots.length > 0 && middleSpots.length > 0) {
+            if (avgLat(lowerSpots) > avgLat(middleSpots)) latDir = -1;
+        } else if (upperSpots.length > 0 && middleSpots.length > 0) {
+            if (avgLat(middleSpots) > avgLat(upperSpots)) latDir = -1;
+        }
+        latDir *= -1;
+
+        spotsData.sort((a, b) => {
+            const diff = (sectionOrder[a.section] || 5) - (sectionOrder[b.section] || 5);
+            return diff !== 0 ? diff : latDir * (a.lat - b.lat);
+        });
+        spotsData.forEach((spot, idx) => {
+            spot.originalIndex = spotsData.length - idx;
+            spot.index = spotsData.length - idx;
+        });
+
+        filteredSpotsData = [...spotsData];
+        sortFilteredSpots();
+
+        let selectedSpot = spotsData.find(s => s.section === 'MIDDLE')
+                        || spotsData.find(s => s.section === 'UPPER')
+                        || spotsData.find(s => s.section === 'LOWER');
+
+        if (selectedSpot) {
+            const sec = selectedSpot.section;
+            document.getElementById('weather-title').textContent = `Weather for ${streamName} (${sectionDisplayMap[sec] || 'UNK'} Spot)`;
+            weatherLatitude = selectedSpot.lat;
+            weatherLongitude = selectedSpot.lon;
+            fetchWeatherData(selectedSpot.lat, selectedSpot.lon);
+        } else {
+            document.getElementById('weather-error').textContent = 'No valid fishing spots found for weather data.';
+            document.getElementById('weather-error').style.display = 'block';
+            document.getElementById('weather-loading').style.display = 'none';
+            document.getElementById('weather-location').textContent = 'Location: N/A';
+        }
+
+        document.getElementById('stream-details').style.display = 'block';
+        document.getElementById('loading').style.display = 'none';
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+</script>
