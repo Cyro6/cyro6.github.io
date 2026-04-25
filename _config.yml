@@ -26,6 +26,8 @@ navigation_header:
     url: /
   - title: Analytics
     url: /Analytics
+  - title: Planner
+    url: /planner
   - title: YouTube
     url: /youtube
   - title: About

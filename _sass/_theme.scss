@@ -484,7 +484,8 @@ pre code {
 
 // Full-width layout for analytics/dashboard pages
 body.stream-details,
-body.analytics {
+body.analytics,
+body.planner {
   .content {
     width: 100% !important;
     max-width: 100% !important;
