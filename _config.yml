@@ -28,6 +28,8 @@ navigation_header:
     url: /Analytics
   - title: Planner
     url: /planner
+  - title: Resources
+    url: /resources
   - title: YouTube
     url: /youtube
   - title: About
