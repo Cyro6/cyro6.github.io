@@ -807,11 +807,7 @@ body.dark-theme .sd-page {
 </div>
 
 <script>
-    const SHEET_ID = '1vRDZny6ZfKGXJOKIgoRo47knNJmmtDT2WTrNvOmQ0lwUiznaF1McQVgpTUa1kTMUpq5X6c3b888BGwz';
-    const SOURCE_GID = '491893533';
-    const STREAM_INFO_GID = '1772368131';
-    const SOURCE_URL = `https://docs.google.com/spreadsheets/d/e/2PACX-${SHEET_ID}/pub?gid=${SOURCE_GID}&single=true&output=csv`;
-    const STREAM_INFO_URL = `https://docs.google.com/spreadsheets/d/e/2PACX-${SHEET_ID}/pub?gid=${STREAM_INFO_GID}&single=true&output=csv`;
+    const DATA_URL = '/assets/data/streams.json';
 
     let sourceData = null;
     let streamInfoData = null;
@@ -980,7 +976,7 @@ body.dark-theme .sd-page {
         }
 
         document.getElementById('stream-title').textContent = `${streamName} Details`;
-        await Promise.all([fetchData(), fetchStreamInfo()]);
+        await fetchData();
         displayStreamDetails();
 
         if (window.innerWidth <= 600) {
@@ -992,51 +988,15 @@ body.dark-theme .sd-page {
 
     async function fetchData() {
         try {
-            const response = await fetch(SOURCE_URL);
+            const response = await fetch(DATA_URL);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const csvText = await response.text();
-            if (!csvText.trim()) throw new Error('Empty CSV data');
-            sourceData = parseCSV(csvText);
+            const json = await response.json();
+            sourceData = json.source;
+            streamInfoData = json.stream_info;
         } catch (error) {
-            document.getElementById('error').textContent = `Error fetching spots data: ${error.message}`;
+            document.getElementById('error').textContent = `Error loading data: ${error.message}`;
             document.getElementById('error').style.display = 'block';
         }
-    }
-
-    async function fetchStreamInfo() {
-        try {
-            const response = await fetch(STREAM_INFO_URL);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const csvText = await response.text();
-            if (!csvText.trim()) throw new Error('Empty stream info CSV data');
-            streamInfoData = parseCSV(csvText);
-        } catch (error) {
-            document.getElementById('error').textContent = `Error fetching stream info: ${error.message}`;
-            document.getElementById('error').style.display = 'block';
-        }
-    }
-
-    function parseCSV(csvText) {
-        const lines = csvText.split('\n').filter(line => line.trim() !== '');
-        const headers = lines[0].split(',').map(h => h.trim());
-        const rows = lines.slice(1).map(line => {
-            const values = [];
-            let current = '';
-            let insideQuotes = false;
-            for (let char of line) {
-                if (char === '"') {
-                    insideQuotes = !insideQuotes;
-                } else if (char === ',' && !insideQuotes) {
-                    values.push(current.trim());
-                    current = '';
-                } else {
-                    current += char;
-                }
-            }
-            values.push(current.trim());
-            return values;
-        });
-        return { headers, rows };
     }
 
     function applyFilters() {

@@ -15,9 +15,11 @@ import io
 SHEET_ID = '2PACX-1vRDZny6ZfKGXJOKIgoRo47knNJmmtDT2WTrNvOmQ0lwUiznaF1McQVgpTUa1kTMUpq5X6c3b888BGwz'
 SOURCE_GID = '491893533'
 CAMPSITE_GID = '212109608'
+STREAM_INFO_GID = '1772368131'
 
 SOURCE_URL = f'https://docs.google.com/spreadsheets/d/e/{SHEET_ID}/pub?gid={SOURCE_GID}&single=true&output=csv'
 CAMPSITE_URL = f'https://docs.google.com/spreadsheets/d/e/{SHEET_ID}/pub?gid={CAMPSITE_GID}&single=true&output=csv'
+STREAM_INFO_URL = f'https://docs.google.com/spreadsheets/d/e/{SHEET_ID}/pub?gid={STREAM_INFO_GID}&single=true&output=csv'
 
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'assets', 'data', 'streams.json')
 
@@ -48,8 +50,9 @@ def main():
 
     source = fetch_csv(SOURCE_URL, 'stream data')
     campsites = fetch_csv(CAMPSITE_URL, 'campsite data')
+    stream_info = fetch_csv(STREAM_INFO_URL, 'stream info')
 
-    output = {'source': source, 'campsites': campsites}
+    output = {'source': source, 'campsites': campsites, 'stream_info': stream_info}
 
     with open(OUTPUT_PATH, 'w', encoding='utf-8') as f:
         json.dump(output, f)
