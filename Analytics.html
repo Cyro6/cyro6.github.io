@@ -5,30 +5,29 @@ title: Analytics
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 .analytics-page {
-    --bg-primary: #D9ECEC;
-    --bg-secondary: #e5e7eb;
-    --card-bg: white;
-    --text-primary: #1f2937;
-    --text-secondary: #6b7280;
-    --header-bg: #008080;
-    --header-hover-bg: #00A0A0;
-    --button-bg: #008080;
-    --button-hover-bg: #00A0A0;
-    --link-color: #008080;
-    --link-hover-color: #00A0A0;
-    --error-bg: #d6dcf4;
-    --table-even-row-bg: #f9fafb;
-    --table-hover-bg: #dbeafe;
-    --footer-bg: #f8fafc;
-    --shadow-color: rgba(0, 0, 0, 0.12);
-    --shadow-hover-color: rgba(0, 0, 0, 0.2);
+    --bg-primary: #f5f0e8;
+    --bg-secondary: #ede8de;
+    --card-bg: #ffffff;
+    --text-primary: #384743;
+    --text-secondary: #a8adac;
+    --header-bg: #242e2b;
+    --header-hover-bg: #384743;
+    --button-bg: #05bf85;
+    --button-hover-bg: #008000;
+    --link-color: #05bf85;
+    --link-hover-color: #008000;
+    --error-bg: #fce8ef;
+    --table-even-row-bg: #f5f0e8;
+    --table-hover-bg: #e8f5f0;
+    --footer-bg: #f0ebe0;
+    --shadow-color: rgba(0, 0, 0, 0.09);
+    --shadow-hover-color: rgba(0, 0, 0, 0.16);
     font-family: 'Inter', sans-serif;
-    background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
-    padding: 20px;
+    background: transparent;
+    padding: 20px 0;
     color: var(--text-primary);
-    transition: background 0.3s ease, color 0.3s ease;
+    transition: color 0.3s ease;
     position: relative;
-    border-radius: 8px;
     margin-top: 1rem;
 }
 .analytics-page.dark-theme {
@@ -37,17 +36,21 @@ title: Analytics
     --card-bg: #2d3748;
     --text-primary: #e5e7eb;
     --text-secondary: #9ca3af;
-    --header-bg: #3a3c5a;
-    --header-hover-bg: #45476b;
-    --link-color: #60a5fa;
-    --link-hover-color: #93c5fd;
+    --header-bg: #242e2b;
+    --header-hover-bg: #384743;
+    --button-bg: #05bf85;
+    --button-hover-bg: #008000;
+    --link-color: #05bf85;
+    --link-hover-color: #34d399;
     --error-bg: #4b5563;
     --table-even-row-bg: #374151;
-    --table-hover-bg: #4b5563;
+    --table-hover-bg: #1a3a30;
     --footer-bg: #2d3748;
     --shadow-color: rgba(0, 0, 0, 0.5);
     --shadow-hover-color: rgba(0, 0, 0, 0.7);
-    background: linear-gradient(135deg, #1f2937, #374151);
+    background: linear-gradient(135deg, #1f2937, #2d3748);
+    border-radius: 8px;
+    padding: 20px;
 }
 .analytics-page *, .analytics-page *::before, .analytics-page *::after {
     box-sizing: border-box;
@@ -72,23 +75,34 @@ title: Analytics
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    background: rgba(0,0,0,0.08);
-    border: 1px solid rgba(0,0,0,0.12);
+    background: #f0ebe0;
+    border: 1px solid #d8d2c6;
     border-radius: 20px;
     padding: 0.35rem 0.9rem;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     font-family: inherit;
     cursor: pointer;
-    color: var(--text-primary);
+    color: #384743;
     box-shadow: none;
-    transition: background 0.2s ease;
+    transition: background 0.2s ease, border-color 0.2s ease;
     white-space: nowrap;
 }
 .analytics-page .theme-toggle-btn:hover,
 .analytics-page .theme-toggle-btn:focus {
-    background: rgba(0,0,0,0.14);
+    background: #e5dfd5;
+    border-color: #c5bfb5;
     box-shadow: none;
-    color: var(--text-primary);
+    color: #242e2b;
+}
+.analytics-page.dark-theme .theme-toggle-btn {
+    background: #374151;
+    border-color: #4b5563;
+    color: #e5e7eb;
+}
+.analytics-page.dark-theme .theme-toggle-btn:hover {
+    background: #4b5563;
+    border-color: #6b7280;
+    color: #f9fafb;
 }
 .analytics-page h2 {
     font-size: 1.5rem;
