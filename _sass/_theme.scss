@@ -482,6 +482,15 @@ pre code {
   display: inline !important;
 }
 
+// Full-width layout for analytics/dashboard pages
+body.stream-details,
+body.analytics {
+  .content {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
 // Site-wide dark mode toggle button in nav
 .site-theme-toggle {
   background: transparent;

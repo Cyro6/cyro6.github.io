@@ -69,7 +69,7 @@ body.dark-theme .sd-page {
 }
 .sd-page h1 {
     text-align: center;
-    font-size: 2.8rem;
+    font-size: 2.2rem;
     font-weight: 700;
     color: var(--link-color);
     margin-bottom: 1.5rem;
@@ -77,10 +77,15 @@ body.dark-theme .sd-page {
     animation: sd-fadeIn 1s ease-in;
 }
 .sd-page h2 {
-    font-size: 2rem;
+    font-size: 1.35rem;
     font-weight: 600;
     color: var(--link-color);
-    margin-bottom: 1.2rem;
+    margin-bottom: 0.9rem;
+}
+.sd-page h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 1rem 0 0.5rem;
 }
 @keyframes sd-fadeIn {
     from { opacity: 0; transform: translateY(-10px); }
@@ -88,15 +93,14 @@ body.dark-theme .sd-page {
 }
 .sd-page .card {
     background: var(--card-bg);
-    border-radius: 14px;
-    box-shadow: 0 6px 25px var(--shadow-color);
-    padding: 25px;
-    margin: 25px 0;
-    transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+    border-radius: 12px;
+    box-shadow: 0 4px 18px var(--shadow-color);
+    padding: 20px;
+    margin: 16px 0;
+    transition: box-shadow 0.3s ease, background 0.3s ease;
 }
 .sd-page .card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 12px 40px var(--shadow-hover-color);
+    box-shadow: 0 8px 30px var(--shadow-hover-color);
 }
 .sd-page .stats,
 .sd-page .month-stats,
@@ -105,12 +109,12 @@ body.dark-theme .sd-page {
 .sd-page .widnr-map-section,
 .sd-page .weather-section,
 .sd-page .spots-section {
-    margin: 20px 0;
-    padding: 15px;
+    margin: 12px 0;
+    padding: 14px;
     background: var(--card-bg);
-    border-radius: 14px;
-    box-shadow: 0 6px 25px var(--shadow-color);
-    transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+    border-radius: 10px;
+    box-shadow: 0 3px 12px var(--shadow-color);
+    transition: box-shadow 0.3s ease, background 0.3s ease;
 }
 .sd-page .stream-info p,
 .sd-page .weather-section p,
@@ -404,54 +408,39 @@ body.dark-theme .sd-page {
     display: block;
 }
 
-/* Widescreen Layout */
-@media screen and (min-width: 1200px) {
+/* Two-column layout */
+@media screen and (min-width: 900px) {
     .sd-page .stream-details {
         display: flex !important;
         flex-wrap: nowrap !important;
-        gap: 2%;
+        gap: 1.5%;
     }
     .sd-page .stream-details .left-column {
-        flex: 0 0 40% !important;
-        width: 40% !important;
+        flex: 0 0 38% !important;
+        width: 38% !important;
         box-sizing: border-box;
     }
     .sd-page .stream-details .right-column {
-        flex: 0 0 58% !important;
-        width: 58% !important;
+        flex: 0 0 60.5% !important;
+        width: 60.5% !important;
         box-sizing: border-box;
     }
     .sd-page .info-stats-container {
         display: flex;
-        gap: 20px;
+        gap: 12px;
     }
-    .sd-page .stream-info,
-    .sd-page .stats {
-        flex: 1;
-        min-width: 200px;
-    }
+    .sd-page .stream-info { flex: 1.4; min-width: 0; }
+    .sd-page .stats       { flex: 1;   min-width: 0; }
     .sd-page .weather-section,
-    .sd-page .widnr-map-section {
-        width: 100%;
-    }
-    .sd-page .spots-section,
-    .sd-page .month-stats,
-    .sd-page .top-outings {
-        flex: 1;
-        min-width: 300px;
-    }
+    .sd-page .widnr-map-section { width: 100%; }
     .sd-page .spots-table,
     .sd-page .month-outing-table,
-    .sd-page .top-outings-table {
-        width: 100%;
-    }
-    .sd-page .filter-section {
-        width: 100%;
-    }
+    .sd-page .top-outings-table { width: 100%; }
+    .sd-page .filter-section { width: 100%; }
 }
 
-/* Mobile and Narrow Screens */
-@media screen and (max-width: 1199px) {
+/* Single-column below 900px */
+@media screen and (max-width: 899px) {
     .sd-page .left-column,
     .sd-page .right-column,
     .sd-page .stream-info,
@@ -465,16 +454,19 @@ body.dark-theme .sd-page {
         float: none;
     }
     .sd-page .info-stats-container {
-        display: block;
+        display: flex;
+        gap: 12px;
     }
+    .sd-page .stream-info { flex: 1.4; min-width: 0; }
+    .sd-page .stats       { flex: 1;   min-width: 0; }
 }
 
 @media screen and (max-width: 600px) {
     .sd-page { padding: 12px 0; }
     .sd-page h1 { font-size: 2rem; }
     .sd-page h2 { font-size: 1.5rem; }
-    .sd-page .card { padding: 0; }
-    .sd-page .card:hover { transform: translateY(0); box-shadow: 0 6px 25px var(--shadow-color); }
+    .sd-page .card { padding: 12px; }
+    .sd-page .card:hover { box-shadow: 0 4px 18px var(--shadow-color); }
     .sd-page .stats,
     .sd-page .month-stats,
     .sd-page .top-outings,
