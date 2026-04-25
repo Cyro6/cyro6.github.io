@@ -807,7 +807,7 @@ body.dark-theme .sd-page {
 </div>
 
 <script>
-    const DATA_URL = '/assets/data/streams.json';
+    const DATA_URL = '/assets/data/streams.json?v={{ site.time | date: "%Y%m%d%H%M%S" }}';
 
     let sourceData = null;
     let streamInfoData = null;

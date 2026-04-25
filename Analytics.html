@@ -426,7 +426,7 @@ body.dark-theme .analytics-page {
     <footer><a href="./resources.html">Resource Links</a></footer>
 
     <script>
-const DATA_URL = '/assets/data/streams.json';
+const DATA_URL = '/assets/data/streams.json?v={{ site.time | date: "%Y%m%d%H%M%S" }}';
 
 let sourceData = null;
 let campsiteData = null;
