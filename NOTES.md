@@ -48,5 +48,6 @@ git push
 | `/insights-trends` | Rating over time, year averages, seasonal patterns |
 | `/insights-compare` | Side-by-side comparison of up to 3 streams |
 | `/insights-precip` | Day-of and 3-day prior precipitation analysis |
+| `/insights-moon` | Moon phase and illumination vs avg rating (computed client-side from trip dates) |
 | `/stream-details` | Per-stream detail page (linked from Analytics table) |
 | `/resources` | Links to external tools, weather, and data sheets |

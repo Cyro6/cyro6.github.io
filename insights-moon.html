@@ -1,0 +1,333 @@
+---
+layout: default
+title: Moon Phase Analysis
+---
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+.moon-page {
+  --card-bg: #ffffff;
+  --text-primary: #384743;
+  --text-secondary: #6b7280;
+  --link-color: #05bf85;
+  --shadow: rgba(0,0,0,0.09);
+  font-family: 'Inter', sans-serif;
+  padding: 20px 0;
+  color: var(--text-primary);
+}
+body.dark-theme .moon-page {
+  --card-bg: #2d3748;
+  --text-primary: #e5e7eb;
+  --text-secondary: #9ca3af;
+  --shadow: rgba(0,0,0,0.5);
+}
+.moon-page h1 {
+  text-align: center;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--link-color);
+  margin: 0 0 .4rem;
+}
+.moon-page .subtitle {
+  text-align: center;
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+}
+.moon-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 12px var(--shadow);
+}
+.moon-card h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--link-color);
+  margin: 0 0 .3rem;
+}
+.moon-card .card-note {
+  font-size: .82rem;
+  color: var(--text-secondary);
+  margin: 0 0 1rem;
+}
+.moon-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+@media (max-width: 768px) { .moon-grid { grid-template-columns: 1fr; } }
+.chart-wrap { position: relative; height: 280px; }
+.chart-wrap-tall { position: relative; height: 340px; }
+.insight-box {
+  margin-top: 1rem;
+  padding: .75rem 1rem;
+  background: rgba(5,191,133,.08);
+  border-left: 3px solid #05bf85;
+  border-radius: 0 6px 6px 0;
+  font-size: .88rem;
+  color: var(--text-primary);
+}
+.loading { text-align: center; color: var(--text-secondary); padding: 3rem; }
+.moon-footer { text-align: center; margin-top: 2rem; color: var(--text-secondary); font-size: .9rem; }
+.moon-footer a { color: var(--link-color); font-weight: 600; text-decoration: none; }
+.phase-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .88rem;
+  margin-top: .5rem;
+}
+.phase-table th {
+  padding: .5rem .75rem;
+  background: #242e2b;
+  color: #d4cfc7;
+  font-weight: 600;
+  text-align: left;
+}
+.phase-table td {
+  padding: .55rem .75rem;
+  border-bottom: 1px solid rgba(0,0,0,.06);
+}
+body.dark-theme .phase-table td { border-color: #374151; }
+.phase-table tr:last-child td { border-bottom: none; }
+</style>
+
+<div class="moon-page typeset">
+  <h1>Moon Phase Analysis</h1>
+  <p class="subtitle">Does the lunar cycle affect your catch rate? — <span id="moon-count">loading…</span> trips analyzed.</p>
+
+  <div id="loading" class="loading">Loading data…</div>
+  <div id="content" style="display:none">
+
+    <div class="moon-grid">
+      <div class="moon-card">
+        <h2>Avg Rating by Lunar Phase</h2>
+        <p class="card-note">All 8 traditional moon phases, ordered through the full cycle.</p>
+        <div class="chart-wrap-tall"><canvas id="phaseChart"></canvas></div>
+        <div class="insight-box" id="phaseInsight"></div>
+      </div>
+      <div class="moon-card">
+        <h2>Avg Rating by Illumination</h2>
+        <p class="card-note">Moon illumination percentage on the day of the trip.</p>
+        <div class="chart-wrap"><canvas id="illumChart"></canvas></div>
+        <div class="insight-box" id="illumInsight"></div>
+      </div>
+    </div>
+
+    <div class="moon-card">
+      <h2>Phase Breakdown</h2>
+      <p class="card-note">Trip count and avg rating for each phase, sorted by rating.</p>
+      <div style="overflow-x:auto">
+        <table class="phase-table" id="phaseTable"></table>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="moon-footer">
+    <a href="/insights">← Insights</a>&nbsp;&nbsp;·&nbsp;&nbsp;<a href="/insights-weather">Weather Correlation →</a>
+  </p>
+</div>
+
+<script>
+const DATA_URL = '/assets/data/streams.json?v={{ site.time | date: "%Y%m%d%H%M%S" }}';
+const RATING_MAP  = {'F':0,'E':1,'D':2,'C':3,'B':4,'A':5,'S':6,'S+':7};
+const RATING_KEYS = ['F','E','D','C','B','A','S','S+'];
+const isDark    = document.body.classList.contains('dark-theme');
+const textColor = isDark ? '#9ca3af' : '#6b7280';
+const gridColor = isDark ? '#374151' : '#e5e7eb';
+
+// ── Moon math ────────────────────────────────────────────────────────────────
+const LUNAR_CYCLE   = 29.53058867;
+const KNOWN_NEW_MOON = Date.UTC(2000, 0, 6, 18, 14); // Jan 6 2000 18:14 UTC
+
+function getMoonAge(date) {
+  const days = (date.getTime() - KNOWN_NEW_MOON) / 86400000;
+  return ((days % LUNAR_CYCLE) + LUNAR_CYCLE) % LUNAR_CYCLE;
+}
+
+function getIllumination(age) {
+  return Math.round((1 - Math.cos(2 * Math.PI * age / LUNAR_CYCLE)) / 2 * 100);
+}
+
+const PHASES = [
+  { name: 'New Moon',        emoji: '🌑', min: 0,     max: 1.85  },
+  { name: 'Waxing Crescent', emoji: '🌒', min: 1.85,  max: 7.38  },
+  { name: 'First Quarter',   emoji: '🌓', min: 7.38,  max: 9.22  },
+  { name: 'Waxing Gibbous',  emoji: '🌔', min: 9.22,  max: 14.77 },
+  { name: 'Full Moon',       emoji: '🌕', min: 14.77, max: 16.61 },
+  { name: 'Waning Gibbous',  emoji: '🌖', min: 16.61, max: 22.15 },
+  { name: 'Last Quarter',    emoji: '🌗', min: 22.15, max: 23.99 },
+  { name: 'Waning Crescent', emoji: '🌘', min: 23.99, max: 29.53 },
+];
+
+function getPhaseName(age) {
+  return PHASES.find(p => age >= p.min && age < p.max) || PHASES[0];
+}
+
+// ── Display helpers ───────────────────────────────────────────────────────────
+function ratingLabel(n) {
+  return RATING_KEYS[Math.round(Math.max(0, Math.min(7, n)))] || '';
+}
+
+function ratingColor(n) {
+  if (n === null || n === undefined || isNaN(n)) return '#9ca3af';
+  const stops = [
+    [220,38,38],[249,115,22],[234,179,8],
+    [132,204,22],[34,197,94],[16,185,129],[5,191,133],[3,105,161]
+  ];
+  const lo = Math.floor(Math.max(0, Math.min(7, n)));
+  const hi = Math.min(lo + 1, 7);
+  const t  = Math.max(0, Math.min(7, n)) - lo;
+  const [c1, c2] = [stops[lo], stops[hi]];
+  return `rgb(${Math.round(c1[0]+(c2[0]-c1[0])*t)},${Math.round(c1[1]+(c2[1]-c1[1])*t)},${Math.round(c1[2]+(c2[2]-c1[2])*t)})`;
+}
+
+function makeBarChart(canvasId, labels, avgs, counts, opts = {}) {
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ data: avgs, backgroundColor: avgs.map(v => v !== null ? ratingColor(v) : '#d1d5db'), borderRadius: 5 }]
+    },
+    options: {
+      indexAxis: opts.horizontal ? 'y' : 'x',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const v = ctx.parsed[opts.horizontal ? 'x' : 'y'];
+              if (v === null) return 'No data';
+              return `Avg: ${v.toFixed(2)} (${ratingLabel(v)}) · ${counts[ctx.dataIndex]} trips`;
+            }
+          }
+        }
+      },
+      scales: opts.horizontal ? {
+        x: { min: 0, max: 7, ticks: { stepSize: 1, callback: v => RATING_KEYS[v] || '', color: textColor }, grid: { color: gridColor } },
+        y: { ticks: { color: textColor }, grid: { color: gridColor } }
+      } : {
+        x: { ticks: { color: textColor }, grid: { color: gridColor } },
+        y: { min: 0, max: 7, ticks: { stepSize: 1, callback: v => RATING_KEYS[v] || '', color: textColor }, grid: { color: gridColor } }
+      }
+    }
+  });
+}
+
+// ── Main ─────────────────────────────────────────────────────────────────────
+async function main() {
+  const json = await fetch(DATA_URL).then(r => r.json());
+  const rows = json.source.rows;
+
+  // Buckets keyed by phase name
+  const phaseBuckets = {};
+  PHASES.forEach(p => { phaseBuckets[p.name] = []; });
+
+  const illumBuckets = {
+    '0–25%\n(Dark)':    [],
+    '25–50%\n(Quarter)': [],
+    '50–75%\n(Gibbous)': [],
+    '75–100%\n(Bright)': []
+  };
+
+  let count = 0;
+  rows.forEach(r => {
+    const val = RATING_MAP[r[17]];
+    if (val === undefined) return;
+    const m = (r[0] || '').match(/^(\d+)\/(\d+)\/(\d+)/);
+    if (!m) return;
+    const date = new Date(Date.UTC(+m[3], +m[1] - 1, +m[2]));
+    if (isNaN(date.getTime())) return;
+
+    count++;
+    const age   = getMoonAge(date);
+    const phase = getPhaseName(age);
+    phaseBuckets[phase.name].push(val);
+
+    const illum = getIllumination(age);
+    if      (illum < 25) illumBuckets['0–25%\n(Dark)'].push(val);
+    else if (illum < 50) illumBuckets['25–50%\n(Quarter)'].push(val);
+    else if (illum < 75) illumBuckets['50–75%\n(Gibbous)'].push(val);
+    else                 illumBuckets['75–100%\n(Bright)'].push(val);
+  });
+
+  document.getElementById('moon-count').textContent = count.toLocaleString();
+
+  // Phase chart (horizontal bar — easier to read long labels)
+  const phaseLabels = PHASES.map(p => `${p.emoji} ${p.name}`);
+  const phaseAvgs   = PHASES.map(p => phaseBuckets[p.name].length
+    ? phaseBuckets[p.name].reduce((a,b) => a+b, 0) / phaseBuckets[p.name].length
+    : null);
+  const phaseCounts = PHASES.map(p => phaseBuckets[p.name].length);
+  makeBarChart('phaseChart', phaseLabels, phaseAvgs, phaseCounts, { horizontal: true });
+
+  const validPhases = PHASES.map((p, i) => ({ name: p.name, avg: phaseAvgs[i], count: phaseCounts[i] }))
+    .filter(x => x.avg !== null);
+  if (validPhases.length) {
+    const best  = [...validPhases].sort((a,b) => b.avg - a.avg)[0];
+    const worst = [...validPhases].sort((a,b) => a.avg - b.avg)[0];
+    document.getElementById('phaseInsight').textContent =
+      `Best: ${best.name} — avg ${best.avg.toFixed(2)} (${ratingLabel(best.avg)}) across ${best.count} trips. ` +
+      `Worst: ${worst.name} — avg ${worst.avg.toFixed(2)} (${ratingLabel(worst.avg)}) across ${worst.count} trips.`;
+  }
+
+  // Illumination chart
+  const illumLabels = Object.keys(illumBuckets);
+  const illumAvgs   = illumLabels.map(k => illumBuckets[k].length
+    ? illumBuckets[k].reduce((a,b) => a+b, 0) / illumBuckets[k].length
+    : null);
+  const illumCounts = illumLabels.map(k => illumBuckets[k].length);
+  makeBarChart('illumChart', illumLabels.map(l => l.replace('\n', ' ')), illumAvgs, illumCounts);
+
+  const validIllum = illumLabels
+    .map((k,i) => ({ name: k.replace('\n',' '), avg: illumAvgs[i], count: illumCounts[i] }))
+    .filter(x => x.avg !== null);
+  if (validIllum.length) {
+    const best  = [...validIllum].sort((a,b) => b.avg - a.avg)[0];
+    const worst = [...validIllum].sort((a,b) => a.avg - b.avg)[0];
+    document.getElementById('illumInsight').textContent =
+      `Best illumination range: ${best.name} — avg ${best.avg.toFixed(2)} (${ratingLabel(best.avg)}) across ${best.count} trips. ` +
+      `Worst: ${worst.name} — avg ${worst.avg.toFixed(2)} (${ratingLabel(worst.avg)}) across ${worst.count} trips.`;
+  }
+
+  // Phase breakdown table (sorted by avg rating desc)
+  const tableRows = PHASES
+    .map(p => ({ phase: p, vals: phaseBuckets[p.name] }))
+    .filter(x => x.vals.length > 0)
+    .map(x => ({ ...x, avg: x.vals.reduce((a,b)=>a+b,0)/x.vals.length }))
+    .sort((a,b) => b.avg - a.avg);
+
+  const tbl = document.getElementById('phaseTable');
+  tbl.innerHTML = `
+    <thead><tr>
+      <th>Phase</th>
+      <th>Trips</th>
+      <th>Avg Rating</th>
+      <th>Letter</th>
+    </tr></thead>
+    <tbody>
+      ${tableRows.map(x => {
+        const bg = ratingColor(x.avg);
+        return `<tr>
+          <td>${x.phase.emoji} ${x.phase.name}</td>
+          <td>${x.vals.length}</td>
+          <td>${x.avg.toFixed(2)}</td>
+          <td><span style="display:inline-block;padding:1px 8px;border-radius:4px;background:${bg};color:#fff;font-weight:700">${ratingLabel(x.avg)}</span></td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  `;
+
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('content').style.display  = 'block';
+}
+
+main().catch(err => {
+  document.getElementById('loading').textContent = 'Error loading data.';
+  console.error(err);
+});
+</script>
