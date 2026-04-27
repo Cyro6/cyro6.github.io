@@ -26,6 +26,8 @@ navigation_header:
     url: /
   - title: Analytics
     url: /Analytics
+  - title: Insights
+    url: /insights
   - title: Planner
     url: /planner
   - title: Resources

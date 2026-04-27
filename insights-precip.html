@@ -1,0 +1,327 @@
+---
+layout: default
+title: Precipitation Analysis
+---
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+.pa-page {
+  --card-bg: #ffffff;
+  --text-primary: #384743;
+  --text-secondary: #6b7280;
+  --link-color: #05bf85;
+  --shadow: rgba(0,0,0,0.09);
+  font-family: 'Inter', sans-serif;
+  padding: 20px 0;
+  color: var(--text-primary);
+}
+body.dark-theme .pa-page {
+  --card-bg: #2d3748;
+  --text-primary: #e5e7eb;
+  --text-secondary: #9ca3af;
+  --shadow: rgba(0,0,0,0.5);
+}
+.pa-page h1 {
+  text-align: center;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--link-color);
+  margin: 0 0 .4rem;
+}
+.pa-page .subtitle {
+  text-align: center;
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+}
+.pa-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 12px var(--shadow);
+}
+.pa-card h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--link-color);
+  margin: 0 0 .3rem;
+}
+.pa-card .card-note {
+  font-size: .82rem;
+  color: var(--text-secondary);
+  margin: 0 0 1rem;
+}
+.pa-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+@media (max-width: 768px) { .pa-grid { grid-template-columns: 1fr; } }
+.chart-wrap { position: relative; height: 260px; }
+.matrix-table { width: 100%; border-collapse: collapse; font-size: .9rem; text-align: center; }
+.matrix-table th {
+  padding: .6rem .8rem;
+  font-weight: 600;
+  background: #242e2b;
+  color: #d4cfc7;
+}
+.matrix-table td {
+  padding: .7rem .8rem;
+  border: 1px solid rgba(0,0,0,.06);
+}
+body.dark-theme .matrix-table td { border-color: #374151; }
+.matrix-table td .big { font-size: 1.3rem; font-weight: 700; }
+.matrix-table td .small-lbl { font-size: .75rem; color: var(--text-secondary); }
+.insight-box {
+  margin-top: 1rem;
+  padding: .75rem 1rem;
+  background: rgba(5,191,133,.08);
+  border-left: 3px solid #05bf85;
+  border-radius: 0 6px 6px 0;
+  font-size: .88rem;
+  color: var(--text-primary);
+}
+.loading { text-align: center; color: var(--text-secondary); padding: 3rem; }
+.pa-footer { text-align: center; margin-top: 2rem; color: var(--text-secondary); font-size: .9rem; }
+.pa-footer a { color: var(--link-color); font-weight: 600; text-decoration: none; }
+</style>
+
+<div class="pa-page typeset">
+  <h1>Precipitation Analysis</h1>
+  <p class="subtitle">Does rain help or hurt? Day-of precipitation vs 3-day prior rainfall vs your ratings.</p>
+
+  <div id="loading" class="loading">Loading data…</div>
+  <div id="content" style="display:none">
+
+    <div class="pa-grid">
+      <div class="pa-card">
+        <h2>Day-of Precipitation</h2>
+        <p class="card-note">Rain or snow that fell on the actual trip day.</p>
+        <div class="chart-wrap"><canvas id="dayChart"></canvas></div>
+        <div class="insight-box" id="dayInsight"></div>
+      </div>
+      <div class="pa-card">
+        <h2>3-Day Prior Rainfall</h2>
+        <p class="card-note">Total rainfall in the 3 days before the trip.</p>
+        <div class="chart-wrap"><canvas id="priorChart"></canvas></div>
+        <div class="insight-box" id="priorInsight"></div>
+      </div>
+    </div>
+
+    <div class="pa-card">
+      <h2>Conditions Matrix</h2>
+      <p class="card-note">Avg rating by combination of day-of weather and recent prior rainfall. Each cell shows avg rating and trip count.</p>
+      <div style="overflow-x:auto">
+        <table class="matrix-table" id="matrixTable"></table>
+      </div>
+      <div class="insight-box" id="matrixInsight"></div>
+    </div>
+
+  </div>
+
+  <p class="pa-footer">
+    <a href="/insights">← Insights</a>&nbsp;&nbsp;·&nbsp;&nbsp;<a href="/insights-weather">Weather Correlation →</a>
+  </p>
+</div>
+
+<script>
+const DATA_URL = '/assets/data/streams.json?v={{ site.time | date: "%Y%m%d%H%M%S" }}';
+const RATING_MAP = {'F':0,'E':1,'D':2,'C':3,'B':4,'A':5,'S':6,'S+':7};
+const RATING_KEYS = ['F','E','D','C','B','A','S','S+'];
+const isDark = document.body.classList.contains('dark-theme');
+const textColor = isDark ? '#9ca3af' : '#6b7280';
+const gridColor = isDark ? '#374151' : '#e5e7eb';
+
+function ratingLabel(n) {
+  return RATING_KEYS[Math.round(Math.max(0, Math.min(7, n)))] || '';
+}
+
+function ratingColor(n) {
+  if (n === null || n === undefined || isNaN(n)) return '#9ca3af';
+  const stops = [
+    [220,38,38],[249,115,22],[234,179,8],
+    [132,204,22],[34,197,94],[16,185,129],[5,191,133],[3,105,161]
+  ];
+  const lo = Math.floor(Math.max(0, Math.min(7, n)));
+  const hi = Math.min(lo + 1, 7);
+  const t = Math.max(0, Math.min(7, n)) - lo;
+  const [c1, c2] = [stops[lo], stops[hi]];
+  return `rgb(${Math.round(c1[0]+(c2[0]-c1[0])*t)},${Math.round(c1[1]+(c2[1]-c1[1])*t)},${Math.round(c1[2]+(c2[2]-c1[2])*t)})`;
+}
+
+function makeBarChart(canvasId, labels, avgs, counts) {
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: avgs,
+        backgroundColor: avgs.map(ratingColor),
+        borderRadius: 5,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const v = ctx.parsed.y;
+              const c = counts[ctx.dataIndex];
+              return `Avg: ${v.toFixed(2)} (${ratingLabel(v)}) · ${c} trips`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { color: textColor }, grid: { color: gridColor } },
+        y: {
+          min: 0, max: 7,
+          ticks: { stepSize: 1, callback: v => RATING_KEYS[v] || '', color: textColor },
+          grid: { color: gridColor }
+        }
+      }
+    }
+  });
+}
+
+async function main() {
+  const json = await fetch(DATA_URL).then(r => r.json());
+  const rows = json.source.rows;
+
+  // Day-of precip buckets
+  const dayBuckets = {
+    'None (0")': [],
+    'Trace (< 0.1")': [],
+    'Light (0.1–0.5")': [],
+    'Heavy (> 0.5")': []
+  };
+  // 3-day prior buckets
+  const priorBuckets = {
+    'Dry (0")': [],
+    'Light (< 0.25")': [],
+    'Moderate (0.25–1")': [],
+    'Heavy (> 1")': []
+  };
+
+  rows.forEach(r => {
+    const dayP = parseFloat(r[24]);
+    const priorP = parseFloat(r[25]);
+    const val = RATING_MAP[r[17]];
+    if (val === undefined) return;
+
+    if (!isNaN(dayP)) {
+      if (dayP === 0) dayBuckets['None (0")'].push(val);
+      else if (dayP < 0.1) dayBuckets['Trace (< 0.1")'].push(val);
+      else if (dayP <= 0.5) dayBuckets['Light (0.1–0.5")'].push(val);
+      else dayBuckets['Heavy (> 0.5")'].push(val);
+    }
+
+    if (!isNaN(priorP)) {
+      if (priorP === 0) priorBuckets['Dry (0")'].push(val);
+      else if (priorP < 0.25) priorBuckets['Light (< 0.25")'].push(val);
+      else if (priorP <= 1) priorBuckets['Moderate (0.25–1")'].push(val);
+      else priorBuckets['Heavy (> 1")'].push(val);
+    }
+  });
+
+  // Day-of chart
+  const dayLabels = Object.keys(dayBuckets).filter(k => dayBuckets[k].length > 0);
+  const dayAvgs = dayLabels.map(k => dayBuckets[k].reduce((a,b) => a+b,0) / dayBuckets[k].length);
+  const dayCounts = dayLabels.map(k => dayBuckets[k].length);
+  makeBarChart('dayChart', dayLabels, dayAvgs, dayCounts);
+
+  const bestDayIdx = dayAvgs.indexOf(Math.max(...dayAvgs));
+  const worstDayIdx = dayAvgs.indexOf(Math.min(...dayAvgs));
+  document.getElementById('dayInsight').textContent =
+    `Best: "${dayLabels[bestDayIdx]}" (avg ${dayAvgs[bestDayIdx].toFixed(2)}, ${dayCounts[bestDayIdx]} trips). ` +
+    `Worst: "${dayLabels[worstDayIdx]}" (avg ${dayAvgs[worstDayIdx].toFixed(2)}, ${dayCounts[worstDayIdx]} trips).`;
+
+  // Prior chart
+  const priorLabels = Object.keys(priorBuckets).filter(k => priorBuckets[k].length > 0);
+  const priorAvgs = priorLabels.map(k => priorBuckets[k].reduce((a,b) => a+b,0) / priorBuckets[k].length);
+  const priorCounts = priorLabels.map(k => priorBuckets[k].length);
+  makeBarChart('priorChart', priorLabels, priorAvgs, priorCounts);
+
+  const bestPriorIdx = priorAvgs.indexOf(Math.max(...priorAvgs));
+  const worstPriorIdx = priorAvgs.indexOf(Math.min(...priorAvgs));
+  document.getElementById('priorInsight').textContent =
+    `Best: "${priorLabels[bestPriorIdx]}" (avg ${priorAvgs[bestPriorIdx].toFixed(2)}, ${priorCounts[bestPriorIdx]} trips). ` +
+    `Worst: "${priorLabels[worstPriorIdx]}" (avg ${priorAvgs[worstPriorIdx].toFixed(2)}, ${priorCounts[worstPriorIdx]} trips).`;
+
+  // Conditions matrix: dry/wet day × dry/wet prior
+  const matrix = {
+    'Dry day, dry prior': [],
+    'Dry day, wet prior': [],
+    'Wet day, dry prior': [],
+    'Wet day, wet prior': []
+  };
+
+  rows.forEach(r => {
+    const dayP = parseFloat(r[24]);
+    const priorP = parseFloat(r[25]);
+    const val = RATING_MAP[r[17]];
+    if (isNaN(dayP) || isNaN(priorP) || val === undefined) return;
+    const dryDay = dayP < 0.05;
+    const dryPrior = priorP < 0.1;
+    const key = `${dryDay ? 'Dry' : 'Wet'} day, ${dryPrior ? 'dry' : 'wet'} prior`;
+    matrix[key].push(val);
+  });
+
+  const tbl = document.getElementById('matrixTable');
+  tbl.innerHTML = `
+    <thead>
+      <tr>
+        <th></th>
+        <th>Prior: Dry (&lt;0.1")</th>
+        <th>Prior: Wet (≥0.1")</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${['Dry day', 'Wet day'].map(dayLabel => {
+        const dryKey = `${dayLabel}, dry prior`;
+        const wetKey = `${dayLabel}, wet prior`;
+        const dryVals = matrix[dryKey];
+        const wetVals = matrix[wetKey];
+        const dryAvg = dryVals.length ? dryVals.reduce((a,b)=>a+b,0)/dryVals.length : null;
+        const wetAvg = wetVals.length ? wetVals.reduce((a,b)=>a+b,0)/wetVals.length : null;
+        const cellStyle = (avg) => avg !== null
+          ? `background:${ratingColor(avg)};color:${avg <= 0.8 || avg >= 5.5 ? 'rgba(255,255,255,.9)' : '#1f2937'}`
+          : `background:${isDark ? '#374151' : '#f3f4f6'};color:${isDark ? '#4b5563' : '#9ca3af'}`;
+        const cell = (avg, vals) => avg !== null
+          ? `<div class="big">${ratingLabel(avg)}</div><div class="small-lbl">${avg.toFixed(2)} · ${vals.length} trips</div>`
+          : '<div class="big">—</div><div class="small-lbl">no data</div>';
+        return `<tr>
+          <th>${dayLabel}${dayLabel === 'Dry day' ? ' (&lt;0.05")' : ' (≥0.05")'}</th>
+          <td style="${cellStyle(dryAvg)}">${cell(dryAvg, dryVals)}</td>
+          <td style="${cellStyle(wetAvg)}">${cell(wetAvg, wetVals)}</td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  `;
+
+  // Matrix insight
+  const matrixEntries = Object.entries(matrix)
+    .filter(([,v]) => v.length > 0)
+    .map(([k,v]) => [k, v.reduce((a,b)=>a+b,0)/v.length, v.length])
+    .sort((a,b) => b[1] - a[1]);
+  if (matrixEntries.length > 0) {
+    const [bestKey, bestAvg, bestCount] = matrixEntries[0];
+    const [worstKey, worstAvg, worstCount] = matrixEntries[matrixEntries.length - 1];
+    document.getElementById('matrixInsight').textContent =
+      `Best combo: "${bestKey}" — avg ${bestAvg.toFixed(2)} (${ratingLabel(bestAvg)}) across ${bestCount} trips. ` +
+      `Worst: "${worstKey}" — avg ${worstAvg.toFixed(2)} (${ratingLabel(worstAvg)}) across ${worstCount} trips.`;
+  }
+
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('content').style.display = 'block';
+}
+
+main().catch(err => {
+  document.getElementById('loading').textContent = 'Error loading data.';
+  console.error(err);
+});
+</script>

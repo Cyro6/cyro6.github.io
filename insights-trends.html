@@ -1,0 +1,354 @@
+---
+layout: default
+title: Rating Trends
+---
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+.rt-page {
+  --card-bg: #ffffff;
+  --text-primary: #384743;
+  --text-secondary: #6b7280;
+  --link-color: #05bf85;
+  --shadow: rgba(0,0,0,0.09);
+  font-family: 'Inter', sans-serif;
+  padding: 20px 0;
+  color: var(--text-primary);
+}
+body.dark-theme .rt-page {
+  --card-bg: #2d3748;
+  --text-primary: #e5e7eb;
+  --text-secondary: #9ca3af;
+  --shadow: rgba(0,0,0,0.5);
+}
+.rt-page h1 {
+  text-align: center;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--link-color);
+  margin: 0 0 .4rem;
+}
+.rt-page .subtitle {
+  text-align: center;
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+}
+.rt-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 12px var(--shadow);
+}
+.rt-card h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--link-color);
+  margin: 0 0 .3rem;
+}
+.rt-card .card-note {
+  font-size: .82rem;
+  color: var(--text-secondary);
+  margin: 0 0 1rem;
+}
+.rt-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+@media (max-width: 768px) { .rt-grid { grid-template-columns: 1fr; } }
+.chart-wrap { position: relative; height: 260px; }
+.chart-wrap-tall { position: relative; height: 340px; }
+.stat-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.2rem;
+}
+.stat-box {
+  background: rgba(5,191,133,.08);
+  border-radius: 8px;
+  padding: .8rem 1.2rem;
+  flex: 1;
+  min-width: 120px;
+}
+.stat-box .val {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--link-color);
+}
+.stat-box .lbl {
+  font-size: .78rem;
+  color: var(--text-secondary);
+  margin-top: .1rem;
+}
+.loading { text-align: center; color: var(--text-secondary); padding: 3rem; }
+.rt-footer { text-align: center; margin-top: 2rem; color: var(--text-secondary); font-size: .9rem; }
+.rt-footer a { color: var(--link-color); font-weight: 600; text-decoration: none; }
+</style>
+
+<div class="rt-page typeset">
+  <h1>Rating Trends</h1>
+  <p class="subtitle">How your ratings have evolved over time — trip by trip and year by year.</p>
+
+  <div id="loading" class="loading">Loading data…</div>
+  <div id="content" style="display:none">
+
+    <div class="rt-card">
+      <div class="stat-row" id="summary-stats"></div>
+    </div>
+
+    <div class="rt-card">
+      <h2>Rating Over Time</h2>
+      <p class="card-note">Each dot is a trip, colored by rating. The line is a 20-trip rolling average.</p>
+      <div class="chart-wrap-tall"><canvas id="timelineChart"></canvas></div>
+    </div>
+
+    <div class="rt-grid">
+      <div class="rt-card">
+        <h2>Average Rating by Year</h2>
+        <p class="card-note">Overall avg rating for each calendar year.</p>
+        <div class="chart-wrap"><canvas id="yearChart"></canvas></div>
+      </div>
+      <div class="rt-card">
+        <h2>Trips by Month</h2>
+        <p class="card-note">How many trips were logged in each month across all years.</p>
+        <div class="chart-wrap"><canvas id="monthChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="rt-footer">
+    <a href="/insights">← Insights</a>&nbsp;&nbsp;·&nbsp;&nbsp;<a href="/insights-compare">Stream Compare →</a>
+  </p>
+</div>
+
+<script>
+const DATA_URL = '/assets/data/streams.json?v={{ site.time | date: "%Y%m%d%H%M%S" }}';
+const RATING_MAP = {'F':0,'E':1,'D':2,'C':3,'B':4,'A':5,'S':6,'S+':7};
+const RATING_KEYS = ['F','E','D','C','B','A','S','S+'];
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const isDark = document.body.classList.contains('dark-theme');
+const textColor = isDark ? '#9ca3af' : '#6b7280';
+const gridColor = isDark ? '#374151' : '#e5e7eb';
+
+function ratingLabel(n) {
+  return RATING_KEYS[Math.round(Math.max(0, Math.min(7, n)))] || '';
+}
+
+function ratingColor(n) {
+  if (n === null || n === undefined || isNaN(n)) return '#9ca3af';
+  const stops = [
+    [220,38,38],[249,115,22],[234,179,8],
+    [132,204,22],[34,197,94],[16,185,129],[5,191,133],[3,105,161]
+  ];
+  const lo = Math.floor(Math.max(0, Math.min(7, n)));
+  const hi = Math.min(lo + 1, 7);
+  const t = Math.max(0, Math.min(7, n)) - lo;
+  const [c1, c2] = [stops[lo], stops[hi]];
+  return `rgb(${Math.round(c1[0]+(c2[0]-c1[0])*t)},${Math.round(c1[1]+(c2[1]-c1[1])*t)},${Math.round(c1[2]+(c2[2]-c1[2])*t)})`;
+}
+
+function parseDate(s) {
+  if (!s) return null;
+  const p = s.split('/');
+  if (p.length !== 3) return null;
+  return new Date(parseInt(p[2]), parseInt(p[0])-1, parseInt(p[1]));
+}
+
+async function main() {
+  const json = await fetch(DATA_URL).then(r => r.json());
+  const allRows = json.source.rows;
+
+  // Sort by date, keep only rows with valid rating
+  const rows = allRows
+    .map(r => ({ r, d: parseDate(r[0]), v: RATING_MAP[r[17]] }))
+    .filter(({ d, v }) => d && v !== undefined)
+    .sort((a, b) => a.d - b.d);
+
+  // Summary stats
+  const vals = rows.map(x => x.v);
+  const overall = vals.reduce((a,b) => a+b, 0) / vals.length;
+  const pctExcellent = vals.filter(v => v >= 5).length / vals.length * 100;
+  const best = rows.filter(x => x.v === 7);
+  document.getElementById('summary-stats').innerHTML = `
+    <div class="stat-box"><div class="val">${rows.length}</div><div class="lbl">Rated trips</div></div>
+    <div class="stat-box"><div class="val">${overall.toFixed(2)}</div><div class="lbl">Overall avg (${ratingLabel(overall)})</div></div>
+    <div class="stat-box"><div class="val">${pctExcellent.toFixed(1)}%</div><div class="lbl">A or better</div></div>
+    <div class="stat-box"><div class="val">${best.length}</div><div class="lbl">S+ trips</div></div>
+  `;
+
+  // 1. Timeline chart — scatter + rolling avg line
+  const WINDOW = 20;
+  const rolling = rows.map((_, i) => {
+    const start = Math.max(0, i - WINDOW + 1);
+    const window = rows.slice(start, i + 1);
+    return window.reduce((s, x) => s + x.v, 0) / window.length;
+  });
+
+  const ctx1 = document.getElementById('timelineChart').getContext('2d');
+  new Chart(ctx1, {
+    data: {
+      datasets: [
+        {
+          type: 'scatter',
+          label: 'Trip',
+          data: rows.map((x, i) => ({ x: i, y: x.v })),
+          backgroundColor: rows.map(x => ratingColor(x.v) + 'bb'),
+          pointRadius: 3,
+          pointHoverRadius: 5,
+        },
+        {
+          type: 'line',
+          label: '20-trip avg',
+          data: rolling.map((v, i) => ({ x: i, y: v })),
+          borderColor: '#05bf85',
+          backgroundColor: 'transparent',
+          pointRadius: 0,
+          tension: 0.4,
+          borderWidth: 2.5,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          labels: { color: textColor, boxWidth: 16, font: { size: 12 } }
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              if (ctx.datasetIndex === 0) {
+                const x = rows[ctx.dataIndex];
+                return `${x.r[0]}: ${x.r[2]} — ${x.r[17]}`;
+              }
+              return `20-trip avg: ${ctx.parsed.y.toFixed(2)} (${ratingLabel(ctx.parsed.y)})`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'Trip #', color: textColor },
+          ticks: { color: textColor, maxTicksLimit: 12 },
+          grid: { color: gridColor }
+        },
+        y: {
+          min: 0, max: 7,
+          ticks: { stepSize: 1, callback: v => RATING_KEYS[v] || '', color: textColor },
+          grid: { color: gridColor }
+        }
+      }
+    }
+  });
+
+  // 2. Year bar chart
+  const yearGroups = {};
+  rows.forEach(({ r, d, v }) => {
+    const yr = d.getFullYear();
+    if (!yearGroups[yr]) yearGroups[yr] = [];
+    yearGroups[yr].push(v);
+  });
+  const years = Object.keys(yearGroups).sort();
+  const yearAvgs = years.map(y => yearGroups[y].reduce((a,b) => a+b,0) / yearGroups[y].length);
+  const yearCounts = years.map(y => yearGroups[y].length);
+
+  const ctx2 = document.getElementById('yearChart').getContext('2d');
+  new Chart(ctx2, {
+    type: 'bar',
+    data: {
+      labels: years,
+      datasets: [{
+        data: yearAvgs,
+        backgroundColor: yearAvgs.map(ratingColor),
+        borderRadius: 5,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const v = ctx.parsed.y;
+              const c = yearCounts[ctx.dataIndex];
+              return `Avg: ${v.toFixed(2)} (${ratingLabel(v)}) · ${c} trips`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { color: textColor }, grid: { color: gridColor } },
+        y: {
+          min: 0, max: 7,
+          ticks: { stepSize: 1, callback: v => RATING_KEYS[v] || '', color: textColor },
+          grid: { color: gridColor }
+        }
+      }
+    }
+  });
+
+  // 3. Month trip count bar chart
+  const monthCounts = new Array(12).fill(0);
+  const monthAvgs = new Array(12).fill(null).map(() => []);
+  rows.forEach(({ d, v }) => {
+    const m = d.getMonth();
+    monthCounts[m]++;
+    monthAvgs[m].push(v);
+  });
+
+  const ctx3 = document.getElementById('monthChart').getContext('2d');
+  new Chart(ctx3, {
+    type: 'bar',
+    data: {
+      labels: MONTH_NAMES,
+      datasets: [{
+        data: monthCounts,
+        backgroundColor: monthAvgs.map(vals => {
+          if (!vals.length) return '#9ca3af';
+          return ratingColor(vals.reduce((a,b) => a+b,0) / vals.length);
+        }),
+        borderRadius: 5,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const m = ctx.dataIndex;
+              const vals = monthAvgs[m];
+              const avg = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
+              return `${ctx.parsed.y} trips · avg ${avg.toFixed(2)} (${ratingLabel(avg)})`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { color: textColor }, grid: { color: gridColor } },
+        y: {
+          ticks: { stepSize: 20, color: textColor },
+          grid: { color: gridColor },
+          title: { display: true, text: 'Trips', color: textColor }
+        }
+      }
+    }
+  });
+
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('content').style.display = 'block';
+}
+
+main().catch(err => {
+  document.getElementById('loading').textContent = 'Error loading data.';
+  console.error(err);
+});
+</script>

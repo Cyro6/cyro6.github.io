@@ -1,0 +1,317 @@
+---
+layout: default
+title: Monthly Heatmap
+---
+
+<style>
+.hm-page {
+  --card-bg: #ffffff;
+  --text-primary: #384743;
+  --text-secondary: #6b7280;
+  --link-color: #05bf85;
+  --shadow: rgba(0,0,0,0.09);
+  --empty-bg: #f3f4f6;
+  --empty-color: #d1d5db;
+  font-family: 'Inter', sans-serif;
+  padding: 20px 0;
+  color: var(--text-primary);
+}
+body.dark-theme .hm-page {
+  --card-bg: #2d3748;
+  --text-primary: #e5e7eb;
+  --text-secondary: #9ca3af;
+  --shadow: rgba(0,0,0,0.5);
+  --empty-bg: #374151;
+  --empty-color: #4b5563;
+}
+.hm-page h1 {
+  text-align: center;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--link-color);
+  margin: 0 0 .4rem;
+}
+.hm-page .subtitle {
+  text-align: center;
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+}
+.hm-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 12px var(--shadow);
+}
+.hm-card h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--link-color);
+  margin: 0 0 .4rem;
+}
+.hm-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+  flex-wrap: wrap;
+  font-size: .9rem;
+  color: var(--text-secondary);
+}
+.hm-controls label { font-weight: 600; }
+.hm-controls select {
+  padding: .3rem .6rem;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background: var(--card-bg);
+  color: var(--text-primary);
+  font-size: .9rem;
+  cursor: pointer;
+}
+.table-scroll { overflow-x: auto; }
+#heatmap-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: .82rem;
+}
+#heatmap-table th {
+  background: #242e2b;
+  color: #d4cfc7;
+  padding: .5rem .6rem;
+  text-align: center;
+  font-weight: 600;
+  white-space: nowrap;
+}
+#heatmap-table th.stream-col {
+  text-align: left;
+  min-width: 140px;
+}
+#heatmap-table td {
+  padding: .45rem .55rem;
+  text-align: center;
+  font-weight: 600;
+  font-size: .8rem;
+  border: 1px solid rgba(0,0,0,.06);
+  cursor: default;
+  transition: opacity .1s;
+  white-space: nowrap;
+}
+#heatmap-table td:hover { opacity: .85; }
+#heatmap-table td.stream-col {
+  text-align: left;
+  font-weight: 500;
+  background: var(--card-bg);
+  color: var(--text-primary);
+  font-size: .82rem;
+}
+#heatmap-table tr:hover td.stream-col { background: rgba(5,191,133,.06); }
+.legend {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+  font-size: .8rem;
+  color: var(--text-secondary);
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: .3rem;
+}
+.legend-swatch {
+  width: 20px;
+  height: 16px;
+  border-radius: 3px;
+}
+.loading { text-align: center; color: var(--text-secondary); padding: 3rem; }
+.hm-footer { text-align: center; margin-top: 2rem; color: var(--text-secondary); font-size: .9rem; }
+.hm-footer a { color: var(--link-color); font-weight: 600; text-decoration: none; }
+</style>
+
+<div class="hm-page typeset">
+  <h1>Monthly Heatmap</h1>
+  <p class="subtitle">Average rating per stream per month. Hover a cell for trip count details.</p>
+
+  <div id="loading" class="loading">Loading data…</div>
+  <div id="content" style="display:none">
+    <div class="hm-card">
+      <h2>Stream × Month Performance</h2>
+      <div class="hm-controls">
+        <label for="sort-select">Sort by:</label>
+        <select id="sort-select">
+          <option value="rating">Avg Rating (best first)</option>
+          <option value="name">Stream Name (A–Z)</option>
+          <option value="visits">Total Visits (most first)</option>
+        </select>
+        <span id="stream-count"></span>
+      </div>
+      <div class="table-scroll">
+        <table id="heatmap-table"></table>
+      </div>
+      <div class="legend">
+        <span>Rating scale:</span>
+        <div class="legend-item"><div class="legend-swatch" style="background:rgb(220,38,38)"></div>F</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:rgb(249,115,22)"></div>E</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:rgb(234,179,8)"></div>D</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:rgb(132,204,22)"></div>C</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:rgb(34,197,94)"></div>B</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:rgb(16,185,129)"></div>A</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:rgb(5,191,133)"></div>S</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:rgb(3,105,161)"></div>S+</div>
+      </div>
+    </div>
+  </div>
+
+  <p class="hm-footer">
+    <a href="/insights">← Insights</a>&nbsp;&nbsp;·&nbsp;&nbsp;<a href="/insights-compare">Stream Compare →</a>
+  </p>
+</div>
+
+<script>
+const DATA_URL = '/assets/data/streams.json?v={{ site.time | date: "%Y%m%d%H%M%S" }}';
+const RATING_MAP = {'F':0,'E':1,'D':2,'C':3,'B':4,'A':5,'S':6,'S+':7};
+const RATING_KEYS = ['F','E','D','C','B','A','S','S+'];
+const MONTH_NAMES = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const isDark = document.body.classList.contains('dark-theme');
+
+function ratingLabel(n) {
+  return RATING_KEYS[Math.round(Math.max(0, Math.min(7, n)))] || '';
+}
+
+function ratingColor(n) {
+  if (n === null) return isDark ? '#374151' : '#f3f4f6';
+  const stops = [
+    [220,38,38],[249,115,22],[234,179,8],
+    [132,204,22],[34,197,94],[16,185,129],[5,191,133],[3,105,161]
+  ];
+  const lo = Math.floor(Math.max(0, Math.min(7, n)));
+  const hi = Math.min(lo + 1, 7);
+  const t = Math.max(0, Math.min(7, n)) - lo;
+  const [c1, c2] = [stops[lo], stops[hi]];
+  return `rgb(${Math.round(c1[0]+(c2[0]-c1[0])*t)},${Math.round(c1[1]+(c2[1]-c1[1])*t)},${Math.round(c1[2]+(c2[2]-c1[2])*t)})`;
+}
+
+function textOnColor(avg) {
+  return (avg <= 0.8 || avg >= 5.5) ? 'rgba(255,255,255,0.92)' : '#1f2937';
+}
+
+let streamMonthData, streamCounts, streamAvg, months, streamNames;
+
+function buildTable(sortBy) {
+  const sorted = [...streamNames];
+  if (sortBy === 'name') sorted.sort((a,b) => a.localeCompare(b));
+  else if (sortBy === 'visits') sorted.sort((a,b) => streamCounts.get(b) - streamCounts.get(a));
+  else sorted.sort((a,b) => streamAvg.get(b) - streamAvg.get(a));
+
+  const table = document.getElementById('heatmap-table');
+  table.innerHTML = '';
+
+  const thead = table.createTHead();
+  const hrow = thead.insertRow();
+  const streamTh = document.createElement('th');
+  streamTh.textContent = 'Stream';
+  streamTh.className = 'stream-col';
+  hrow.appendChild(streamTh);
+  months.forEach(m => {
+    const th = document.createElement('th');
+    th.textContent = MONTH_NAMES[m];
+    hrow.appendChild(th);
+  });
+  const avgTh = document.createElement('th');
+  avgTh.textContent = 'Overall';
+  hrow.appendChild(avgTh);
+  const visitsTh = document.createElement('th');
+  visitsTh.textContent = 'Trips';
+  hrow.appendChild(visitsTh);
+
+  const tbody = table.createTBody();
+  sorted.forEach(s => {
+    const row = tbody.insertRow();
+    const stTd = document.createElement('td');
+    stTd.textContent = s;
+    stTd.className = 'stream-col';
+    row.appendChild(stTd);
+
+    months.forEach(m => {
+      const td = document.createElement('td');
+      const ratings = streamMonthData.get(s)?.get(m);
+      if (ratings && ratings.length > 0) {
+        const avg = ratings.reduce((a,b) => a+b, 0) / ratings.length;
+        td.style.background = ratingColor(avg);
+        td.style.color = textOnColor(avg);
+        td.textContent = ratingLabel(avg);
+        td.title = `${s} — ${MONTH_NAMES[m]}: ${ratings.length} trip${ratings.length>1?'s':''}, avg ${avg.toFixed(2)} (${ratingLabel(avg)})`;
+      } else {
+        td.style.background = isDark ? '#374151' : '#f3f4f6';
+        td.style.color = isDark ? '#4b5563' : '#d1d5db';
+        td.textContent = '–';
+      }
+      row.appendChild(td);
+    });
+
+    const a = streamAvg.get(s);
+    const avgTd = document.createElement('td');
+    avgTd.style.background = ratingColor(a);
+    avgTd.style.color = textOnColor(a);
+    avgTd.style.fontWeight = '700';
+    avgTd.textContent = ratingLabel(a);
+    avgTd.title = `Overall avg: ${a.toFixed(2)} (${ratingLabel(a)})`;
+    row.appendChild(avgTd);
+
+    const visitsTd = document.createElement('td');
+    visitsTd.style.background = isDark ? '#374151' : '#f3f4f6';
+    visitsTd.style.color = isDark ? '#9ca3af' : '#6b7280';
+    visitsTd.textContent = streamCounts.get(s);
+    row.appendChild(visitsTd);
+  });
+}
+
+async function main() {
+  const json = await fetch(DATA_URL).then(r => r.json());
+  const rows = json.source.rows;
+
+  streamMonthData = new Map();
+  streamCounts = new Map();
+
+  rows.forEach(r => {
+    const stream = r[2];
+    const month = parseInt(r[19]);
+    const rating = RATING_MAP[r[17]];
+    if (!stream || stream === 'Unknown' || !month || isNaN(month) || rating === undefined) return;
+
+    if (!streamMonthData.has(stream)) streamMonthData.set(stream, new Map());
+    streamCounts.set(stream, (streamCounts.get(stream) || 0) + 1);
+
+    const mMap = streamMonthData.get(stream);
+    if (!mMap.has(month)) mMap.set(month, []);
+    mMap.get(month).push(rating);
+  });
+
+  // Filter to 3+ visits
+  streamNames = [...streamMonthData.keys()].filter(s => (streamCounts.get(s) || 0) >= 3);
+  document.getElementById('stream-count').textContent = `${streamNames.length} streams with 3+ visits`;
+
+  streamAvg = new Map();
+  streamNames.forEach(s => {
+    const all = [...streamMonthData.get(s).values()].flat();
+    streamAvg.set(s, all.reduce((a,b) => a+b, 0) / all.length);
+  });
+
+  // Months present in data
+  months = [1,2,3,4,5,6,7,8,9,10,11,12].filter(m =>
+    streamNames.some(s => streamMonthData.get(s)?.has(m))
+  );
+
+  buildTable('rating');
+
+  document.getElementById('sort-select').addEventListener('change', e => buildTable(e.target.value));
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('content').style.display = 'block';
+}
+
+main().catch(err => {
+  document.getElementById('loading').textContent = 'Error loading data.';
+  console.error(err);
+});
+</script>

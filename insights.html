@@ -1,0 +1,93 @@
+---
+layout: default
+title: Insights
+---
+
+<style>
+.insights-hub {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 1rem;
+  font-family: 'Inter', sans-serif;
+}
+.insights-hub h1 {
+  text-align: center;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #05bf85;
+  margin: 0 0 .4rem;
+}
+.hub-sub {
+  text-align: center;
+  color: #6b7280;
+  margin-bottom: 2rem;
+  font-size: 1rem;
+}
+.hub-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.2rem;
+  margin-bottom: 2rem;
+}
+@media (max-width: 600px) { .hub-grid { grid-template-columns: 1fr; } }
+.hub-card {
+  display: flex;
+  flex-direction: column;
+  background: #f0ebe0;
+  border-radius: 10px;
+  padding: 1.4rem 1.6rem;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: 0 2px 8px rgba(0,0,0,.07);
+  transition: transform .15s, box-shadow .15s;
+}
+.hub-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0,0,0,.13);
+  text-decoration: none;
+}
+.hub-icon { font-size: 1.8rem; margin-bottom: .5rem; }
+.hub-card h2 { font-size: 1.05rem; font-weight: 700; color: #05bf85; margin: 0 0 .4rem; }
+.hub-card p { font-size: .88rem; color: #555; margin: 0; line-height: 1.5; }
+.hub-footer { text-align: center; margin-top: .5rem; color: #888; font-size: .9rem; }
+.hub-footer a { color: #05bf85; font-weight: 600; text-decoration: none; }
+body.dark-theme .hub-sub { color: #9ca3af; }
+body.dark-theme .hub-card { background: #2a3530; }
+body.dark-theme .hub-card p { color: #a8adac; }
+body.dark-theme .hub-footer { color: #9ca3af; }
+</style>
+
+<div class="insights-hub typeset">
+  <h1>Insights</h1>
+  <p class="hub-sub">Deep dives into your trip data — 953 trips, 54 streams, 12 years.</p>
+  <div class="hub-grid">
+    <a class="hub-card" href="/insights-weather">
+      <div class="hub-icon">🌦</div>
+      <h2>Weather Correlation</h2>
+      <p>How barometric pressure, temperature, and weather conditions relate to catch quality on 600+ logged trips.</p>
+    </a>
+    <a class="hub-card" href="/insights-heatmap">
+      <div class="hub-icon">🗓</div>
+      <h2>Monthly Heatmap</h2>
+      <p>Stream × month performance grid — find which streams peak in which months at a glance.</p>
+    </a>
+    <a class="hub-card" href="/insights-trends">
+      <div class="hub-icon">📈</div>
+      <h2>Rating Trends</h2>
+      <p>Your rating history over time, year-by-year averages, and trip count by month.</p>
+    </a>
+    <a class="hub-card" href="/insights-compare">
+      <div class="hub-icon">⚖</div>
+      <h2>Stream Compare</h2>
+      <p>Side-by-side comparison of up to 3 streams — visits, avg rating, and monthly performance.</p>
+    </a>
+    <a class="hub-card" href="/insights-precip">
+      <div class="hub-icon">🌧</div>
+      <h2>Precipitation Analysis</h2>
+      <p>Day-of and 3-day prior rainfall effects on ratings — should you fish after rain?</p>
+    </a>
+  </div>
+  <p class="hub-footer">
+    <a href="/Analytics">← Analytics</a>&nbsp;&nbsp;·&nbsp;&nbsp;<a href="/planner">Planner</a>
+  </p>
+</div>

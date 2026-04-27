@@ -1,0 +1,299 @@
+---
+layout: default
+title: Weather Correlation
+---
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+.wc-page {
+  --card-bg: #ffffff;
+  --text-primary: #384743;
+  --text-secondary: #6b7280;
+  --link-color: #05bf85;
+  --shadow: rgba(0,0,0,0.09);
+  font-family: 'Inter', sans-serif;
+  padding: 20px 0;
+  color: var(--text-primary);
+}
+body.dark-theme .wc-page {
+  --card-bg: #2d3748;
+  --text-primary: #e5e7eb;
+  --text-secondary: #9ca3af;
+  --shadow: rgba(0,0,0,0.5);
+}
+.wc-page h1 {
+  text-align: center;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--link-color);
+  margin: 0 0 .4rem;
+}
+.wc-page .subtitle {
+  text-align: center;
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+}
+.wc-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 12px var(--shadow);
+}
+.wc-card h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--link-color);
+  margin: 0 0 .4rem;
+}
+.wc-card .card-note {
+  font-size: .82rem;
+  color: var(--text-secondary);
+  margin: 0 0 1rem;
+}
+.wc-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+@media (max-width: 768px) { .wc-grid { grid-template-columns: 1fr; } }
+.chart-wrap { position: relative; height: 260px; }
+.loading { text-align: center; color: var(--text-secondary); padding: 3rem; }
+.wc-footer { text-align: center; margin-top: 2rem; color: var(--text-secondary); font-size: .9rem; }
+.wc-footer a { color: var(--link-color); font-weight: 600; text-decoration: none; }
+.insight-box {
+  margin-top: 1rem;
+  padding: .75rem 1rem;
+  background: rgba(5,191,133,.08);
+  border-left: 3px solid #05bf85;
+  border-radius: 0 6px 6px 0;
+  font-size: .88rem;
+  color: var(--text-primary);
+}
+</style>
+
+<div class="wc-page typeset">
+  <h1>Weather Correlation</h1>
+  <p class="subtitle">How conditions affect your catch rating — based on 600+ trips with logged weather.</p>
+
+  <div id="loading" class="loading">Loading data…</div>
+  <div id="content" style="display:none">
+    <div class="wc-grid">
+      <div class="wc-card">
+        <h2>Barometric Pressure Trend</h2>
+        <p class="card-note">Average rating grouped by pressure direction at noon.</p>
+        <div class="chart-wrap"><canvas id="pressureChart"></canvas></div>
+        <div class="insight-box" id="pressureInsight"></div>
+      </div>
+      <div class="wc-card">
+        <h2>Weather Condition</h2>
+        <p class="card-note">Average rating by sky/precipitation condition.</p>
+        <div class="chart-wrap"><canvas id="conditionChart"></canvas></div>
+        <div class="insight-box" id="conditionInsight"></div>
+      </div>
+      <div class="wc-card">
+        <h2>Air Temperature Range</h2>
+        <p class="card-note">Average of min/max logged temp for the trip.</p>
+        <div class="chart-wrap"><canvas id="tempChart"></canvas></div>
+        <div class="insight-box" id="tempInsight"></div>
+      </div>
+      <div class="wc-card">
+        <h2>Day-of Precipitation</h2>
+        <p class="card-note">Amount of rain/snow that fell on the trip day.</p>
+        <div class="chart-wrap"><canvas id="precipChart"></canvas></div>
+        <div class="insight-box" id="precipInsight"></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="wc-footer">
+    <a href="/insights">← Insights</a>&nbsp;&nbsp;·&nbsp;&nbsp;<a href="/insights-precip">Precipitation Analysis →</a>
+  </p>
+</div>
+
+<script>
+const DATA_URL = '/assets/data/streams.json?v={{ site.time | date: "%Y%m%d%H%M%S" }}';
+const RATING_MAP = {'F':0,'E':1,'D':2,'C':3,'B':4,'A':5,'S':6,'S+':7};
+const RATING_KEYS = ['F','E','D','C','B','A','S','S+'];
+const isDark = document.body.classList.contains('dark-theme');
+const textColor = isDark ? '#9ca3af' : '#6b7280';
+const gridColor = isDark ? '#374151' : '#e5e7eb';
+
+function ratingVal(row) {
+  const v = RATING_MAP[row[17]];
+  return v !== undefined ? v : null;
+}
+
+function ratingLabel(n) {
+  return RATING_KEYS[Math.round(Math.max(0, Math.min(7, n)))] || '';
+}
+
+function ratingColor(n) {
+  if (n === null || n === undefined || isNaN(n)) return '#9ca3af';
+  const stops = [
+    [220,38,38],[249,115,22],[234,179,8],
+    [132,204,22],[34,197,94],[16,185,129],[5,191,133],[3,105,161]
+  ];
+  const lo = Math.floor(Math.max(0, Math.min(7, n)));
+  const hi = Math.min(lo + 1, 7);
+  const t = Math.max(0, Math.min(7, n)) - lo;
+  const [c1, c2] = [stops[lo], stops[hi]];
+  return `rgb(${Math.round(c1[0]+(c2[0]-c1[0])*t)},${Math.round(c1[1]+(c2[1]-c1[1])*t)},${Math.round(c1[2]+(c2[2]-c1[2])*t)})`;
+}
+
+function groupByKey(rows, keyFn) {
+  const groups = {};
+  rows.forEach(r => {
+    const key = keyFn(r);
+    const val = ratingVal(r);
+    if (!key || val === null) return;
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(val);
+  });
+  return groups;
+}
+
+function groupStats(groups) {
+  return Object.fromEntries(
+    Object.entries(groups).map(([k, vals]) => [k, {
+      avg: vals.reduce((a,b) => a+b, 0) / vals.length,
+      count: vals.length
+    }])
+  );
+}
+
+function makeBarChart(canvasId, labels, avgs, counts) {
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: avgs,
+        backgroundColor: avgs.map(ratingColor),
+        borderRadius: 5,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const v = ctx.parsed.y;
+              const c = counts[ctx.dataIndex];
+              return `Avg: ${v.toFixed(2)} (${ratingLabel(v)}) · ${c} trips`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { color: textColor }, grid: { color: gridColor } },
+        y: {
+          min: 0, max: 7,
+          ticks: { stepSize: 1, callback: v => RATING_KEYS[v] || '', color: textColor },
+          grid: { color: gridColor }
+        }
+      }
+    }
+  });
+}
+
+function bestKey(stats) {
+  return Object.entries(stats).sort((a,b) => b[1].avg - a[1].avg)[0];
+}
+
+async function main() {
+  const json = await fetch(DATA_URL).then(r => r.json());
+  const rows = json.source.rows;
+
+  // 1. Pressure trend
+  const pressureOrder = ['Significant Rising','Rising','Stable','Falling','Significant Falling'];
+  const pressureGroups = groupByKey(rows, r => {
+    const s = r[29];
+    if (!s) return null;
+    const t = s.trim();
+    if (t.startsWith('Significant Rising')) return 'Significant Rising';
+    if (t.startsWith('Rising')) return 'Rising';
+    if (t.startsWith('Significant Falling')) return 'Significant Falling';
+    if (t.startsWith('Falling')) return 'Falling';
+    if (t.startsWith('Stable')) return 'Stable';
+    return null;
+  });
+  const pressureStats = groupStats(pressureGroups);
+  const pLabels = pressureOrder.filter(k => pressureStats[k]);
+  makeBarChart('pressureChart',
+    pLabels,
+    pLabels.map(k => pressureStats[k].avg),
+    pLabels.map(k => pressureStats[k].count)
+  );
+  const [bestP] = bestKey(pressureStats);
+  document.getElementById('pressureInsight').textContent =
+    `Best pressure trend in your data: "${bestP}" (avg ${pressureStats[bestP].avg.toFixed(2)} across ${pressureStats[bestP].count} trips).`;
+
+  // 2. Weather condition
+  const condOrder = ['Sunny','Mostly Sunny','Partly Cloudy','Cloudy','Drizzle','Rainy','Snow'];
+  const condGroups = groupByKey(rows, r => r[23] || null);
+  const condStats = groupStats(condGroups);
+  const cLabels = condOrder.filter(k => condStats[k]);
+  makeBarChart('conditionChart',
+    cLabels,
+    cLabels.map(k => condStats[k].avg),
+    cLabels.map(k => condStats[k].count)
+  );
+  const [bestC] = bestKey(condStats);
+  document.getElementById('conditionInsight').textContent =
+    `Best condition in your data: "${bestC}" (avg ${condStats[bestC].avg.toFixed(2)} across ${condStats[bestC].count} trips).`;
+
+  // 3. Temperature range
+  const tempBuckets = { '< 40°F':[], '40–55°F':[], '55–70°F':[], '> 70°F':[] };
+  rows.forEach(r => {
+    const mn = parseFloat(r[21]), mx = parseFloat(r[22]);
+    const val = ratingVal(r);
+    if (val === null) return;
+    const temp = (!isNaN(mn) && !isNaN(mx)) ? (mn+mx)/2 : (!isNaN(mn) ? mn : mx);
+    if (isNaN(temp)) return;
+    if (temp < 40) tempBuckets['< 40°F'].push(val);
+    else if (temp < 55) tempBuckets['40–55°F'].push(val);
+    else if (temp < 70) tempBuckets['55–70°F'].push(val);
+    else tempBuckets['> 70°F'].push(val);
+  });
+  const tLabels = Object.keys(tempBuckets).filter(k => tempBuckets[k].length > 0);
+  const tAvgs = tLabels.map(k => tempBuckets[k].reduce((a,b)=>a+b,0)/tempBuckets[k].length);
+  const tCounts = tLabels.map(k => tempBuckets[k].length);
+  makeBarChart('tempChart', tLabels, tAvgs, tCounts);
+  const bestTIdx = tAvgs.indexOf(Math.max(...tAvgs));
+  document.getElementById('tempInsight').textContent =
+    `Best temp range: ${tLabels[bestTIdx]} (avg ${tAvgs[bestTIdx].toFixed(2)} across ${tCounts[bestTIdx]} trips).`;
+
+  // 4. Day-of precipitation
+  const precipBuckets = { 'None (0")':[], 'Trace (< 0.1")':[], 'Light (0.1–0.5")':[], 'Heavy (> 0.5")':[] };
+  rows.forEach(r => {
+    const p = parseFloat(r[24]);
+    const val = ratingVal(r);
+    if (isNaN(p) || val === null) return;
+    if (p === 0) precipBuckets['None (0")'].push(val);
+    else if (p < 0.1) precipBuckets['Trace (< 0.1")'].push(val);
+    else if (p <= 0.5) precipBuckets['Light (0.1–0.5")'].push(val);
+    else precipBuckets['Heavy (> 0.5")'].push(val);
+  });
+  const prcLabels = Object.keys(precipBuckets).filter(k => precipBuckets[k].length > 0);
+  const prcAvgs = prcLabels.map(k => precipBuckets[k].reduce((a,b)=>a+b,0)/precipBuckets[k].length);
+  const prcCounts = prcLabels.map(k => precipBuckets[k].length);
+  makeBarChart('precipChart', prcLabels, prcAvgs, prcCounts);
+  const bestPrcIdx = prcAvgs.indexOf(Math.max(...prcAvgs));
+  document.getElementById('precipInsight').textContent =
+    `Best day-of precip: "${prcLabels[bestPrcIdx]}" (avg ${prcAvgs[bestPrcIdx].toFixed(2)} across ${prcCounts[bestPrcIdx]} trips).`;
+
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('content').style.display = 'block';
+}
+
+main().catch(err => {
+  document.getElementById('loading').textContent = 'Error loading data.';
+  console.error(err);
+});
+</script>

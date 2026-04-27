@@ -485,7 +485,13 @@ pre code {
 // Full-width layout for analytics/dashboard pages
 body.stream-details,
 body.analytics,
-body.planner {
+body.planner,
+body.insights,
+body.weather-correlation,
+body.monthly-heatmap,
+body.rating-trends,
+body.stream-compare,
+body.precipitation-analysis {
   .content {
     width: 100% !important;
     max-width: 100% !important;

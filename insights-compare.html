@@ -1,0 +1,382 @@
+---
+layout: default
+title: Stream Compare
+---
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+.sc-page {
+  --card-bg: #ffffff;
+  --text-primary: #384743;
+  --text-secondary: #6b7280;
+  --link-color: #05bf85;
+  --shadow: rgba(0,0,0,0.09);
+  font-family: 'Inter', sans-serif;
+  padding: 20px 0;
+  color: var(--text-primary);
+}
+body.dark-theme .sc-page {
+  --card-bg: #2d3748;
+  --text-primary: #e5e7eb;
+  --text-secondary: #9ca3af;
+  --shadow: rgba(0,0,0,0.5);
+}
+.sc-page h1 {
+  text-align: center;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--link-color);
+  margin: 0 0 .4rem;
+}
+.sc-page .subtitle {
+  text-align: center;
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+}
+.sc-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 12px var(--shadow);
+}
+.sc-card h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--link-color);
+  margin: 0 0 1rem;
+}
+.selector-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+@media (max-width: 600px) { .selector-row { grid-template-columns: 1fr; } }
+.selector-group label {
+  display: block;
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: .3rem;
+}
+.selector-group select {
+  width: 100%;
+  padding: .5rem .7rem;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: var(--card-bg);
+  color: var(--text-primary);
+  font-size: .9rem;
+  cursor: pointer;
+}
+.compare-btn {
+  background: #05bf85;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: .55rem 1.4rem;
+  font-size: .9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s;
+}
+.compare-btn:hover { background: #03a570; }
+.sc-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+@media (max-width: 768px) { .sc-grid { grid-template-columns: 1fr; } }
+.chart-wrap { position: relative; height: 280px; }
+.stats-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+.stats-table th {
+  background: #242e2b;
+  color: #d4cfc7;
+  padding: .5rem .8rem;
+  text-align: left;
+  font-weight: 600;
+}
+.stats-table td {
+  padding: .5rem .8rem;
+  border-bottom: 1px solid rgba(0,0,0,.06);
+  color: var(--text-primary);
+}
+.stats-table tbody tr:last-child td { border-bottom: none; }
+body.dark-theme .stats-table td { border-bottom-color: #374151; }
+.stream-a { color: #05bf85; font-weight: 700; }
+.stream-b { color: #f97316; font-weight: 700; }
+.stream-c { color: #8b5cf6; font-weight: 700; }
+.loading { text-align: center; color: var(--text-secondary); padding: 3rem; }
+.placeholder { text-align: center; color: var(--text-secondary); padding: 2rem; font-style: italic; }
+.sc-footer { text-align: center; margin-top: 2rem; color: var(--text-secondary); font-size: .9rem; }
+.sc-footer a { color: var(--link-color); font-weight: 600; text-decoration: none; }
+</style>
+
+<div class="sc-page typeset">
+  <h1>Stream Compare</h1>
+  <p class="subtitle">Select up to 3 streams to compare side by side.</p>
+
+  <div id="loading" class="loading">Loading data…</div>
+  <div id="app" style="display:none">
+
+    <div class="sc-card">
+      <h2>Select Streams</h2>
+      <div class="selector-row">
+        <div class="selector-group">
+          <label class="stream-a">Stream A</label>
+          <select id="sel-a"><option value="">— Select —</option></select>
+        </div>
+        <div class="selector-group">
+          <label class="stream-b">Stream B</label>
+          <select id="sel-b"><option value="">— None —</option></select>
+        </div>
+        <div class="selector-group">
+          <label class="stream-c">Stream C</label>
+          <select id="sel-c"><option value="">— None —</option></select>
+        </div>
+      </div>
+      <button class="compare-btn" id="compare-btn">Compare</button>
+    </div>
+
+    <div id="results" style="display:none">
+      <div class="sc-card">
+        <h2>Stats Comparison</h2>
+        <table class="stats-table" id="stats-table"></table>
+      </div>
+
+      <div class="sc-grid">
+        <div class="sc-card">
+          <h2>Rating Distribution</h2>
+          <div class="chart-wrap"><canvas id="distChart"></canvas></div>
+        </div>
+        <div class="sc-card">
+          <h2>Monthly Avg Rating</h2>
+          <div class="chart-wrap"><canvas id="monthlyChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="placeholder" class="placeholder">Select at least one stream and click Compare.</div>
+  </div>
+
+  <p class="sc-footer">
+    <a href="/insights">← Insights</a>&nbsp;&nbsp;·&nbsp;&nbsp;<a href="/insights-heatmap">Monthly Heatmap →</a>
+  </p>
+</div>
+
+<script>
+const DATA_URL = '/assets/data/streams.json?v={{ site.time | date: "%Y%m%d%H%M%S" }}';
+const RATING_MAP = {'F':0,'E':1,'D':2,'C':3,'B':4,'A':5,'S':6,'S+':7};
+const RATING_KEYS = ['F','E','D','C','B','A','S','S+'];
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const STREAM_COLORS = ['#05bf85', '#f97316', '#8b5cf6'];
+const isDark = document.body.classList.contains('dark-theme');
+const textColor = isDark ? '#9ca3af' : '#6b7280';
+const gridColor = isDark ? '#374151' : '#e5e7eb';
+
+let streamData = new Map(); // stream -> { rows, monthlyData }
+let distChartInst = null, monthlyChartInst = null;
+
+function ratingLabel(n) {
+  return RATING_KEYS[Math.round(Math.max(0, Math.min(7, n)))] || '';
+}
+
+function parseDate(s) {
+  if (!s) return null;
+  const p = s.split('/');
+  return p.length === 3 ? new Date(parseInt(p[2]), parseInt(p[0])-1, parseInt(p[1])) : null;
+}
+
+function streamStats(rows) {
+  const vals = rows.map(r => RATING_MAP[r[17]]).filter(v => v !== undefined);
+  const avg = vals.length ? vals.reduce((a,b) => a+b, 0) / vals.length : null;
+  const bestMonth = (() => {
+    const mGroups = {};
+    rows.forEach(r => {
+      const m = parseInt(r[19]);
+      const v = RATING_MAP[r[17]];
+      if (!m || v === undefined) return;
+      if (!mGroups[m]) mGroups[m] = [];
+      mGroups[m].push(v);
+    });
+    let best = null, bestAvg = -1;
+    Object.entries(mGroups).forEach(([m, vs]) => {
+      const a = vs.reduce((x,y) => x+y, 0) / vs.length;
+      if (a > bestAvg) { bestAvg = a; best = parseInt(m); }
+    });
+    return best ? MONTH_NAMES[best - 1] : '—';
+  })();
+  const pctExcellent = vals.filter(v => v >= 5).length / vals.length * 100;
+  const pctS = vals.filter(v => v >= 6).length / vals.length * 100;
+  const dist = RATING_KEYS.map(k => vals.filter(v => v === RATING_MAP[k]).length);
+  const monthly = Array.from({length:12}, (_,i) => {
+    const mv = rows.map(r => ({m: parseInt(r[19])-1, v: RATING_MAP[r[17]]})).filter(x => x.m === i && x.v !== undefined);
+    return mv.length ? mv.reduce((s,x) => s+x.v, 0)/mv.length : null;
+  });
+  return { count: vals.length, avg, bestMonth, pctExcellent, pctS, dist, monthly };
+}
+
+function buildResults(selected) {
+  const streams = selected.filter(Boolean);
+  if (!streams.length) {
+    document.getElementById('results').style.display = 'none';
+    document.getElementById('placeholder').style.display = 'block';
+    return;
+  }
+  document.getElementById('placeholder').style.display = 'none';
+  document.getElementById('results').style.display = 'block';
+
+  const stats = streams.map(s => ({ name: s, ...streamStats(streamData.get(s) || []) }));
+
+  // Stats table
+  const tbl = document.getElementById('stats-table');
+  const colorClass = ['stream-a', 'stream-b', 'stream-c'];
+  tbl.innerHTML = `
+    <thead><tr>
+      <th>Metric</th>
+      ${stats.map((s,i) => `<th class="${colorClass[i]}">${s.name}</th>`).join('')}
+    </tr></thead>
+    <tbody>
+      <tr><td>Total Trips</td>${stats.map(s => `<td>${s.count}</td>`).join('')}</tr>
+      <tr><td>Avg Rating</td>${stats.map(s => `<td>${s.avg !== null ? s.avg.toFixed(2) + ' (' + ratingLabel(s.avg) + ')' : '—'}</td>`).join('')}</tr>
+      <tr><td>Best Month</td>${stats.map(s => `<td>${s.bestMonth}</td>`).join('')}</tr>
+      <tr><td>A or better</td>${stats.map(s => `<td>${s.pctExcellent.toFixed(1)}%</td>`).join('')}</tr>
+      <tr><td>S or better</td>${stats.map(s => `<td>${s.pctS.toFixed(1)}%</td>`).join('')}</tr>
+    </tbody>
+  `;
+
+  // Destroy old charts
+  if (distChartInst) { distChartInst.destroy(); distChartInst = null; }
+  if (monthlyChartInst) { monthlyChartInst.destroy(); monthlyChartInst = null; }
+
+  // Rating distribution grouped bar
+  const ctx1 = document.getElementById('distChart').getContext('2d');
+  distChartInst = new Chart(ctx1, {
+    type: 'bar',
+    data: {
+      labels: RATING_KEYS,
+      datasets: stats.map((s, i) => ({
+        label: s.name,
+        data: s.dist,
+        backgroundColor: STREAM_COLORS[i] + 'cc',
+        borderColor: STREAM_COLORS[i],
+        borderWidth: 1,
+        borderRadius: 4,
+      }))
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, labels: { color: textColor, boxWidth: 14, font: { size: 11 } } },
+        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y} trips` } }
+      },
+      scales: {
+        x: { ticks: { color: textColor }, grid: { color: gridColor } },
+        y: {
+          ticks: { stepSize: 1, color: textColor },
+          grid: { color: gridColor },
+          title: { display: true, text: 'Trips', color: textColor }
+        }
+      }
+    }
+  });
+
+  // Monthly avg rating line chart
+  const ctx2 = document.getElementById('monthlyChart').getContext('2d');
+  monthlyChartInst = new Chart(ctx2, {
+    type: 'line',
+    data: {
+      labels: MONTH_NAMES,
+      datasets: stats.map((s, i) => ({
+        label: s.name,
+        data: s.monthly,
+        borderColor: STREAM_COLORS[i],
+        backgroundColor: STREAM_COLORS[i] + '22',
+        tension: 0.3,
+        pointRadius: 4,
+        spanGaps: false,
+      }))
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, labels: { color: textColor, boxWidth: 14, font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const v = ctx.parsed.y;
+              return v !== null ? `${ctx.dataset.label}: ${v.toFixed(2)} (${ratingLabel(v)})` : `${ctx.dataset.label}: no data`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { color: textColor }, grid: { color: gridColor } },
+        y: {
+          min: 0, max: 7,
+          ticks: { stepSize: 1, callback: v => RATING_KEYS[v] || '', color: textColor },
+          grid: { color: gridColor }
+        }
+      }
+    }
+  });
+}
+
+async function main() {
+  const json = await fetch(DATA_URL).then(r => r.json());
+  const allRows = json.source.rows;
+
+  // Group by stream
+  const streamCounts = new Map();
+  allRows.forEach(r => {
+    const s = r[2];
+    if (!s || s === 'Unknown') return;
+    if (!streamData.has(s)) streamData.set(s, []);
+    streamData.get(s).push(r);
+    streamCounts.set(s, (streamCounts.get(s) || 0) + 1);
+  });
+
+  // Streams with 3+ visits, sorted by count desc
+  const streams = [...streamData.keys()]
+    .filter(s => (streamCounts.get(s) || 0) >= 3)
+    .sort((a, b) => streamCounts.get(b) - streamCounts.get(a));
+
+  ['sel-a', 'sel-b', 'sel-c'].forEach((id, i) => {
+    const sel = document.getElementById(id);
+    streams.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s;
+      opt.textContent = `${s} (${streamCounts.get(s)} trips)`;
+      sel.appendChild(opt);
+    });
+  });
+
+  // Default: pre-select top 3
+  document.getElementById('sel-a').value = streams[0] || '';
+  document.getElementById('sel-b').value = streams[1] || '';
+  document.getElementById('sel-c').value = '';
+
+  document.getElementById('compare-btn').addEventListener('click', () => {
+    const selected = [
+      document.getElementById('sel-a').value,
+      document.getElementById('sel-b').value,
+      document.getElementById('sel-c').value,
+    ];
+    buildResults(selected);
+  });
+
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+
+  // Auto-run initial compare
+  buildResults([streams[0] || '', streams[1] || '', '']);
+}
+
+main().catch(err => {
+  document.getElementById('loading').textContent = 'Error loading data.';
+  console.error(err);
+});
+</script>
