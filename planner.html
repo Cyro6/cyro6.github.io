@@ -171,7 +171,6 @@ body.dark-theme .planner-page {
 .planner-page #toggle-stream-pool {
     margin-bottom: 16px;
 }
-.planner-page .trip-plan-container,
 .planner-page .stream-pool-container {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
@@ -273,6 +272,72 @@ body.dark-theme .planner-page {
 .planner-page td.midpoint { text-align: center; width: 80px; }
 .planner-page td.midpoint a { font-size: 1.2rem; display: inline-block; }
 
+/* ── Plan A/B/C cards ─────────────────────────────────────────────────────── */
+.plan-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.2rem;
+    margin-top: 0.5rem;
+}
+.plan-card {
+    flex: 1 1 260px;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px var(--shadow-color);
+}
+.plan-card-header {
+    background: var(--header-bg);
+    color: #05bf85;
+    padding: 0.65rem 1.2rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+.plan-section {
+    padding: 0.9rem 1.2rem;
+}
+.plan-section + .plan-section {
+    border-top: 1px solid rgba(0,0,0,0.09);
+}
+body.dark-theme .plan-section + .plan-section {
+    border-top-color: rgba(255,255,255,0.08);
+}
+.plan-section-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--text-secondary);
+    margin-bottom: 0.35rem;
+}
+.plan-stream-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+.plan-stream-link {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--link-color);
+    text-decoration: none;
+}
+.plan-stream-link:hover { color: var(--link-hover-color); text-decoration: none; }
+.plan-stream-none {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+.plan-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    margin-top: 0.45rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
 @media screen and (max-width: 600px) {
     .planner-page { padding: 12px; }
     .planner-page h1 { font-size: 1.6rem; }
@@ -296,7 +361,6 @@ body.dark-theme .planner-page {
     .planner-page th .header-icon { font-size: 1.1rem; }
 }
 @media screen and (max-width: 360px) {
-    .planner-page .trip-plan-container,
     .planner-page .stream-pool-container { max-width: 360px; overflow-x: auto; }
     .planner-page table { width: auto; }
     .planner-page th,
@@ -398,24 +462,7 @@ body.dark-theme .planner-page {
 
         <div id="trip-plan-loading" class="loading" style="display: none;">Generating Trip Plan...</div>
         <div id="trip-plan-error" class="error"></div>
-        <div class="trip-plan-container">
-            <table id="trip-plan-table" style="display: none;">
-                <thead>
-                    <tr>
-                        <th title="Day"><div class="header-content"><span class="header-icon">🗓️</span><span>Day</span></div></th>
-                        <th title="Primary Stream"><div class="header-content"><span class="header-icon">🌊</span><span>Primary</span></div></th>
-                        <th class="precipitation" title="Primary Precip Past 3 Days"><div class="header-content"><span class="header-icon">💧</span><span>Past</span></div></th>
-                        <th class="precipitation" title="Primary Precip Next 4 Days"><div class="header-content"><span class="header-icon">🌦️</span><span>Future</span></div></th>
-                        <th title="Backup Stream"><div class="header-content"><span class="header-icon">🌊</span><span>Backup</span></div></th>
-                        <th class="precipitation" title="Backup Precip Past 3 Days"><div class="header-content"><span class="header-icon">💧</span><span>Past</span></div></th>
-                        <th class="precipitation" title="Backup Precip Next 4 Days"><div class="header-content"><span class="header-icon">🌦️</span><span>Future</span></div></th>
-                        <th title="Straight-Line Distance (miles)"><div class="header-content"><span class="header-icon">📏</span><span>Distance</span></div></th>
-                        <th title="Est. Driving Distance (miles)"><div class="header-content"><span class="header-icon">🚗</span><span>Drive Est.</span></div></th>
-                    </tr>
-                </thead>
-                <tbody id="trip-plan-body"></tbody>
-            </table>
-        </div>
+        <div id="trip-plan-cards" class="plan-cards" style="display:none;"></div>
     </div>
 
     <!-- Card 2: Stream Pool (collapsible) -->
@@ -790,109 +837,139 @@ function streamLink(streamName) {
 }
 
 function displayTripPlan(tripPlan) {
-    const tableBody = document.getElementById('trip-plan-body');
-    const table     = document.getElementById('trip-plan-table');
-    const errorDiv  = document.getElementById('trip-plan-error');
-    if (!tableBody || !table || !errorDiv) return;
+    const cardsDiv = document.getElementById('trip-plan-cards');
+    const errorDiv = document.getElementById('trip-plan-error');
+    if (!cardsDiv || !errorDiv) return;
 
-    tableBody.innerHTML = '';
+    cardsDiv.innerHTML = '';
 
     if (tripPlan.length === 0 || tripPlan.every(p => p.primary.stream === 'None')) {
         errorDiv.textContent = 'No streams available for the selected filters.';
         errorDiv.style.display = 'block';
-        table.style.display = 'none';
+        cardsDiv.style.display = 'none';
         return;
     }
 
     errorDiv.textContent = '';
     errorDiv.style.display = 'none';
 
+    const planLabels = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+
     tripPlan.forEach((plan, planIdx) => {
-        const tr = document.createElement('tr');
+        const card = document.createElement('div');
+        card.className = 'plan-card';
 
-        // Day
-        const tdDay = document.createElement('td');
-        tdDay.textContent = plan.day;
-        tr.appendChild(tdDay);
+        // Header
+        const header = document.createElement('div');
+        header.className = 'plan-card-header';
+        header.textContent = `Plan ${planLabels[planIdx] || planIdx + 1}`;
+        card.appendChild(header);
 
-        // Primary stream
-        const tdPrimary = document.createElement('td');
-        tdPrimary.style.whiteSpace = 'nowrap';
-        tdPrimary.appendChild(streamLink(plan.primary.stream));
-        if (plan.primaryRating !== undefined && plan.primary.stream !== 'None') {
-            tdPrimary.appendChild(ratingBadge(plan.primaryRating));
+        // PRIMARY section
+        const primarySection = document.createElement('div');
+        primarySection.className = 'plan-section';
+
+        const primaryLabel = document.createElement('div');
+        primaryLabel.className = 'plan-section-label';
+        primaryLabel.textContent = 'Primary';
+        primarySection.appendChild(primaryLabel);
+
+        const primaryRow = document.createElement('div');
+        primaryRow.className = 'plan-stream-row';
+        if (plan.primary.stream && plan.primary.stream !== 'None') {
+            const a = document.createElement('a');
+            a.href = `/stream-details?stream=${encodeURIComponent(plan.primary.stream)}`;
+            a.textContent = plan.primary.stream;
+            a.className = 'plan-stream-link';
+            primaryRow.appendChild(a);
+            if (plan.primaryRating !== undefined) {
+                primaryRow.appendChild(ratingBadge(plan.primaryRating));
+            }
+        } else {
+            const span = document.createElement('span');
+            span.className = 'plan-stream-none';
+            span.textContent = 'None available';
+            primaryRow.appendChild(span);
         }
-        tr.appendChild(tdPrimary);
+        primarySection.appendChild(primaryRow);
 
-        // Primary precip past
-        const tdPPast = document.createElement('td');
-        tdPPast.classList.add('precipitation');
-        tdPPast.id = `pp-past-${planIdx}`;
-        tdPPast.textContent = plan.primaryPrecipitationPast;
-        tr.appendChild(tdPPast);
-
-        // Primary precip future
-        const tdPFuture = document.createElement('td');
-        tdPFuture.classList.add('precipitation');
-        tdPFuture.id = `pp-future-${planIdx}`;
-        tdPFuture.textContent = plan.primaryPrecipitationFuture;
-        tr.appendChild(tdPFuture);
-
-        // Backup stream
-        const tdBackup = document.createElement('td');
-        tdBackup.style.whiteSpace = 'nowrap';
-        tdBackup.appendChild(streamLink(plan.backup.stream));
-        if (plan.backupRating !== undefined && plan.backup.stream !== 'None') {
-            tdBackup.appendChild(ratingBadge(plan.backupRating));
+        if (plan.primary.stream !== 'None') {
+            const primaryMeta = document.createElement('div');
+            primaryMeta.className = 'plan-meta';
+            primaryMeta.innerHTML =
+                `<span>💧 3-day rain: <span id="pp-past-${planIdx}">${plan.primaryPrecipitationPast}</span></span>` +
+                `<span>🌦 4-day fcst: <span id="pp-future-${planIdx}">${plan.primaryPrecipitationFuture}</span></span>`;
+            primarySection.appendChild(primaryMeta);
         }
-        tr.appendChild(tdBackup);
+        card.appendChild(primarySection);
 
-        // Backup precip past
-        const tdBPast = document.createElement('td');
-        tdBPast.classList.add('precipitation');
-        tdBPast.id = `bp-past-${planIdx}`;
-        tdBPast.textContent = plan.backupPrecipitationPast;
-        tr.appendChild(tdBPast);
+        // BACKUP section
+        const backupSection = document.createElement('div');
+        backupSection.className = 'plan-section';
 
-        // Backup precip future
-        const tdBFuture = document.createElement('td');
-        tdBFuture.classList.add('precipitation');
-        tdBFuture.id = `bp-future-${planIdx}`;
-        tdBFuture.textContent = plan.backupPrecipitationFuture;
-        tr.appendChild(tdBFuture);
+        const backupLabel = document.createElement('div');
+        backupLabel.className = 'plan-section-label';
+        backupLabel.textContent = 'Backup';
+        backupSection.appendChild(backupLabel);
 
-        // Straight distance
-        const tdDist = document.createElement('td');
-        tdDist.textContent = plan.straightDistance !== 'N/A' ? `${plan.straightDistance} mi` : 'N/A';
-        tr.appendChild(tdDist);
+        const backupRow = document.createElement('div');
+        backupRow.className = 'plan-stream-row';
+        if (plan.backup.stream && plan.backup.stream !== 'None') {
+            const a = document.createElement('a');
+            a.href = `/stream-details?stream=${encodeURIComponent(plan.backup.stream)}`;
+            a.textContent = plan.backup.stream;
+            a.className = 'plan-stream-link';
+            backupRow.appendChild(a);
+            if (plan.backupRating !== undefined) {
+                backupRow.appendChild(ratingBadge(plan.backupRating));
+            }
+        } else {
+            const span = document.createElement('span');
+            span.className = 'plan-stream-none';
+            span.textContent = 'None nearby';
+            backupRow.appendChild(span);
+        }
+        backupSection.appendChild(backupRow);
 
-        // Driving estimate
-        const tdDrive = document.createElement('td');
-        tdDrive.textContent = plan.drivingDistance !== 'N/A' ? `${plan.drivingDistance} mi` : 'N/A';
-        tr.appendChild(tdDrive);
+        const backupMeta = document.createElement('div');
+        backupMeta.className = 'plan-meta';
+        let metaHtml = '';
+        if (plan.backup.stream !== 'None') {
+            metaHtml +=
+                `<span>💧 3-day rain: <span id="bp-past-${planIdx}">${plan.backupPrecipitationPast}</span></span>` +
+                `<span>🌦 4-day fcst: <span id="bp-future-${planIdx}">${plan.backupPrecipitationFuture}</span></span>`;
+        }
+        if (plan.straightDistance !== 'N/A') {
+            metaHtml += `<span>📏 ${plan.straightDistance} mi from primary</span>`;
+        }
+        if (metaHtml) {
+            backupMeta.innerHTML = metaHtml;
+            backupSection.appendChild(backupMeta);
+        }
+        card.appendChild(backupSection);
 
-        tableBody.appendChild(tr);
+        cardsDiv.appendChild(card);
     });
 
-    table.style.display = 'table';
+    cardsDiv.style.display = 'flex';
 
-    // Fetch precipitation asynchronously and update cells as they resolve
+    // Fetch precipitation asynchronously and update spans as they resolve
     tripPlan.forEach(async (plan, planIdx) => {
         if (plan.primary.gps !== 'N/A') {
             const [lat, lon] = plan.primary.gps.split(',').map(Number);
             const precip = await fetchPrecipitationData(lat, lon);
-            const pastCell   = document.getElementById(`pp-past-${planIdx}`);
-            const futureCell = document.getElementById(`pp-future-${planIdx}`);
-            if (pastCell)   pastCell.textContent   = precip.past;
-            if (futureCell) futureCell.textContent = precip.future;
+            const pastEl   = document.getElementById(`pp-past-${planIdx}`);
+            const futureEl = document.getElementById(`pp-future-${planIdx}`);
+            if (pastEl)   pastEl.textContent   = precip.past;
+            if (futureEl) futureEl.textContent = precip.future;
         }
         if (plan.backup.gps !== 'N/A') {
             const [lat, lon] = plan.backup.gps.split(',').map(Number);
             const precip = await fetchPrecipitationData(lat, lon);
-            const pastCell   = document.getElementById(`bp-past-${planIdx}`);
-            const futureCell = document.getElementById(`bp-future-${planIdx}`);
-            if (pastCell)   pastCell.textContent   = precip.past;
-            if (futureCell) futureCell.textContent = precip.future;
+            const pastEl   = document.getElementById(`bp-past-${planIdx}`);
+            const futureEl = document.getElementById(`bp-future-${planIdx}`);
+            if (pastEl)   pastEl.textContent   = precip.past;
+            if (futureEl) futureEl.textContent = precip.future;
         }
     });
 }
