@@ -732,9 +732,11 @@ function generateTripPlan(filteredStreams, allStreams, numDays, maxBackupDistanc
         tripPlan.push({
             day,
             primary: { stream: primaryStream.stream, gps: primaryGps },
+            primaryRating: primaryStream.rating,
             primaryPrecipitationPast:   primaryStream.midpoint ? '...' : 'N/A',
             primaryPrecipitationFuture: primaryStream.midpoint ? '...' : 'N/A',
             backup: { stream: backupStream.stream, gps: backupGps },
+            backupRating: backupStream.rating,
             backupPrecipitationPast:   backupStream.midpoint ? '...' : 'N/A',
             backupPrecipitationFuture: backupStream.midpoint ? '...' : 'N/A',
             straightDistance,
@@ -759,6 +761,24 @@ function getRatingColor(rating) {
     } else {
         return '#22c55e';
     }
+}
+
+function ratingToLetter(avg) {
+    if (avg === null || avg === undefined || isNaN(avg)) return '—';
+    const letters = ['F', 'E', 'D', 'C', 'B', 'A', 'S'];
+    const clamped = Math.max(0, Math.min(6.99, avg));
+    const base = Math.floor(clamped);
+    const letter = letters[Math.min(base, 6)];
+    return (clamped - base) >= 0.5 ? letter + '+' : letter;
+}
+
+function ratingBadge(avg) {
+    const span = document.createElement('span');
+    span.textContent = ratingToLetter(avg);
+    span.style.cssText =
+        'display:inline-block;margin-left:6px;padding:1px 6px;border-radius:4px;' +
+        `background:${getRatingColor(avg)};color:white;font-size:0.75rem;font-weight:700;vertical-align:middle;`;
+    return span;
 }
 
 function streamLink(streamName) {
@@ -797,7 +817,11 @@ function displayTripPlan(tripPlan) {
 
         // Primary stream
         const tdPrimary = document.createElement('td');
+        tdPrimary.style.whiteSpace = 'nowrap';
         tdPrimary.appendChild(streamLink(plan.primary.stream));
+        if (plan.primaryRating !== undefined && plan.primary.stream !== 'None') {
+            tdPrimary.appendChild(ratingBadge(plan.primaryRating));
+        }
         tr.appendChild(tdPrimary);
 
         // Primary precip past
@@ -816,7 +840,11 @@ function displayTripPlan(tripPlan) {
 
         // Backup stream
         const tdBackup = document.createElement('td');
+        tdBackup.style.whiteSpace = 'nowrap';
         tdBackup.appendChild(streamLink(plan.backup.stream));
+        if (plan.backupRating !== undefined && plan.backup.stream !== 'None') {
+            tdBackup.appendChild(ratingBadge(plan.backupRating));
+        }
         tr.appendChild(tdBackup);
 
         // Backup precip past
@@ -942,8 +970,8 @@ function displayStreamPool(rows) {
 
         // Rating (color-coded)
         const tdRating = document.createElement('td');
-        tdRating.textContent = row.rating;
         const rating = parseFloat(row.rating);
+        tdRating.textContent = ratingToLetter(rating);
         if (!isNaN(rating) && rating >= 0 && rating <= 6) {
             tdRating.style.backgroundColor = getRatingColor(rating);
             tdRating.style.color = 'white';
