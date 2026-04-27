@@ -74,7 +74,7 @@ body.dark-theme .wc-page {
 
 <div class="wc-page typeset">
   <h1>Weather Correlation</h1>
-  <p class="subtitle">How conditions affect your catch rating — based on 600+ trips with logged weather.</p>
+  <p class="subtitle">How conditions affect your catch rating — <span id="wx-count">loading…</span> trips with logged weather.</p>
 
   <div id="loading" class="loading">Loading data…</div>
   <div id="content" style="display:none">
@@ -209,6 +209,8 @@ function bestKey(stats) {
 async function main() {
   const json = await fetch(DATA_URL).then(r => r.json());
   const rows = json.source.rows;
+  const wxCount = rows.filter(r => r[21]).length;
+  document.getElementById('wx-count').textContent = wxCount.toLocaleString();
 
   // 1. Pressure trend
   const pressureOrder = ['Significant Rising','Rising','Stable','Falling','Significant Falling'];

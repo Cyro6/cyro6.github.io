@@ -88,7 +88,7 @@ body.dark-theme .matrix-table td { border-color: #374151; }
 
 <div class="pa-page typeset">
   <h1>Precipitation Analysis</h1>
-  <p class="subtitle">Does rain help or hurt? Day-of precipitation vs 3-day prior rainfall vs your ratings.</p>
+  <p class="subtitle">Does rain help or hurt? Day-of precipitation vs 3-day prior rainfall vs your ratings — <span id="precip-count">loading…</span> trips with precipitation data.</p>
 
   <div id="loading" class="loading">Loading data…</div>
   <div id="content" style="display:none">
@@ -191,6 +191,8 @@ function makeBarChart(canvasId, labels, avgs, counts) {
 async function main() {
   const json = await fetch(DATA_URL).then(r => r.json());
   const rows = json.source.rows;
+  const precipCount = rows.filter(r => r[24] !== '' && RATING_MAP[r[17]] !== undefined).length;
+  document.getElementById('precip-count').textContent = precipCount.toLocaleString();
 
   // Day-of precip buckets
   const dayBuckets = {
