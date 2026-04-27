@@ -543,7 +543,9 @@ const REQUEST_DELAY = 100;
 const RETRY_DELAY = 1000;
 const MAX_RETRIES = 3;
 const BATCH_SIZE = 5;
+const CONFIDENCE_C = 4; // visits needed to fully trust a rating
 
+let globalAvgRating = 3.5; // updated after data loads
 let sourceData = null;
 let campsiteData = null;
 let processedData = null;
@@ -557,6 +559,10 @@ let isStreamPoolVisible = false;
 const precipitationCache = new Map();
 
 // ── Utility ──────────────────────────────────────────────────────────────────
+
+function confidenceScore(rating, visits) {
+    return (visits * rating + CONFIDENCE_C * globalAvgRating) / (visits + CONFIDENCE_C);
+}
 
 function haversineDistance(lat1, lon1, lat2, lon2) {
     const R = 3958.8;
@@ -688,6 +694,10 @@ function processSourceData() {
     });
 
     allData = Object.values(groupedAll).map(entry => buildEntryAll(entry));
+
+    if (allData.length > 0) {
+        globalAvgRating = allData.reduce((sum, s) => sum + s.rating, 0) / allData.length;
+    }
 }
 
 function buildEntry({ month, stream, ratings, sections, spots }) {
@@ -780,7 +790,7 @@ function generateTripPlan(filteredStreams, allStreams, numDays, maxBackupDistanc
             continue;
         }
 
-        availablePrimary.sort((a, b) => b.rating - a.rating);
+        availablePrimary.sort((a, b) => confidenceScore(b.rating, b.visits) - confidenceScore(a.rating, a.visits));
         const primaryStream = availablePrimary[0];
         usedStreams.add(primaryStream.stream);
 
@@ -1007,7 +1017,7 @@ function getTopCampsites(streams, radius, n = 2) {
                 .filter(s => s.campsiteDist <= radius)
                 .sort((a, b) => b.rating - a.rating);
             if (nearby.length === 0) return null;
-            const score = nearby.slice(0, 5).reduce((sum, s) => sum + s.rating, 0);
+            const score = nearby.slice(0, 5).reduce((sum, s) => sum + confidenceScore(s.rating, s.visits), 0);
             return { name, lat, lon, score, count: nearby.length, nearby };
         })
         .filter(Boolean)
