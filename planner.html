@@ -501,6 +501,16 @@ body.dark-theme .campsite-section-header {
                         <option value="MX">MX</option>
                     </select>
                 </div>
+                <div>
+                    <label for="years-back-select"><span class="icon">🕐</span> Data Window:</label>
+                    <select id="years-back-select" onchange="applyFilters()">
+                        <option value="2">Last 2 yrs</option>
+                        <option value="4" selected>Last 4 yrs</option>
+                        <option value="6">Last 6 yrs</option>
+                        <option value="8">Last 8 yrs</option>
+                        <option value="0">All time</option>
+                    </select>
+                </div>
             </div>
         </div>
 
@@ -550,6 +560,7 @@ let sourceData = null;
 let campsiteData = null;
 let processedData = null;
 let allData = null;
+let validRows = []; // all parsed rows with dates, re-grouped per filter
 let filteredData = [];
 let streamPoolData = [];
 let sortColumn = 'Visits';
@@ -647,57 +658,57 @@ function processSourceData() {
     const ratingMap = { 'F': 0, 'E': 1, 'D': 2, 'C': 3, 'B': 4, 'A': 5, 'S': 6 };
     const excludedStreams = ['Unknown', 'Central Sands', 'Minnesota', 'Southern WI'];
 
-    const validData = sourceData.rows
+    validRows = sourceData.rows
         .filter(row => {
             if (row.length < 18) return false;
             const stream = row[2]?.trim() || '';
             const rating = row[17]?.toUpperCase();
-            const validRating = /^[SABCDEF]$/.test(rating);
-            const validStream = !excludedStreams.some(excluded => stream.includes(excluded));
-            return validRating && validStream;
+            return /^[SABCDEF]$/.test(rating) && !excludedStreams.some(e => stream.includes(e));
         })
         .map(row => {
             const dateRaw = row[0] || '01/01/2000';
-            const date = new Date(dateRaw.replace(/(\d+)\/(\d+)\/(\d+)/, '$3-$1-$2'));
-            const month = isNaN(date.getTime()) ? 'Unknown' : date.toLocaleString('default', { month: 'long' });
-            const stream  = row[2]?.trim() || '';
-            const rating  = row[17]?.toUpperCase();
-            const section = row[15]?.trim().toUpperCase() || 'UNKNOWN';
-            const lat = parseFloat(row[12]);
-            const lon = parseFloat(row[13]);
-            return [month, stream, rating, section, lat, lon];
+            const d = new Date(dateRaw.replace(/(\d+)\/(\d+)\/(\d+)/, '$3-$1-$2'));
+            const date = isNaN(d.getTime()) ? null : d;
+            const month = date ? date.toLocaleString('default', { month: 'long' }) : 'Unknown';
+            return {
+                date,
+                month,
+                stream:  row[2]?.trim() || '',
+                rating:  ratingMap[row[17]?.toUpperCase()],
+                section: row[15]?.trim().toUpperCase() || 'UNKNOWN',
+                lat:     parseFloat(row[12]),
+                lon:     parseFloat(row[13])
+            };
         });
 
-    // Group by month + stream
-    const groupedByMonth = {};
-    validData.forEach(([month, stream, rating, section, lat, lon]) => {
+    // Build full grouped data (no date filter) for the month dropdown
+    const { processed, all, avg } = buildGroupedData(validRows);
+    processedData   = processed;
+    allData         = all;
+    globalAvgRating = avg;
+}
+
+function buildGroupedData(rows) {
+    const byMonth  = {};
+    const byStream = {};
+
+    rows.forEach(({ month, stream, rating, section, lat, lon }) => {
         const key = `${month}|${stream}`;
-        if (!groupedByMonth[key]) {
-            groupedByMonth[key] = { month, stream, ratings: [], sections: [], spots: [] };
-        }
-        groupedByMonth[key].ratings.push(ratingMap[rating]);
-        groupedByMonth[key].sections.push(section);
-        if (!isNaN(lat) && !isNaN(lon)) groupedByMonth[key].spots.push({ lat, lon });
+        if (!byMonth[key]) byMonth[key] = { month, stream, ratings: [], sections: [], spots: [] };
+        byMonth[key].ratings.push(rating);
+        byMonth[key].sections.push(section);
+        if (!isNaN(lat) && !isNaN(lon)) byMonth[key].spots.push({ lat, lon });
+
+        if (!byStream[stream]) byStream[stream] = { stream, ratings: [], sections: [], spots: [] };
+        byStream[stream].ratings.push(rating);
+        byStream[stream].sections.push(section);
+        if (!isNaN(lat) && !isNaN(lon)) byStream[stream].spots.push({ lat, lon });
     });
 
-    processedData = Object.values(groupedByMonth).map(entry => buildEntry(entry));
-
-    // Group by stream only
-    const groupedAll = {};
-    validData.forEach(([month, stream, rating, section, lat, lon]) => {
-        if (!groupedAll[stream]) {
-            groupedAll[stream] = { stream, ratings: [], sections: [], spots: [] };
-        }
-        groupedAll[stream].ratings.push(ratingMap[rating]);
-        groupedAll[stream].sections.push(section);
-        if (!isNaN(lat) && !isNaN(lon)) groupedAll[stream].spots.push({ lat, lon });
-    });
-
-    allData = Object.values(groupedAll).map(entry => buildEntryAll(entry));
-
-    if (allData.length > 0) {
-        globalAvgRating = allData.reduce((sum, s) => sum + s.rating, 0) / allData.length;
-    }
+    const processed = Object.values(byMonth).map(e => buildEntry(e));
+    const all       = Object.values(byStream).map(e => buildEntryAll(e));
+    const avg       = all.length > 0 ? all.reduce((s, x) => s + x.rating, 0) / all.length : 3.5;
+    return { processed, all, avg };
 }
 
 function buildEntry({ month, stream, ratings, sections, spots }) {
@@ -1278,10 +1289,19 @@ async function applyFilters() {
     const maxBackupDistance  = parseFloat(backupDistanceSelect.value) || 20;
     const numDays            = parseInt(tripDaysSelect.value) || 3;
     const numRadius          = selectedRadius === 'ALL' ? 30 : parseFloat(selectedRadius);
+    const yearsBack          = parseInt(document.getElementById('years-back-select')?.value) || 0;
+
+    // Re-group trips filtered to the selected time window
+    const cutoff = yearsBack > 0
+        ? new Date(Date.now() - yearsBack * 365.25 * 24 * 60 * 60 * 1000)
+        : null;
+    const timeRows = cutoff ? validRows.filter(r => r.date && r.date >= cutoff) : validRows;
+    const { processed: localProcessed, all: localAll, avg: localAvg } = buildGroupedData(timeRows);
+    globalAvgRating = localAvg; // keep confidence scoring calibrated to this window
 
     const rowsToProcess = selectedMonth === 'ALL'
-        ? allData
-        : processedData.filter(row => row.month === selectedMonth);
+        ? localAll
+        : localProcessed.filter(row => row.month === selectedMonth);
 
     // Base pool: apply name/visits/rating/section filters, no campsite restriction
     const basePool = rowsToProcess.map(row => ({
@@ -1343,6 +1363,8 @@ function clearFilters() {
     if (radiusSelect)  radiusSelect.value  = '30';
     if (backupDistSel) backupDistSel.value = '20';
     if (tripDaysSel)   tripDaysSel.value   = '3';
+    const yearsBackSel = document.getElementById('years-back-select');
+    if (yearsBackSel)  yearsBackSel.value  = '4';
 
     // Re-select current month
     const monthSelect = document.getElementById('month-select');
