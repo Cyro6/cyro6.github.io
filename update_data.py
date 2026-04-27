@@ -5,6 +5,9 @@
 #
 # Output: assets/data/streams.json
 # After running, commit the updated streams.json to the repo and push.
+#
+# If weather_cache.json exists (created by fill_weather.py), it is
+# automatically merged in so filled weather data survives sheet re-downloads.
 
 import urllib.request
 import csv
@@ -22,6 +25,13 @@ CAMPSITE_URL = f'https://docs.google.com/spreadsheets/d/e/{SHEET_ID}/pub?gid={CA
 STREAM_INFO_URL = f'https://docs.google.com/spreadsheets/d/e/{SHEET_ID}/pub?gid={STREAM_INFO_GID}&single=true&output=csv'
 
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'assets', 'data', 'streams.json')
+CACHE_PATH  = os.path.join(os.path.dirname(__file__), 'assets', 'data', 'weather_cache.json')
+
+FIELD_MAP = [
+    (21, 'tmin'), (22, 'tmax'), (23, 'condition'), (24, 'precip'),
+    (25, 'recent_rain'), (26, 'wind_speed'), (27, 'wind_dir'),
+    (28, 'pressure'), (29, 'pressure_trend'),
+]
 
 
 def fetch_csv(url, label):
@@ -45,6 +55,35 @@ def fetch_csv(url, label):
     return {'headers': headers, 'rows': data}
 
 
+def _cache_key(date_mdy, lat_s, lon_s):
+    try:
+        p = date_mdy.strip().split('/')
+        iso = f"{p[2]}-{int(p[0]):02d}-{int(p[1]):02d}"
+        return f"{iso}_{round(float(lat_s), 2):.2f}_{round(float(lon_s), 2):.2f}"
+    except Exception:
+        return None
+
+
+def apply_weather_cache(rows):
+    if not os.path.exists(CACHE_PATH):
+        return 0
+    with open(CACHE_PATH, encoding='utf-8') as f:
+        cache = json.load(f)
+    applied = 0
+    for row in rows:
+        if row[21]:  # already has min temp — sheet data takes priority
+            continue
+        key = _cache_key(row[0], row[12], row[13])
+        if not key or key not in cache:
+            continue
+        wx = cache[key]
+        for col, field in FIELD_MAP:
+            if not row[col] and wx.get(field):
+                row[col] = wx[field]
+        applied += 1
+    return applied
+
+
 def main():
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
 
@@ -53,6 +92,10 @@ def main():
     stream_info = fetch_csv(STREAM_INFO_URL, 'stream info')
 
     output = {'source': source, 'campsites': campsites, 'stream_info': stream_info}
+
+    applied = apply_weather_cache(output['source']['rows'])
+    if applied:
+        print(f'Applied weather cache to {applied} rows')
 
     with open(OUTPUT_PATH, 'w', encoding='utf-8') as f:
         json.dump(output, f)
