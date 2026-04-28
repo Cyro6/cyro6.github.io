@@ -209,13 +209,68 @@ body.dark-theme .legend-item { color: #e5e7eb; }
   text-decoration: none;
 }
 .sp-link:hover { color: #008000; }
+
+/* ── View mode badge ─────────────────────────────────────────────────────── */
+.view-mode-badge {
+  display: inline-block;
+  font-size: .7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  letter-spacing: .04em;
+  transition: background .2s, color .2s;
+}
+.view-mode-badge.streams {
+  background: rgba(5,191,133,.12);
+  color: #05bf85;
+}
+.view-mode-badge.trips {
+  background: rgba(249,115,22,.12);
+  color: #f97316;
+}
+
+/* ── Trip circle popup ───────────────────────────────────────────────────── */
+.trip-popup {
+  padding: 12px 15px;
+  min-width: 200px;
+  font-family: 'Inter', sans-serif;
+}
+.tp-name {
+  font-size: .95rem;
+  font-weight: 700;
+  color: #05bf85;
+  margin-bottom: 8px;
+}
+.tp-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .82rem;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+.tp-row strong { color: #384743; font-weight: 600; }
+.tp-link {
+  display: block;
+  margin-top: 8px;
+  padding-top: 7px;
+  border-top: 1px solid #f0ebe0;
+  color: #05bf85;
+  font-weight: 600;
+  font-size: .82rem;
+  text-decoration: none;
+}
+.tp-link:hover { color: #008000; }
 </style>
 
 <div class="stream-map-page">
   <div id="stream-map"></div>
 
   <div class="map-controls" id="map-controls">
-    <div class="map-controls-title">🗺 Stream Map</div>
+    <div class="map-controls-title" style="display:flex;align-items:center;justify-content:space-between;">
+      <span>🗺 Stream Map</span>
+      <span class="view-mode-badge streams" id="view-badge">Streams</span>
+    </div>
 
     <div class="ctrl-group">
       <span class="ctrl-label">Color by</span>
@@ -255,8 +310,9 @@ body.dark-theme .legend-item { color: #e5e7eb; }
 </div>
 
 <script>
-const DATA_URL = '/assets/data/streams.json?v={{ site.time | date: "%Y%m%d%H%M%S" }}';
-const EXCLUDED  = ['Unknown','Central Sands','Minnesota','Southern WI'];
+const DATA_URL      = '/assets/data/streams.json?v={{ site.time | date: "%Y%m%d%H%M%S" }}';
+const EXCLUDED      = ['Unknown','Central Sands','Minnesota','Southern WI'];
+const ZOOM_THRESHOLD = 11;
 const RATING_MAP  = {'F':0,'E':1,'D':2,'C':3,'B':4,'A':5,'S':6};
 const RATING_KEYS = ['F','E','D','C','B','A','S'];
 
@@ -301,7 +357,6 @@ L.tileLayer(tileUrl, {
   maxZoom: 18
 }).addTo(map);
 
-// Prevent control panel interactions from reaching the map
 ['map-controls','map-legend'].forEach(id => {
   const el = document.getElementById(id);
   if (!el) return;
@@ -312,9 +367,11 @@ L.tileLayer(tileUrl, {
 
 // ── State ─────────────────────────────────────────────────────────────────────
 
-let streamData = [];  // all parsed stream objects
-let markers    = [];  // currently shown Leaflet markers
-let colorMode  = 'recent';
+let streamData  = [];  // aggregated per-stream objects
+let allTripData = [];  // flat individual trips: { name, lat, lon, date, rating, section }
+let streamLayer = L.layerGroup().addTo(map);
+let tripLayer   = L.layerGroup();
+let colorMode   = 'recent';
 let didFitBounds = false;
 
 // ── Controls ──────────────────────────────────────────────────────────────────
@@ -326,7 +383,7 @@ function setColorMode(mode) {
   renderMarkers();
 }
 
-// ── Marker factory ────────────────────────────────────────────────────────────
+// ── Marker / popup factories ──────────────────────────────────────────────────
 
 function makeIcon(displayRating, visits) {
   const color = ratingColor(displayRating);
@@ -345,8 +402,6 @@ function makeIcon(displayRating, visits) {
     popupAnchor:[0, -r - 2]
   });
 }
-
-// ── Popup factory ─────────────────────────────────────────────────────────────
 
 function makePopup(s) {
   const rc = ratingColor(s.recentRating);
@@ -369,15 +424,31 @@ function makePopup(s) {
   </div>`;
 }
 
+function makeTripPopup(t) {
+  const rc = ratingColor(t.rating);
+  return `<div class="trip-popup">
+    <div class="tp-name">🌊 ${t.name}</div>
+    <div class="tp-row"><strong>Date:</strong> ${fmtDate(t.date)}</div>
+    <div class="tp-row">
+      <strong>Rating:</strong>
+      <span class="rating-pill" style="background:${rc}">${ratingToLetter(t.rating)}</span>
+    </div>
+    ${t.section ? `<div class="tp-row"><strong>Section:</strong> ${t.section}</div>` : ''}
+    <a class="tp-link" href="/stream-details?stream=${encodeURIComponent(t.name)}">View stream history &rarr;</a>
+  </div>`;
+}
+
 // ── Render ────────────────────────────────────────────────────────────────────
 
 function renderMarkers() {
-  markers.forEach(m => map.removeLayer(m));
-  markers = [];
+  streamLayer.clearLayers();
 
   const minVisits = parseInt(document.getElementById('map-min-visits').value) || 1;
   const yearsBack = parseInt(document.getElementById('map-years').value) || 0;
   const cutoff    = yearsBack > 0 ? new Date(Date.now() - yearsBack * 365.25 * 86400000) : null;
+
+  let count  = 0;
+  const bounds = [];
 
   streamData.forEach(s => {
     const trips = cutoff ? s.allTrips.filter(t => t.date && t.date >= cutoff) : s.allTrips;
@@ -387,7 +458,6 @@ function renderMarkers() {
     const recentTrip = trips[0];
     const avgRating  = trips.reduce((sum,t) => sum + t.rating, 0) / trips.length;
 
-    // Best month (require ≥2 trips in month to qualify)
     const byMonth = {};
     trips.forEach(t => {
       if (!t.date) return;
@@ -405,18 +475,81 @@ function renderMarkers() {
 
     const marker = L.marker([s.lat, s.lon], { icon: makeIcon(displayRating, trips.length) });
     marker.bindPopup(makePopup(info), { maxWidth: 280, closeButton: true });
-    marker.addTo(map);
-    markers.push(marker);
+    streamLayer.addLayer(marker);
+    bounds.push([s.lat, s.lon]);
+    count++;
   });
 
-  document.getElementById('map-stat').textContent =
-    `${markers.length} stream${markers.length !== 1 ? 's' : ''} shown`;
+  if (map.getZoom() < ZOOM_THRESHOLD) {
+    document.getElementById('map-stat').textContent =
+      `${count} stream${count !== 1 ? 's' : ''} · zoom in for trips`;
+  }
 
-  if (!didFitBounds && markers.length > 0) {
-    map.fitBounds(L.featureGroup(markers).getBounds().pad(0.12));
+  if (!didFitBounds && bounds.length > 0) {
+    map.fitBounds(L.latLngBounds(bounds).pad(0.12));
     didFitBounds = true;
   }
+
+  renderTripMarkers();
 }
+
+function renderTripMarkers() {
+  tripLayer.clearLayers();
+
+  const yearsBack = parseInt(document.getElementById('map-years').value) || 0;
+  const cutoff    = yearsBack > 0 ? new Date(Date.now() - yearsBack * 365.25 * 86400000) : null;
+
+  let count = 0;
+  allTripData.forEach(t => {
+    if (cutoff && t.date && t.date < cutoff) return;
+
+    const cm = L.circleMarker([t.lat, t.lon], {
+      radius:      7,
+      fillColor:   ratingColor(t.rating),
+      fillOpacity: 0.88,
+      color:       'rgba(255,255,255,.75)',
+      weight:      1.5
+    });
+    cm.bindPopup(makeTripPopup(t), { maxWidth: 260, closeButton: true });
+    tripLayer.addLayer(cm);
+    count++;
+  });
+
+  if (map.getZoom() >= ZOOM_THRESHOLD) {
+    document.getElementById('map-stat').textContent =
+      `${count} trip${count !== 1 ? 's' : ''} shown`;
+  }
+}
+
+// ── Zoom layer switch ─────────────────────────────────────────────────────────
+
+function handleZoomChange() {
+  const zoom  = map.getZoom();
+  const badge = document.getElementById('view-badge');
+
+  if (zoom >= ZOOM_THRESHOLD) {
+    if (map.hasLayer(streamLayer)) map.removeLayer(streamLayer);
+    if (!map.hasLayer(tripLayer))  tripLayer.addTo(map);
+    badge.className   = 'view-mode-badge trips';
+    badge.textContent = 'Trips';
+    // recount filtered trips for the stat
+    const yb = parseInt(document.getElementById('map-years').value) || 0;
+    const co = yb > 0 ? new Date(Date.now() - yb * 365.25 * 86400000) : null;
+    const cnt = allTripData.filter(t => !co || !t.date || t.date >= co).length;
+    document.getElementById('map-stat').textContent = `${cnt} trip${cnt !== 1 ? 's' : ''} shown`;
+  } else {
+    if (map.hasLayer(tripLayer))    map.removeLayer(tripLayer);
+    if (!map.hasLayer(streamLayer)) streamLayer.addTo(map);
+    badge.className   = 'view-mode-badge streams';
+    badge.textContent = 'Streams';
+    let cnt = 0;
+    streamLayer.eachLayer(() => cnt++);
+    document.getElementById('map-stat').textContent =
+      `${cnt} stream${cnt !== 1 ? 's' : ''} · zoom in for trips`;
+  }
+}
+
+map.on('zoomend', handleZoomChange);
 
 // ── Legend ────────────────────────────────────────────────────────────────────
 
@@ -440,8 +573,8 @@ async function init() {
     const raw  = {};
 
     rows.forEach(row => {
-      const stream = row[2]?.trim();
-      const rating = RATING_MAP[row[17]?.toUpperCase()];
+      const stream  = row[2]?.trim();
+      const rating  = RATING_MAP[row[17]?.toUpperCase()];
       if (!stream || rating === undefined) return;
       if (EXCLUDED.some(e => stream.includes(e))) return;
 
@@ -449,13 +582,16 @@ async function init() {
       const lon = parseFloat(row[13]);
       if (isNaN(lat) || isNaN(lon) || (Math.abs(lat) < 0.001 && Math.abs(lon) < 0.001)) return;
 
-      const m = (row[0] || '').match(/^(\d+)\/(\d+)\/(\d+)/);
-      const date = m ? new Date(Date.UTC(+m[3], +m[1]-1, +m[2])) : null;
+      const m       = (row[0] || '').match(/^(\d+)\/(\d+)\/(\d+)/);
+      const date    = m ? new Date(Date.UTC(+m[3], +m[1]-1, +m[2])) : null;
+      const section = row[3]?.trim() || '';
 
       if (!raw[stream]) raw[stream] = { lats:[], lons:[], trips:[] };
       raw[stream].lats.push(lat);
       raw[stream].lons.push(lon);
       raw[stream].trips.push({ date, rating });
+
+      allTripData.push({ name: stream, lat, lon, date, rating, section });
     });
 
     streamData = Object.entries(raw).map(([name, d]) => ({
