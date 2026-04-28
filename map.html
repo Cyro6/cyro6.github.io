@@ -1,0 +1,477 @@
+---
+layout: default
+title: Stream Map
+---
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+.stream-map-page {
+  position: relative;
+  font-family: 'Inter', sans-serif;
+}
+#stream-map {
+  width: 100%;
+  height: calc(100vh - 68px);
+  z-index: 1;
+}
+
+/* ── Floating controls ───────────────────────────────────────────────────── */
+.map-controls {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 900;
+  background: rgba(255,255,255,0.96);
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  min-width: 210px;
+  backdrop-filter: blur(6px);
+}
+body.dark-theme .map-controls {
+  background: rgba(26,36,31,0.96);
+  color: #e5e7eb;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.45);
+}
+.map-controls-title {
+  font-size: .9rem;
+  font-weight: 700;
+  color: #05bf85;
+  margin: 0 0 12px;
+  letter-spacing: .02em;
+}
+.ctrl-group {
+  margin-bottom: 10px;
+}
+.ctrl-label {
+  display: block;
+  font-size: .7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: #9ca3af;
+  margin-bottom: 4px;
+}
+.ctrl-toggle {
+  display: flex;
+  gap: 4px;
+}
+.ctrl-toggle button {
+  flex: 1;
+  padding: 5px 0;
+  font-size: .78rem;
+  font-weight: 600;
+  border: 1.5px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all .15s;
+  font-family: 'Inter', sans-serif;
+}
+.ctrl-toggle button.active {
+  background: #05bf85;
+  color: white;
+  border-color: #05bf85;
+}
+body.dark-theme .ctrl-toggle button {
+  background: #374151;
+  color: #9ca3af;
+  border-color: #4b5563;
+}
+body.dark-theme .ctrl-toggle button.active {
+  background: #05bf85;
+  color: white;
+  border-color: #05bf85;
+}
+.ctrl-select {
+  width: 100%;
+  padding: 5px 8px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 6px;
+  font-size: .82rem;
+  font-family: 'Inter', sans-serif;
+  background: white;
+  color: #384743;
+}
+body.dark-theme .ctrl-select {
+  background: #2d3748;
+  color: #e5e7eb;
+  border-color: #4b5563;
+}
+.map-stat {
+  font-size: .73rem;
+  color: #9ca3af;
+  text-align: center;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(0,0,0,.07);
+}
+body.dark-theme .map-stat { border-top-color: rgba(255,255,255,.07); }
+
+/* ── Legend ──────────────────────────────────────────────────────────────── */
+.map-legend {
+  position: absolute;
+  bottom: 32px;
+  left: 14px;
+  z-index: 900;
+  background: rgba(255,255,255,0.93);
+  border-radius: 8px;
+  padding: 8px 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+  backdrop-filter: blur(4px);
+  font-family: 'Inter', sans-serif;
+}
+body.dark-theme .map-legend {
+  background: rgba(26,36,31,0.93);
+}
+.legend-title {
+  font-size: .68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: #9ca3af;
+  margin-bottom: 5px;
+}
+.legend-items {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: .75rem;
+  color: #384743;
+  font-weight: 600;
+}
+body.dark-theme .legend-item { color: #e5e7eb; }
+.legend-dot {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1.5px solid rgba(255,255,255,.6);
+  box-shadow: 0 1px 3px rgba(0,0,0,.25);
+}
+
+/* ── Popups ──────────────────────────────────────────────────────────────── */
+.leaflet-popup-content-wrapper {
+  border-radius: 10px !important;
+  padding: 0 !important;
+  overflow: hidden;
+  box-shadow: 0 6px 24px rgba(0,0,0,.18) !important;
+}
+.leaflet-popup-content { margin: 0 !important; width: auto !important; }
+.leaflet-popup-tip-container { display: none; }
+.stream-popup {
+  padding: 14px 16px;
+  min-width: 220px;
+  font-family: 'Inter', sans-serif;
+}
+.sp-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #05bf85;
+  margin-bottom: 10px;
+  line-height: 1.2;
+}
+.sp-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .82rem;
+  color: #6b7280;
+  margin-bottom: 5px;
+}
+.sp-row strong { color: #384743; font-weight: 600; }
+.rating-pill {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 4px;
+  color: white;
+  font-weight: 700;
+  font-size: .75rem;
+}
+.sp-divider {
+  border: none;
+  border-top: 1px solid #f0ebe0;
+  margin: 9px 0 8px;
+}
+.sp-link {
+  display: block;
+  color: #05bf85;
+  font-weight: 600;
+  font-size: .82rem;
+  text-decoration: none;
+}
+.sp-link:hover { color: #008000; }
+</style>
+
+<div class="stream-map-page">
+  <div id="stream-map"></div>
+
+  <div class="map-controls" id="map-controls">
+    <div class="map-controls-title">🗺 Stream Map</div>
+
+    <div class="ctrl-group">
+      <span class="ctrl-label">Color by</span>
+      <div class="ctrl-toggle">
+        <button id="btn-recent" class="active" onclick="setColorMode('recent')">Recent</button>
+        <button id="btn-avg" onclick="setColorMode('avg')">Avg</button>
+      </div>
+    </div>
+
+    <div class="ctrl-group">
+      <label class="ctrl-label" for="map-min-visits">Min Visits</label>
+      <select id="map-min-visits" class="ctrl-select" onchange="renderMarkers()">
+        <option value="1">Any</option>
+        <option value="3">3+</option>
+        <option value="5" selected>5+</option>
+        <option value="10">10+</option>
+      </select>
+    </div>
+
+    <div class="ctrl-group">
+      <label class="ctrl-label" for="map-years">Data Window</label>
+      <select id="map-years" class="ctrl-select" onchange="renderMarkers()">
+        <option value="2">Last 2 yrs</option>
+        <option value="4" selected>Last 4 yrs</option>
+        <option value="6">Last 6 yrs</option>
+        <option value="0">All time</option>
+      </select>
+    </div>
+
+    <div class="map-stat" id="map-stat">Loading…</div>
+  </div>
+
+  <div class="map-legend" id="map-legend">
+    <div class="legend-title">Rating</div>
+    <div class="legend-items" id="legend-items"></div>
+  </div>
+</div>
+
+<script>
+const DATA_URL = '/assets/data/streams.json?v={{ site.time | date: "%Y%m%d%H%M%S" }}';
+const EXCLUDED  = ['Unknown','Central Sands','Minnesota','Southern WI'];
+const RATING_MAP  = {'F':0,'E':1,'D':2,'C':3,'B':4,'A':5,'S':6};
+const RATING_KEYS = ['F','E','D','C','B','A','S'];
+
+// ── Rating helpers ────────────────────────────────────────────────────────────
+
+function ratingColor(n) {
+  if (n == null || isNaN(n)) return '#9ca3af';
+  const stops = [
+    [220,38,38],[249,115,22],[234,179,8],
+    [132,204,22],[34,197,94],[16,185,129],[5,191,133]
+  ];
+  const lo = Math.floor(Math.max(0, Math.min(6, n)));
+  const hi = Math.min(lo + 1, 6);
+  const t  = Math.max(0, Math.min(6, n)) - lo;
+  const [c1,c2] = [stops[lo],stops[hi]];
+  return `rgb(${Math.round(c1[0]+(c2[0]-c1[0])*t)},${Math.round(c1[1]+(c2[1]-c1[1])*t)},${Math.round(c1[2]+(c2[2]-c1[2])*t)})`;
+}
+
+function ratingToLetter(n) {
+  if (n == null || isNaN(n)) return '—';
+  const clamped = Math.max(0, Math.min(5.99, n));
+  const base    = Math.floor(clamped);
+  const letter  = RATING_KEYS[Math.min(base, 6)];
+  return (clamped - base) >= 0.5 ? letter + '+' : letter;
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+// ── Map init ──────────────────────────────────────────────────────────────────
+
+const isDark  = document.body.classList.contains('dark-theme');
+const tileUrl = isDark
+  ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+  : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+
+const map = L.map('stream-map', { zoomControl: true });
+L.tileLayer(tileUrl, {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+  maxZoom: 18
+}).addTo(map);
+
+// Prevent control panel interactions from reaching the map
+['map-controls','map-legend'].forEach(id => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  ['click','mousedown','wheel','touchstart','dblclick'].forEach(evt =>
+    el.addEventListener(evt, e => e.stopPropagation(), { passive: false })
+  );
+});
+
+// ── State ─────────────────────────────────────────────────────────────────────
+
+let streamData = [];  // all parsed stream objects
+let markers    = [];  // currently shown Leaflet markers
+let colorMode  = 'recent';
+let didFitBounds = false;
+
+// ── Controls ──────────────────────────────────────────────────────────────────
+
+function setColorMode(mode) {
+  colorMode = mode;
+  document.getElementById('btn-recent').classList.toggle('active', mode === 'recent');
+  document.getElementById('btn-avg').classList.toggle('active', mode === 'avg');
+  renderMarkers();
+}
+
+// ── Marker factory ────────────────────────────────────────────────────────────
+
+function makeIcon(displayRating, visits) {
+  const color = ratingColor(displayRating);
+  const label = ratingToLetter(displayRating);
+  const r  = Math.max(13, Math.min(22, 9 + Math.sqrt(visits) * 2.4));
+  const sz = Math.round(r * 2);
+  const fs = r < 17 ? 9 : 10;
+  return L.divIcon({
+    html: `<div style="width:${sz}px;height:${sz}px;background:${color};border-radius:50%;` +
+          `display:flex;align-items:center;justify-content:center;` +
+          `color:#fff;font-weight:700;font-size:${fs}px;font-family:'Inter',sans-serif;` +
+          `border:2.5px solid rgba(255,255,255,.85);box-shadow:0 2px 7px rgba(0,0,0,.35);">${label}</div>`,
+    className: '',
+    iconSize:   [sz, sz],
+    iconAnchor: [r,  r],
+    popupAnchor:[0, -r - 2]
+  });
+}
+
+// ── Popup factory ─────────────────────────────────────────────────────────────
+
+function makePopup(s) {
+  const rc = ratingColor(s.recentRating);
+  const ac = ratingColor(s.avgRating);
+  return `<div class="stream-popup">
+    <div class="sp-name">🌊 ${s.name}</div>
+    <div class="sp-row"><strong>Last fished:</strong> ${fmtDate(s.recentDate)}</div>
+    <div class="sp-row">
+      <strong>Last rating:</strong>
+      <span class="rating-pill" style="background:${rc}">${ratingToLetter(s.recentRating)}</span>
+    </div>
+    <div class="sp-row">
+      <strong>Avg:</strong>
+      <span class="rating-pill" style="background:${ac}">${ratingToLetter(s.avgRating)}</span>
+      &nbsp;${s.avgRating.toFixed(2)} &middot; ${s.visits} visits
+    </div>
+    ${s.bestMonth ? `<div class="sp-row"><strong>Best month:</strong> ${s.bestMonth}</div>` : ''}
+    <hr class="sp-divider">
+    <a class="sp-link" href="/stream-details?stream=${encodeURIComponent(s.name)}">View full history &rarr;</a>
+  </div>`;
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+
+function renderMarkers() {
+  markers.forEach(m => map.removeLayer(m));
+  markers = [];
+
+  const minVisits = parseInt(document.getElementById('map-min-visits').value) || 1;
+  const yearsBack = parseInt(document.getElementById('map-years').value) || 0;
+  const cutoff    = yearsBack > 0 ? new Date(Date.now() - yearsBack * 365.25 * 86400000) : null;
+
+  streamData.forEach(s => {
+    const trips = cutoff ? s.allTrips.filter(t => t.date && t.date >= cutoff) : s.allTrips;
+    if (trips.length < minVisits) return;
+
+    trips.sort((a,b) => (b.date||0) - (a.date||0));
+    const recentTrip = trips[0];
+    const avgRating  = trips.reduce((sum,t) => sum + t.rating, 0) / trips.length;
+
+    // Best month (require ≥2 trips in month to qualify)
+    const byMonth = {};
+    trips.forEach(t => {
+      if (!t.date) return;
+      const mo = t.date.toLocaleString('default', { month: 'long' });
+      (byMonth[mo] = byMonth[mo] || []).push(t.rating);
+    });
+    const bestMonth = Object.entries(byMonth)
+      .filter(([,v]) => v.length >= 2)
+      .map(([mo,v]) => ({ mo, avg: v.reduce((a,b)=>a+b,0)/v.length }))
+      .sort((a,b) => b.avg - a.avg)[0]?.mo || null;
+
+    const displayRating = colorMode === 'recent' ? recentTrip.rating : avgRating;
+    const info = { name: s.name, visits: trips.length, recentRating: recentTrip.rating,
+                   recentDate: recentTrip.date, avgRating, bestMonth };
+
+    const marker = L.marker([s.lat, s.lon], { icon: makeIcon(displayRating, trips.length) });
+    marker.bindPopup(makePopup(info), { maxWidth: 280, closeButton: true });
+    marker.addTo(map);
+    markers.push(marker);
+  });
+
+  document.getElementById('map-stat').textContent =
+    `${markers.length} stream${markers.length !== 1 ? 's' : ''} shown`;
+
+  if (!didFitBounds && markers.length > 0) {
+    map.fitBounds(L.featureGroup(markers).getBounds().pad(0.12));
+    didFitBounds = true;
+  }
+}
+
+// ── Legend ────────────────────────────────────────────────────────────────────
+
+function buildLegend() {
+  const grades = ['F','C','B','A','S'];
+  document.getElementById('legend-items').innerHTML = grades.map(g => {
+    const idx = RATING_KEYS.indexOf(g);
+    return `<div class="legend-item">
+      <span class="legend-dot" style="background:${ratingColor(idx)}"></span>
+      <span>${g}</span>
+    </div>`;
+  }).join('');
+}
+
+// ── Bootstrap ─────────────────────────────────────────────────────────────────
+
+async function init() {
+  try {
+    const json = await fetch(DATA_URL).then(r => r.json());
+    const rows = json.source.rows;
+    const raw  = {};
+
+    rows.forEach(row => {
+      const stream = row[2]?.trim();
+      const rating = RATING_MAP[row[17]?.toUpperCase()];
+      if (!stream || rating === undefined) return;
+      if (EXCLUDED.some(e => stream.includes(e))) return;
+
+      const lat = parseFloat(row[12]);
+      const lon = parseFloat(row[13]);
+      if (isNaN(lat) || isNaN(lon) || (Math.abs(lat) < 0.001 && Math.abs(lon) < 0.001)) return;
+
+      const m = (row[0] || '').match(/^(\d+)\/(\d+)\/(\d+)/);
+      const date = m ? new Date(Date.UTC(+m[3], +m[1]-1, +m[2])) : null;
+
+      if (!raw[stream]) raw[stream] = { lats:[], lons:[], trips:[] };
+      raw[stream].lats.push(lat);
+      raw[stream].lons.push(lon);
+      raw[stream].trips.push({ date, rating });
+    });
+
+    streamData = Object.entries(raw).map(([name, d]) => ({
+      name,
+      lat: d.lats.reduce((a,b)=>a+b,0) / d.lats.length,
+      lon: d.lons.reduce((a,b)=>a+b,0) / d.lons.length,
+      allTrips: d.trips
+    }));
+
+    buildLegend();
+    renderMarkers();
+  } catch(err) {
+    document.getElementById('map-stat').textContent = 'Error loading data';
+    console.error(err);
+  }
+}
+
+init();
+</script>
