@@ -163,7 +163,7 @@ async function main() {
   // Sort by date, keep only rows with valid rating
   const rows = allRows
     .map(r => ({ r, d: parseDate(r[0]), v: RATING_MAP[r[17]] }))
-    .filter(({ d, v }) => d && v !== undefined)
+    .filter(({ d, v }) => d && v !== undefined && v !== 0)
     .sort((a, b) => a.d - b.d);
 
   // Summary stats

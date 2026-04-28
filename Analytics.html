@@ -375,7 +375,7 @@ function processSourceData() {
             if (row.length < 18) return false;
             const stream = row[2]?.trim() || '';
             const rating = row[17]?.toUpperCase();
-            const validRating = /^[SABCDEF]$/.test(rating);
+            const validRating = /^[SABCDE]$/.test(rating);
             const validStream = !excludedStreams.some(excluded => stream.includes(excluded));
             return validRating && validStream;
         })

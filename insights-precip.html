@@ -191,7 +191,7 @@ function makeBarChart(canvasId, labels, avgs, counts) {
 async function main() {
   const json = await fetch(DATA_URL).then(r => r.json());
   const rows = json.source.rows;
-  const precipCount = rows.filter(r => r[24] !== '' && RATING_MAP[r[17]] !== undefined).length;
+  const precipCount = rows.filter(r => r[24] !== '' && RATING_MAP[r[17]] !== undefined && RATING_MAP[r[17]] !== 0).length;
   document.getElementById('precip-count').textContent = precipCount.toLocaleString();
 
   // Day-of precip buckets
@@ -213,7 +213,7 @@ async function main() {
     const dayP = parseFloat(r[24]);
     const priorP = parseFloat(r[25]);
     const val = RATING_MAP[r[17]];
-    if (val === undefined) return;
+    if (val === undefined || val === 0) return;
 
     if (!isNaN(dayP)) {
       if (dayP === 0) dayBuckets['None (0")'].push(val);
@@ -266,7 +266,7 @@ async function main() {
     const dayP = parseFloat(r[24]);
     const priorP = parseFloat(r[25]);
     const val = RATING_MAP[r[17]];
-    if (isNaN(dayP) || isNaN(priorP) || val === undefined) return;
+    if (isNaN(dayP) || isNaN(priorP) || val === undefined || val === 0) return;
     const dryDay = dayP < 0.05;
     const dryPrior = priorP < 0.1;
     const key = `${dryDay ? 'Dry' : 'Wet'} day, ${dryPrior ? 'dry' : 'wet'} prior`;

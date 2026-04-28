@@ -663,7 +663,7 @@ function processSourceData() {
             if (row.length < 18) return false;
             const stream = row[2]?.trim() || '';
             const rating = row[17]?.toUpperCase();
-            return /^[SABCDEF]$/.test(rating) && !excludedStreams.some(e => stream.includes(e));
+            return /^[SABCDE]$/.test(rating) && !excludedStreams.some(e => stream.includes(e));
         })
         .map(row => {
             const dateRaw = row[0] || '';

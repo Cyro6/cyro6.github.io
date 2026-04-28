@@ -121,7 +121,7 @@ const gridColor = isDark ? '#374151' : '#e5e7eb';
 
 function ratingVal(row) {
   const v = RATING_MAP[row[17]];
-  return v !== undefined ? v : null;
+  return (v !== undefined && v !== 0) ? v : null;
 }
 
 function ratingLabel(n) {

@@ -237,7 +237,7 @@ async function main() {
   let count = 0;
   rows.forEach(r => {
     const val = RATING_MAP[r[17]];
-    if (val === undefined) return;
+    if (val === undefined || val === 0) return;
     const m = (r[0] || '').match(/^(\d+)\/(\d+)\/(\d+)/);
     if (!m) return;
     const date = new Date(Date.UTC(+m[3], +m[1] - 1, +m[2]));

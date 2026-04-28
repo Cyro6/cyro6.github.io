@@ -278,7 +278,7 @@ async function main() {
     const stream = r[2];
     const month = parseInt(r[19]);
     const rating = RATING_MAP[r[17]];
-    if (!stream || stream === 'Unknown' || !month || isNaN(month) || rating === undefined) return;
+    if (!stream || stream === 'Unknown' || !month || isNaN(month) || rating === undefined || rating === 0) return;
 
     if (!streamMonthData.has(stream)) streamMonthData.set(stream, new Map());
     streamCounts.set(stream, (streamCounts.get(stream) || 0) + 1);

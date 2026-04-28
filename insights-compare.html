@@ -189,14 +189,14 @@ function parseDate(s) {
 }
 
 function streamStats(rows) {
-  const vals = rows.map(r => RATING_MAP[r[17]]).filter(v => v !== undefined);
+  const vals = rows.map(r => RATING_MAP[r[17]]).filter(v => v !== undefined && v !== 0);
   const avg = vals.length ? vals.reduce((a,b) => a+b, 0) / vals.length : null;
   const bestMonth = (() => {
     const mGroups = {};
     rows.forEach(r => {
       const m = parseInt(r[19]);
       const v = RATING_MAP[r[17]];
-      if (!m || v === undefined) return;
+      if (!m || v === undefined || v === 0) return;
       if (!mGroups[m]) mGroups[m] = [];
       mGroups[m].push(v);
     });
