@@ -168,7 +168,11 @@ title: Driftless Trout Fishing Trip Log
       </span>
       {% endif %}
       {% if post.youtube %}
+      {% if post.youtube[0].url %}
       <a href="{{ post.youtube[0].url }}" target="_blank" rel="noopener" style="font-size: 0.78rem; background: #cc2c3f; padding: 0.2rem 0.6rem; border-radius: 4px; color: white; text-decoration: none;">YouTube</a>
+      {% else %}
+      <span style="font-size: 0.78rem; background: #888; padding: 0.2rem 0.6rem; border-radius: 4px; color: white;">Coming Soon</span>
+      {% endif %}
       {% endif %}
     </div>
     {% endif %}
