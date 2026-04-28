@@ -293,8 +293,9 @@ body.dark-theme .legend-item { color: #e5e7eb; }
       <label class="ctrl-label" for="map-min-visits">Min Visits</label>
       <select id="map-min-visits" class="ctrl-select" onchange="renderMarkers()">
         <option value="1">Any</option>
+        <option value="2" selected>2+</option>
         <option value="3">3+</option>
-        <option value="5" selected>5+</option>
+        <option value="5">5+</option>
         <option value="10">10+</option>
       </select>
     </div>
@@ -302,8 +303,8 @@ body.dark-theme .legend-item { color: #e5e7eb; }
     <div class="ctrl-group">
       <label class="ctrl-label" for="map-years">Data Window</label>
       <select id="map-years" class="ctrl-select" onchange="renderMarkers()">
-        <option value="2">Last 2 yrs</option>
-        <option value="4" selected>Last 4 yrs</option>
+        <option value="2" selected>Last 2 yrs</option>
+        <option value="4">Last 4 yrs</option>
         <option value="6">Last 6 yrs</option>
         <option value="0">All time</option>
       </select>
