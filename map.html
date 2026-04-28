@@ -281,6 +281,15 @@ body.dark-theme .legend-item { color: #e5e7eb; }
     </div>
 
     <div class="ctrl-group">
+      <span class="ctrl-label">Log Type</span>
+      <div class="ctrl-toggle">
+        <button id="btn-log-both" class="active" onclick="setLogFilter('both')">Both</button>
+        <button id="btn-log-mine" onclick="setLogFilter('mine')">Mine</button>
+        <button id="btn-log-other" onclick="setLogFilter('other')">Other</button>
+      </div>
+    </div>
+
+    <div class="ctrl-group">
       <label class="ctrl-label" for="map-min-visits">Min Visits</label>
       <select id="map-min-visits" class="ctrl-select" onchange="renderMarkers()">
         <option value="1">Any</option>
@@ -368,10 +377,11 @@ L.tileLayer(tileUrl, {
 // ── State ─────────────────────────────────────────────────────────────────────
 
 let streamData  = [];  // aggregated per-stream objects
-let allTripData = [];  // flat individual trips: { name, lat, lon, date, rating, section }
+let allTripData = [];  // flat individual trips: { name, lat, lon, date, rating, section, whoLog }
 let streamLayer = L.layerGroup().addTo(map);
 let tripLayer   = L.layerGroup();
 let colorMode   = 'recent';
+let logFilter   = 'both';
 let didFitBounds = false;
 
 // ── Controls ──────────────────────────────────────────────────────────────────
@@ -381,6 +391,20 @@ function setColorMode(mode) {
   document.getElementById('btn-recent').classList.toggle('active', mode === 'recent');
   document.getElementById('btn-avg').classList.toggle('active', mode === 'avg');
   renderMarkers();
+}
+
+function setLogFilter(filter) {
+  logFilter = filter;
+  document.getElementById('btn-log-both').classList.toggle('active',  filter === 'both');
+  document.getElementById('btn-log-mine').classList.toggle('active',  filter === 'mine');
+  document.getElementById('btn-log-other').classList.toggle('active', filter === 'other');
+  renderMarkers();
+}
+
+function matchesLogFilter(whoLog) {
+  if (logFilter === 'mine')  return whoLog === 'C';
+  if (logFilter === 'other') return whoLog !== 'C';
+  return true;
 }
 
 // ── Marker / popup factories ──────────────────────────────────────────────────
@@ -451,7 +475,8 @@ function renderMarkers() {
   const bounds = [];
 
   streamData.forEach(s => {
-    const trips = cutoff ? s.allTrips.filter(t => t.date && t.date >= cutoff) : s.allTrips;
+    const trips = (cutoff ? s.allTrips.filter(t => t.date && t.date >= cutoff) : s.allTrips)
+      .filter(t => matchesLogFilter(t.whoLog));
     if (trips.length < minVisits) return;
 
     trips.sort((a,b) => (b.date||0) - (a.date||0));
@@ -502,6 +527,7 @@ function renderTripMarkers() {
   let count = 0;
   allTripData.forEach(t => {
     if (cutoff && t.date && t.date < cutoff) return;
+    if (!matchesLogFilter(t.whoLog)) return;
 
     const cm = L.circleMarker([t.lat, t.lon], {
       radius:      7,
@@ -585,13 +611,14 @@ async function init() {
       const m       = (row[0] || '').match(/^(\d+)\/(\d+)\/(\d+)/);
       const date    = m ? new Date(Date.UTC(+m[3], +m[1]-1, +m[2])) : null;
       const section = row[3]?.trim() || '';
+      const whoLog  = row[37]?.trim().toUpperCase() || '';
 
       if (!raw[stream]) raw[stream] = { lats:[], lons:[], trips:[] };
       raw[stream].lats.push(lat);
       raw[stream].lons.push(lon);
-      raw[stream].trips.push({ date, rating });
+      raw[stream].trips.push({ date, rating, whoLog });
 
-      allTripData.push({ name: stream, lat, lon, date, rating, section });
+      allTripData.push({ name: stream, lat, lon, date, rating, section, whoLog });
     });
 
     streamData = Object.entries(raw).map(([name, d]) => ({
