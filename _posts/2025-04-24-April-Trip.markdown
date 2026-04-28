@@ -1,4 +1,8 @@
 ---
+images:
+  - /assets/images/4-25-2025 - DeVrou Trout Fishing Thumbnail.jpg
+  - /assets/images/4-26-2025 Thumbnail.jpg
+  - /assets/images/4-27-2025 Thumbnail.jpg
 summary: "This trip was filled with success, we caught around 70 fish in the 4 days we fished. The weather was both cold and hot. The last day was the most challenging."
 
 campsite:
@@ -89,10 +93,6 @@ days:
         lat: 44.598119
         lng: -91.862561
 
-images:
-  - /assets/images/4-25-2025 - DeVrou Trout Fishing Thumbnail.jpg
-  - /assets/images/4-26-2025 Thumbnail.jpg
-  - /assets/images/4-27-2025 Thumbnail.jpg
 
 layout: post
 title: April Trip
@@ -102,3 +102,4 @@ youtube:
     url: https://www.youtube.com/playlist?list=PLcbBncgGuhvsCQ-zoz4IiwTHI_u6_ViPs
 ---
 # April 2025
+

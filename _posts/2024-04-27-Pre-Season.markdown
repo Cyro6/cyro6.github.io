@@ -1,4 +1,9 @@
 ---
+images:
+  - /assets/images/PXL_20240427_215514378.MP.jpg
+  - /assets/images/PXL_20240427_161317431.MP.jpg
+  - /assets/images/PXL_20240428_213057044.MP.jpg
+  - /assets/images/PXL_20240428_181751581.MP.jpg
 summary: "Pre-season opener trip with a drive in Friday evening and fishing Saturday through Monday."
 
 campsite:
@@ -64,14 +69,10 @@ memes:
   - |
     "Nock Nock, Dad thanks for beating me as a child" - This is from some stupid Facebook Reel where some kid is dancing in a fox costume and is happy that their Dad finally used their pronouns "Fox/Foxem", it then cuts to a dude thanking his Dad for correcting that out of his son.
 
-images:
-  - /assets/images/PXL_20240427_161317431.MP.jpg
-  - /assets/images/PXL_20240427_215514378.MP.jpg
-  - /assets/images/PXL_20240428_181751581.MP.jpg
-  - /assets/images/PXL_20240428_213057044.MP.jpg
 
 layout: post
 title: Pre Season
 date: 2024-04-27
 ---
 # April 2024
+

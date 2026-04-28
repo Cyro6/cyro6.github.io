@@ -1,4 +1,14 @@
 ---
+images:
+  - /assets/images/20240906_222114.jpg
+  - /assets/images/20240906_221946.jpg
+  - /assets/images/20240907_114947.jpg
+  - /assets/images/20240907_133736.jpg
+  - /assets/images/20240907_133742.jpg
+  - /assets/images/20240907_114937.jpg
+  - /assets/images/20240907_073938.jpg
+  - /assets/images/20240907_085802.jpg
+  - /assets/images/20240907_111220.jpg
 summary: "We really struggled to find trout, I suspect we went up a bit early for good water temps, trout are still in their summer hiding phase and were not spread out and easy to find. We started out too low on the stream, a lesson I should have learned from my previous trip out."
 
 campsite:
@@ -37,19 +47,10 @@ days:
         lat: 43.813160
         lng: -90.768337
 
-images:
-  - /assets/images/20240906_221946.jpg
-  - /assets/images/20240906_222114.jpg
-  - /assets/images/20240907_073938.jpg
-  - /assets/images/20240907_085802.jpg
-  - /assets/images/20240907_111220.jpg
-  - /assets/images/20240907_114937.jpg
-  - /assets/images/20240907_114947.jpg
-  - /assets/images/20240907_133736.jpg
-  - /assets/images/20240907_133742.jpg
 
 layout: post
 title: September Jack Trip
 date: 2024-09-07
 ---
 # September 2024
+

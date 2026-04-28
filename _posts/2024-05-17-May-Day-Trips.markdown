@@ -1,4 +1,6 @@
 ---
+images:
+  - /assets/images/20240518_190453.jpg
 summary: "Two solo day trips on consecutive days in mid-May."
 
 cost:
@@ -41,11 +43,10 @@ days:
         lat: 44.855935
         lng: -89.164545
 
-images:
-  - /assets/images/20240518_190453.jpg
 
 layout: post
 title: May Day Trips
 date: 2024-05-17
 ---
 # May 2024
+

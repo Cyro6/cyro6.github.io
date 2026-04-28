@@ -1,4 +1,8 @@
 ---
+images:
+  - /assets/images/IMG_20240830_182513.jpg
+  - /assets/images/IMG_20240830_182457.jpg
+  - /assets/images/IMG_20241226_092633.jpg
 summary: "We really struggled to find trout, we suspect we went up a bit early for good water temps, trout are still in their summer hiding phase and were not spread out and easy to find."
 
 campsite:
@@ -60,13 +64,10 @@ days:
         lat:
         lng:
 
-images:
-  - /assets/images/IMG_20240830_182457.jpg
-  - /assets/images/IMG_20240830_182513.jpg
-  - /assets/images/IMG_20241226_092633.jpg
 
 layout: post
 title: August Up North Trip
 date: 2024-08-29
 ---
 # August 2024
+

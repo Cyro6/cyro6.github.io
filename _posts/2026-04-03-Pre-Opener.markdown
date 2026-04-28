@@ -1,4 +1,7 @@
 ---
+images:
+  - /assets/images/April 2026 Part 2 TN.jpg
+  - /assets/images/April 2026 Part 1 TN.jpg
 days:
   - day:
     date: April 3, 2026
@@ -31,9 +34,6 @@ campsite:
   url: https://maps.app.goo.gl/2KXjRzk6b48Xocn19
   lat: 43.6676698
   lng: -90.5963731
-images:
-  - /assets/images/April 2026 Part 1 TN.jpg
-  - /assets/images/April 2026 Part 2 TN.jpg
 layout: post
 title: Pre Opener
 date: 2026-04-03

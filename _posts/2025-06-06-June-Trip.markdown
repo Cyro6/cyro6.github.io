@@ -1,4 +1,14 @@
 ---
+images:
+  - /assets/images/20250606_175511.jpg
+  - /assets/images/20250606_175432.jpg
+  - /assets/images/Beau+ChaseJune2025.jpg
+  - /assets/images/20250607_165113.jpg
+  - /assets/images/20250607_165041.jpg
+  - /assets/images/BeauJune2025.jpg
+  - /assets/images/20250608_192308.jpg
+  - /assets/images/20250608_112956.jpg
+  - /assets/images/20250608_113034.jpg
 summary: "Beau and I went on this trip and I knew there was rain recently in the forecast. Barometric pressure was falling during this trip, it was cooler than normal due to the rain and overcast skies."
 
 campsite:
@@ -58,16 +68,6 @@ days:
 memes:
   - "We'll fix that in post"
 
-images:
-  - /assets/images/20250606_175432.jpg
-  - /assets/images/20250606_175511.jpg
-  - /assets/images/20250607_165041.jpg
-  - /assets/images/20250607_165113.jpg
-  - /assets/images/Beau+ChaseJune2025.jpg
-  - /assets/images/20250608_112956.jpg
-  - /assets/images/20250608_113034.jpg
-  - /assets/images/20250608_192308.jpg
-  - /assets/images/BeauJune2025.jpg
 
 thumbnail: /assets/images/20250607_165113.jpg
 
@@ -79,3 +79,4 @@ youtube:
     url: https://www.youtube.com/playlist?list=PLcbBncgGuhvsXZJJqu87rSoM9jYhsfdzE
 ---
 # June 2025
+

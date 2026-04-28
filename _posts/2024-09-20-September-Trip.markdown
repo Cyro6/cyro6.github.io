@@ -1,4 +1,15 @@
 ---
+images:
+  - /assets/images/20240919_215632.jpg
+  - /assets/images/20240920_162012(0).jpg
+  - /assets/images/20240920_175811.jpg
+  - /assets/images/20240920_175826.jpg
+  - /assets/images/20240920_081610.jpg
+  - /assets/images/20240920_124150.jpg
+  - /assets/images/20240920_161948.jpg
+  - /assets/images/20240921_174448.jpg
+  - /assets/images/20240921_104308.jpg
+  - /assets/images/20240921_104250.jpg
 summary: "It rained the night before we started fishing, this completely threw off my morning plans and I wasted time going to streams that were muddied and high. I could have fished these with Ben but with Jack I had to look for lower and clearer streams to make wading easier. We did find a few eventually and we found fish but sadly things didn't go perfectly."
 
 campsite:
@@ -60,20 +71,10 @@ days:
         lat: 44.567845
         lng: -91.691862
 
-images:
-  - /assets/images/20240919_215632.jpg
-  - /assets/images/20240920_081610.jpg
-  - /assets/images/20240920_124150.jpg
-  - /assets/images/20240920_161948.jpg
-  - /assets/images/20240920_162012(0).jpg
-  - /assets/images/20240920_175811.jpg
-  - /assets/images/20240920_175826.jpg
-  - /assets/images/20240921_104250.jpg
-  - /assets/images/20240921_104308.jpg
-  - /assets/images/20240921_174448.jpg
 
 layout: post
 title: September Trip
 date: 2024-09-20
 ---
 # September 2024
+

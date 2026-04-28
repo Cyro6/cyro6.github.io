@@ -1,4 +1,8 @@
 ---
+images:
+  - /assets/images/20250523_173927.jpg
+  - /assets/images/20250523_172232.jpg
+  - /assets/images/20250523_172225.jpg
 summary: "Given the past challenges with fishing up north I tried a few different strategies to get on fish for this trip."
 
 campsite:
@@ -58,10 +62,6 @@ days:
         lat: 45.677348
         lng: -88.663531
 
-images:
-  - /assets/images/20250523_172225.jpg
-  - /assets/images/20250523_172232.jpg
-  - /assets/images/20250523_173927.jpg
 
 layout: post
 title: May Up North Trip
@@ -75,3 +75,4 @@ youtube:
     url: https://youtu.be/gnnr0Rp2Gvs
 ---
 # May 2025
+

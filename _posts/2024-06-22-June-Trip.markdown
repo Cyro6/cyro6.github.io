@@ -1,4 +1,12 @@
 ---
+images:
+  - /assets/images/20240622_180857.jpg
+  - /assets/images/20240622_180755.jpg
+  - /assets/images/20240623_180650.jpg
+  - /assets/images/20240623_231243.jpg
+  - /assets/images/20240623_180646.jpg
+  - /assets/images/20240623_125712.jpg
+  - /assets/images/20240623_180642.jpg
 summary: "Trip with a rough start on Saturday due to recent heavy rain but the weather and conditions improved as the weekend went on."
 
 campsite:
@@ -61,14 +69,6 @@ days:
 memes:
   - First of all repent and seek absolution.
 
-images:
-  - /assets/images/20240622_180755.jpg
-  - /assets/images/20240622_180857.jpg
-  - /assets/images/20240623_125712.jpg
-  - /assets/images/20240623_180642.jpg
-  - /assets/images/20240623_180646.jpg
-  - /assets/images/20240623_180650.jpg
-  - /assets/images/20240623_231243.jpg
 
 layout: post
 title: June Trip
@@ -77,3 +77,4 @@ date: 2024-06-22
 # June 2024
 
 Note: Cannot use the Hipcamp campsite again.
+

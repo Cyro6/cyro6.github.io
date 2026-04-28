@@ -1,4 +1,10 @@
 ---
+images:
+  - /assets/images/20250508_201040.jpg
+  - /assets/images/20250509_133204.jpg
+  - /assets/images/20250509_103110.jpg
+  - /assets/images/20250509_103058.jpg
+  - /assets/images/20250511_190353.jpg
 summary: "This trip will arguably be one of the best fishing trips I will have ever had in a 4 day period. We caught a total of roughly 150 fish."
 
 campsite:
@@ -68,12 +74,6 @@ days:
         lat: 44.429028
         lng: -91.400750
 
-images:
-  - /assets/images/20250508_201040.jpg
-  - /assets/images/20250509_103058.jpg
-  - /assets/images/20250509_103110.jpg
-  - /assets/images/20250509_133204.jpg
-  - /assets/images/20250511_190353.jpg
 
 layout: post
 title: May Trip
@@ -83,3 +83,4 @@ youtube:
     url: https://www.youtube.com/playlist?list=PLcbBncgGuhvufF8FLGHh_itidTvwGwgEk
 ---
 # May 2025
+

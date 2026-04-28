@@ -1,4 +1,6 @@
 ---
+images:
+  - /assets/images/20250921_162342.jpg
 summary: "This trip was a consistent one, probably 2-3 trout per hour with a total fishing time of 16 or so hours, a lot of work. All footage of this trip was useless as my GoPro was tilted too far down. There was a lot of fun footage that could have been."
 
 campsite:
@@ -50,11 +52,10 @@ days:
         lat: 44.429028
         lng: -91.400750
 
-images:
-  - /assets/images/20250921_162342.jpg
 
 layout: post
 title: September Jack Trip
 date: 2025-09-18
 ---
 # September 2025
+
