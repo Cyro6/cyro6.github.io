@@ -794,6 +794,28 @@ body.dark-theme .sd-page {
                     </table>
                 </div>
             </div>
+            <div class="top-outings">
+                <h2>10 Most Recent Trips</h2>
+                <button class="top-outings-toggle" data-toggle="recent-trips-content" onclick="toggleSection('recent-trips-content')">Expand</button>
+                <div class="top-outings-content" id="recent-trips-content">
+                    <table class="top-outings-table" id="recent-trips-table">
+                        <thead>
+                            <tr>
+                                <th title="Date"><div class="header-content"><span class="header-icon">📅</span></div></th>
+                                <th title="Rating"><div class="header-content"><span class="header-icon">⭐</span></div></th>
+                                <th title="Location"><div class="header-content"><span class="header-icon">🗺️</span></div></th>
+                                <th title="Section"><div class="header-content"><span class="header-icon">📍</span></div></th>
+                                <th title="YouTube Link"><div class="header-content">
+                                    <svg class="youtube-header-icon" viewBox="0 0 24 24">
+                                        <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0C.488 3.45.029 5.804 0 12c.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0C23.512 20.55 23.971 18.196 24 12c-.029-6.185-.484-8.54-4.385-8.816zM9 16V8l8 4-8 4z"/>
+                                    </svg>
+                                </div></th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-trips-body"></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -1229,6 +1251,23 @@ body.dark-theme .sd-page {
                     : 'N/A'}</td>
             `;
             topOutingsBody.appendChild(tr);
+        });
+
+        const recentTripsBody = document.getElementById('recent-trips-body');
+        recentTripsBody.innerHTML = '';
+        streamData.slice().sort((a, b) => b.date - a.date).slice(0, 10).forEach(trip => {
+            const hasCoords = !isNaN(trip.lat) && !isNaN(trip.lon) && Math.abs(trip.lat) > 0.001 && Math.abs(trip.lon) > 0.001;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td data-label="Date">${trip.date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</td>
+                <td data-label="Rating">${ratingReverseMap[trip.rating] || 'N/A'}</td>
+                <td data-label="Location">${hasCoords ? `<a href="https://www.google.com/maps?q=${trip.lat},${trip.lon}" target="_blank" class="link-icon">🗺️</a>` : '—'}</td>
+                <td data-label="Section">${sectionDisplayMap[trip.section] || 'UNK'}</td>
+                <td data-label="YouTube Link">${trip.youtubeLink
+                    ? `<a href="${trip.youtubeLink}" target="_blank" class="link-icon"><svg class="youtube-icon" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0C.488 3.45.029 5.804 0 12c.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0C23.512 20.55 23.971 18.196 24 12c-.029-6.185-.484-8.54-4.385-8.816zM9 16V8l8 4-8 4z"/></svg></a>`
+                    : 'N/A'}</td>
+            `;
+            recentTripsBody.appendChild(tr);
         });
 
         const spotsMap = new Map();
