@@ -606,8 +606,10 @@ async function init() {
       const lon = parseFloat(row[13]);
       if (isNaN(lat) || isNaN(lon) || (Math.abs(lat) < 0.001 && Math.abs(lon) < 0.001)) return;
 
+      if (rating === 0) return; // F = scouted only, not fished
+
       const m       = (row[0] || '').match(/^(\d+)\/(\d+)\/(\d+)/);
-      const date    = m ? new Date(Date.UTC(+m[3], +m[1]-1, +m[2])) : null;
+      const date    = m ? new Date(+m[3], +m[1]-1, +m[2]) : null;
       const section = row[3]?.trim() || '';
       const whoLog  = row[37]?.trim().toUpperCase() || '';
 
