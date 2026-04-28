@@ -666,9 +666,10 @@ function processSourceData() {
             return /^[SABCDEF]$/.test(rating) && !excludedStreams.some(e => stream.includes(e));
         })
         .map(row => {
-            const dateRaw = row[0] || '01/01/2000';
-            const d = new Date(dateRaw.replace(/(\d+)\/(\d+)\/(\d+)/, '$3-$1-$2'));
-            const date = isNaN(d.getTime()) ? null : d;
+            const dateRaw = row[0] || '';
+            const _dm = dateRaw.match(/(\d+)\/(\d+)\/(\d+)/);
+            const d = _dm ? new Date(+_dm[3], +_dm[1]-1, +_dm[2]) : null;
+            const date = d && !isNaN(d.getTime()) ? d : null;
             const month = date ? date.toLocaleString('default', { month: 'long' }) : 'Unknown';
             return {
                 date,

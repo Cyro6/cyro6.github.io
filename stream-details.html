@@ -1094,7 +1094,8 @@ body.dark-theme .sd-page {
         const streamData = sourceData?.rows
             .filter(row => {
                 if (row.length < 18) return false;
-                const date = new Date(row[0].replace(/(\d+)\/(\d+)\/(\d+)/, '$3-$1-$2'));
+                const _dm = row[0].match(/(\d+)\/(\d+)\/(\d+)/);
+                const date = _dm ? new Date(+_dm[3], +_dm[1]-1, +_dm[2]) : new Date(NaN);
                 const stream = row[2]?.trim() || '';
                 const rating = row[17]?.toUpperCase();
                 const validRating = /^[SABCDE]|S+$/.test(rating);
@@ -1102,7 +1103,8 @@ body.dark-theme .sd-page {
                 return stream === streamName && validRating && validStream && !isNaN(date.getTime());
             })
             .map(row => {
-                const date = new Date(row[0].replace(/(\d+)\/(\d+)\/(\d+)/, '$3-$1-$2'));
+                const _dm = row[0].match(/(\d+)\/(\d+)\/(\d+)/);
+                const date = _dm ? new Date(+_dm[3], +_dm[1]-1, +_dm[2]) : new Date(NaN);
                 return {
                     month: date.toLocaleString('default', { month: 'long' }),
                     stream: row[2]?.trim() || '',

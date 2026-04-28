@@ -381,7 +381,8 @@ function processSourceData() {
         })
         .map(row => {
             const dateRaw = row[0] || '01/01/2000';
-            const date = new Date(dateRaw.replace(/(\d+)\/(\d+)\/(\d+)/, '$3-$1-$2'));
+            const _dm = dateRaw.match(/(\d+)\/(\d+)\/(\d+)/);
+            const date = _dm ? new Date(+_dm[3], +_dm[1]-1, +_dm[2]) : new Date(NaN);
             const month = isNaN(date.getTime()) ? 'Unknown' : date.toLocaleString('default', { month: 'long' });
             const stream = row[2]?.trim() || '';
             const rating = row[17]?.toUpperCase();
