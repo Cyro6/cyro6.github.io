@@ -223,7 +223,11 @@ layout: default
   <div style="padding: 1.5rem; background: #f0ebe0; border-radius: 6px; border-left: 4px solid #05bf85;">
     <h4 style="margin: 0 0 1rem;">Watch on YouTube</h4>
     {% for video in page.youtube %}
+    {% if video.url %}
     <a href="{{ video.url }}" target="_blank" class="button" style="margin-right: 0.5rem; margin-bottom: 0.5rem;">{{ video.title }}</a>
+    {% else %}
+    <span class="button" style="margin-right: 0.5rem; margin-bottom: 0.5rem; opacity: 0.5; cursor: default;">{{ video.title }}</span>
+    {% endif %}
     {% endfor %}
   </div>
   {% endif %}
