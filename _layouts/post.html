@@ -19,6 +19,8 @@ layout: default
     <h4 style="margin: 0 0 0.75rem;">Campsite</h4>
     {% if page.campsite.url %}
     <a href="{{ page.campsite.url }}" target="_blank">{{ page.campsite.name }}</a>
+    {% elsif page.campsite.lat %}
+    <a href="https://www.google.com/maps/place/{{ page.campsite.lat }},{{ page.campsite.lng }}" target="_blank">{{ page.campsite.name }}</a>
     {% else %}
     {{ page.campsite.name }}
     {% endif %}
@@ -58,7 +60,7 @@ layout: default
     <ul style="margin: 0.75rem 0 0; padding-left: 1.25rem;">
       {% for spot in day.spots %}
       <li style="margin-bottom: 0.5rem;">
-        {% if spot.url %}<a href="{{ spot.url }}" target="_blank">{{ spot.name }}</a>{% else %}{{ spot.name }}{% endif %}
+        {% if spot.url %}<a href="{{ spot.url }}" target="_blank">{{ spot.name }}</a>{% elsif spot.lat %}<a href="https://www.google.com/maps/place/{{ spot.lat }},{{ spot.lng }}" target="_blank">{{ spot.name }}</a>{% else %}{{ spot.name }}{% endif %}
         {% if spot.notes %} &mdash; {{ spot.notes }}{% endif %}
       </li>
       {% endfor %}
