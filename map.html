@@ -322,8 +322,8 @@ body.dark-theme .legend-item { color: #e5e7eb; }
 const DATA_URL      = '/assets/data/streams.json?v={{ site.time | date: "%Y%m%d%H%M%S" }}';
 const EXCLUDED      = ['Unknown','Central Sands','Minnesota','Southern WI'];
 const ZOOM_THRESHOLD = 11;
-const RATING_MAP  = {'F':0,'E':1,'D':2,'C':3,'B':4,'A':5,'S':6};
-const RATING_KEYS = ['F','E','D','C','B','A','S'];
+const RATING_MAP  = {'F':0,'E':1,'D':2,'C':3,'B':4,'A':5,'S':6,'S+':7};
+const RATING_KEYS = ['F','E','D','C','B','A','S','S+'];
 
 // ── Rating helpers ────────────────────────────────────────────────────────────
 
@@ -331,21 +331,19 @@ function ratingColor(n) {
   if (n == null || isNaN(n)) return '#9ca3af';
   const stops = [
     [220,38,38],[249,115,22],[234,179,8],
-    [132,204,22],[34,197,94],[16,185,129],[5,191,133]
+    [132,204,22],[34,197,94],[16,185,129],[5,191,133],[3,105,161]
   ];
-  const lo = Math.floor(Math.max(0, Math.min(6, n)));
-  const hi = Math.min(lo + 1, 6);
-  const t  = Math.max(0, Math.min(6, n)) - lo;
+  const lo = Math.floor(Math.max(0, Math.min(7, n)));
+  const hi = Math.min(lo + 1, 7);
+  const t  = Math.max(0, Math.min(7, n)) - lo;
   const [c1,c2] = [stops[lo],stops[hi]];
   return `rgb(${Math.round(c1[0]+(c2[0]-c1[0])*t)},${Math.round(c1[1]+(c2[1]-c1[1])*t)},${Math.round(c1[2]+(c2[2]-c1[2])*t)})`;
 }
 
 function ratingToLetter(n) {
   if (n == null || isNaN(n)) return '—';
-  const clamped = Math.max(0, Math.min(5.99, n));
-  const base    = Math.floor(clamped);
-  const letter  = RATING_KEYS[Math.min(base, 6)];
-  return (clamped - base) >= 0.5 ? letter + '+' : letter;
+  const clamped = Math.max(0, Math.min(7, n));
+  return RATING_KEYS[Math.round(clamped)] || 'S+';
 }
 
 function fmtDate(d) {
@@ -580,7 +578,7 @@ map.on('zoomend', handleZoomChange);
 // ── Legend ────────────────────────────────────────────────────────────────────
 
 function buildLegend() {
-  const grades = ['F','C','B','A','S'];
+  const grades = ['F','C','B','A','S','S+'];
   document.getElementById('legend-items').innerHTML = grades.map(g => {
     const idx = RATING_KEYS.indexOf(g);
     return `<div class="legend-item">
