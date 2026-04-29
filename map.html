@@ -267,10 +267,14 @@ body.dark-theme .legend-item { color: #e5e7eb; }
   <div id="stream-map"></div>
 
   <div class="map-controls" id="map-controls">
-    <div class="map-controls-title" style="display:flex;align-items:center;justify-content:space-between;">
+    <div class="map-controls-title" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleControls()">
       <span>🗺 Stream Map</span>
-      <span class="view-mode-badge streams" id="view-badge">Streams</span>
+      <span style="display:flex;align-items:center;gap:6px;">
+        <span class="view-mode-badge streams" id="view-badge">Streams</span>
+        <span id="ctrl-chevron" style="font-size:.75rem;color:#9ca3af;">▲</span>
+      </span>
     </div>
+    <div id="ctrl-body">
 
     <div class="ctrl-group">
       <span class="ctrl-label">Color by</span>
@@ -404,6 +408,14 @@ function matchesLogFilter(whoLog) {
   if (logFilter === 'mine')  return whoLog === 'C';
   if (logFilter === 'other') return whoLog !== 'C';
   return true;
+}
+
+function toggleControls() {
+  const body    = document.getElementById('ctrl-body');
+  const chevron = document.getElementById('ctrl-chevron');
+  const collapsed = body.style.display === 'none';
+  body.style.display    = collapsed ? '' : 'none';
+  chevron.textContent   = collapsed ? '▲' : '▼';
 }
 
 // ── Marker / popup factories ──────────────────────────────────────────────────

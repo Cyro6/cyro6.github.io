@@ -9,7 +9,7 @@ images:
   - /assets/images/20251004_135706.jpg
   - /assets/images/20251004_165738.jpg
   - /assets/images/20251004_165639.jpg
-summary: "Initially the goal was to find a big brown, then the goal was to find trout, then the goal was to catch fish and reach our limit. We did eventually manage that."
+summary: "Initially the goal was to find a big brown, then the goal was to find trout, then the goal was to catch fish and reach our limit. We did eventually manage that. Day 3 was the real winner of this trip, going back to the old standby stream."
 
 
 campsite:
