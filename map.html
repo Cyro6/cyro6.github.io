@@ -86,6 +86,25 @@ body.dark-theme .ctrl-toggle button.active {
   color: white;
   border-color: #05bf85;
 }
+.ctrl-check {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: .78rem;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  user-select: none;
+  padding: 1px 0;
+}
+.ctrl-check input[type="checkbox"] {
+  accent-color: #05bf85;
+  width: 13px;
+  height: 13px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+body.dark-theme .ctrl-check { color: #9ca3af; }
 .ctrl-select {
   width: 100%;
   padding: 5px 8px;
@@ -256,23 +275,22 @@ body.dark-theme .legend-item { color: #e5e7eb; }
     <div class="ctrl-group">
       <span class="ctrl-label">Color by</span>
       <div class="ctrl-toggle">
-        <button id="btn-recent" class="active" onclick="setColorMode('recent')">Recent</button>
-        <button id="btn-avg" onclick="setColorMode('avg')">Avg</button>
+        <button id="btn-recent" class="active" onclick="setColorMode('recent')" title="Color each stream marker by your most recent trip rating">Recent</button>
+        <button id="btn-avg" onclick="setColorMode('avg')" title="Color each stream marker by the average rating across all trips in the window">Avg</button>
       </div>
     </div>
 
     <div class="ctrl-group">
       <span class="ctrl-label">Log Type</span>
-      <div class="ctrl-toggle">
-        <button id="btn-log-both" class="active" onclick="setLogFilter('both')">Both</button>
-        <button id="btn-log-mine" onclick="setLogFilter('mine')">Mine</button>
-        <button id="btn-log-other" onclick="setLogFilter('other')">Other</button>
+      <div style="display:flex;flex-direction:column;gap:3px;margin-top:2px;">
+        <label class="ctrl-check" title="Include trips you logged yourself"><input type="checkbox" id="chk-mine" checked onchange="updateLogFilter()"> Mine</label>
+        <label class="ctrl-check" title="Include trips logged by others in the group"><input type="checkbox" id="chk-other" checked onchange="updateLogFilter()"> Others</label>
       </div>
     </div>
 
     <div class="ctrl-group">
-      <label class="ctrl-label" for="map-min-visits">Min Visits</label>
-      <select id="map-min-visits" class="ctrl-select" onchange="renderMarkers()">
+      <label class="ctrl-label" for="map-min-visits" title="Only show streams visited at least this many times in the selected time window">Min Visits</label>
+      <select id="map-min-visits" class="ctrl-select" title="Only show streams visited at least this many times in the selected time window" onchange="renderMarkers()">
         <option value="1">Any</option>
         <option value="2" selected>2+</option>
         <option value="3">3+</option>
@@ -282,8 +300,8 @@ body.dark-theme .legend-item { color: #e5e7eb; }
     </div>
 
     <div class="ctrl-group">
-      <label class="ctrl-label" for="map-years">Data Window</label>
-      <select id="map-years" class="ctrl-select" onchange="renderMarkers()">
+      <label class="ctrl-label" for="map-years" title="Only count trips within this time period when calculating ratings and visit counts">Data Window</label>
+      <select id="map-years" class="ctrl-select" title="Only count trips within this time period when calculating ratings and visit counts" onchange="renderMarkers()">
         <option value="2" selected>Last 2 yrs</option>
         <option value="4">Last 4 yrs</option>
         <option value="6">Last 6 yrs</option>
@@ -293,11 +311,11 @@ body.dark-theme .legend-item { color: #e5e7eb; }
 
     <div class="ctrl-group">
       <span class="ctrl-label">Overlays</span>
-      <div class="ctrl-toggle" style="flex-direction:column;gap:5px;">
-        <button id="btn-dnr"     onclick="toggleDNRLayer()">DNR Regs</button>
-        <button id="btn-land"    onclick="toggleLandLayer()">Managed Land</button>
-        <button id="btn-parking" onclick="toggleParkingLayer()">Parking</button>
-        <button id="btn-habitat" onclick="toggleHabitatLayer()">Habitat Projects</button>
+      <div style="display:flex;flex-direction:column;gap:3px;margin-top:2px;">
+        <label class="ctrl-check" title="WI DNR classified trout stream regulations colored by category"><input type="checkbox" id="chk-dnr" onchange="toggleDNRLayer()"> DNR Regs</label>
+        <label class="ctrl-check" title="DNR-owned land (filled) and stream easements (highlighted) near trout streams"><input type="checkbox" id="chk-land" onchange="toggleLandLayer()"> Managed Land</label>
+        <label class="ctrl-check" title="DNR parking lots within ~1km of a classified trout stream"><input type="checkbox" id="chk-parking" onchange="toggleParkingLayer()"> Parking</label>
+        <label class="ctrl-check" title="Trout stream habitat improvement projects"><input type="checkbox" id="chk-habitat" onchange="toggleHabitatLayer()"> Habitat Projects</label>
       </div>
       <div id="dnr-legend-inline" style="display:none;margin-top:8px;">
         <div style="display:flex;flex-direction:column;gap:4px;">
@@ -391,11 +409,10 @@ function setColorMode(mode) {
   renderMarkers();
 }
 
-function setLogFilter(filter) {
-  logFilter = filter;
-  document.getElementById('btn-log-both').classList.toggle('active',  filter === 'both');
-  document.getElementById('btn-log-mine').classList.toggle('active',  filter === 'mine');
-  document.getElementById('btn-log-other').classList.toggle('active', filter === 'other');
+function updateLogFilter() {
+  const mine  = document.getElementById('chk-mine').checked;
+  const other = document.getElementById('chk-other').checked;
+  logFilter = mine && !other ? 'mine' : !mine && other ? 'other' : 'both';
   renderMarkers();
 }
 
@@ -601,15 +618,10 @@ let dnrLayer   = L.layerGroup();
 let dnrGeoJSON = null; // cached after first load
 
 function toggleDNRLayer() {
-  dnrEnabled = !dnrEnabled;
-  document.getElementById('btn-dnr').classList.toggle('active', dnrEnabled);
+  dnrEnabled = document.getElementById('chk-dnr').checked;
   document.getElementById('dnr-legend-inline').style.display = dnrEnabled ? 'block' : 'none';
-  if (dnrEnabled) {
-    dnrLayer.addTo(map);
-    loadDNRLayer();
-  } else {
-    map.removeLayer(dnrLayer);
-  }
+  if (dnrEnabled) { dnrLayer.addTo(map); loadDNRLayer(); }
+  else { map.removeLayer(dnrLayer); }
 }
 
 async function loadDNRLayer() {
@@ -661,8 +673,7 @@ function easementWeight() {
 }
 
 function toggleLandLayer() {
-  landEnabled = !landEnabled;
-  document.getElementById('btn-land').classList.toggle('active', landEnabled);
+  landEnabled = document.getElementById('chk-land').checked;
   if (landEnabled) { landLayer.addTo(map); loadLandLayer(); }
   else { map.removeLayer(landLayer); }
 }
@@ -713,8 +724,7 @@ let parkingLayer   = L.layerGroup();
 let parkingGeoJSON = null;
 
 function toggleParkingLayer() {
-  parkingEnabled = !parkingEnabled;
-  document.getElementById('btn-parking').classList.toggle('active', parkingEnabled);
+  parkingEnabled = document.getElementById('chk-parking').checked;
   if (parkingEnabled) { parkingLayer.addTo(map); loadParkingLayer(); }
   else { map.removeLayer(parkingLayer); }
 }
@@ -751,8 +761,7 @@ let habitatLayer   = L.layerGroup();
 let habitatGeoJSON = null;
 
 function toggleHabitatLayer() {
-  habitatEnabled = !habitatEnabled;
-  document.getElementById('btn-habitat').classList.toggle('active', habitatEnabled);
+  habitatEnabled = document.getElementById('chk-habitat').checked;
   if (habitatEnabled) { habitatLayer.addTo(map); loadHabitatLayer(); }
   else { map.removeLayer(habitatLayer); }
 }
