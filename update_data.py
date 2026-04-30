@@ -361,7 +361,7 @@ def fetch_dnr_managed_lands(stream_segs):
     print('Fetching DNR managed lands...')
     features = _fetch_arcgis_geojson(MANAGED_LANDS_URL, {
         'outFields': 'PROP_NAME,ACRES,PUBLIC_ACCESS,TRANS_TYPE',
-        'maxAllowableOffset': 0.0001,
+        'maxAllowableOffset': 0.001,
     }, 'managed lands')
 
     kept = []
