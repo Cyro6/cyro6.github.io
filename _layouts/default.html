@@ -23,9 +23,7 @@
         {{ content }}
       </div>
     </main>
-    <footer class="footer" role="contentinfo">
-      {% include nav-footer.html %}
-    </footer>
+    {% include site-footer.html %}
     {% if site.service_worker != false %}{% include site-sw.html %}{% endif %}
   </body>
 </html>
