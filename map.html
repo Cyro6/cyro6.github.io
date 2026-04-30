@@ -413,11 +413,12 @@ function setColorMode(mode) {
 function updateLogFilter() {
   const mine  = document.getElementById('chk-mine').checked;
   const other = document.getElementById('chk-other').checked;
-  logFilter = mine && !other ? 'mine' : !mine && other ? 'other' : 'both';
+  logFilter = mine && other ? 'both' : mine ? 'mine' : other ? 'other' : 'none';
   renderMarkers();
 }
 
 function matchesLogFilter(whoLog) {
+  if (logFilter === 'none')  return false;
   if (logFilter === 'mine')  return whoLog === 'C';
   if (logFilter === 'other') return whoLog !== 'C';
   return true;
@@ -494,7 +495,7 @@ function makeTripPopup(t) {
 function renderMarkers() {
   streamLayer.clearLayers();
 
-  const minVisits = parseInt(document.getElementById('map-min-visits').value) || 1;
+  const minVisits = parseInt(document.getElementById('map-min-visits').value, 10);
   const yearsBack = parseInt(document.getElementById('map-years').value) || 0;
   const cutoff    = yearsBack > 0 ? new Date(Date.now() - yearsBack * 365.25 * 86400000) : null;
 
