@@ -29,6 +29,7 @@ OUTPUT_PATH          = os.path.join(os.path.dirname(__file__), 'assets', 'data',
 CACHE_PATH           = os.path.join(os.path.dirname(__file__), 'assets', 'data', 'weather_cache.json')
 DNR_OUTPUT_PATH      = os.path.join(os.path.dirname(__file__), 'assets', 'data', 'dnr_streams.geojson')
 MANAGED_LANDS_PATH   = os.path.join(os.path.dirname(__file__), 'assets', 'data', 'dnr_managed_lands.geojson')
+EASEMENT_STREAMS_PATH = os.path.join(os.path.dirname(__file__), 'assets', 'data', 'dnr_easement_streams.geojson')
 PARKING_PATH         = os.path.join(os.path.dirname(__file__), 'assets', 'data', 'dnr_parking.geojson')
 HABITAT_PATH         = os.path.join(os.path.dirname(__file__), 'assets', 'data', 'dnr_habitat_projects.geojson')
 
@@ -428,6 +429,92 @@ def fetch_dnr_habitat_projects():
     print(f'  Saved {len(features)} habitat project reaches ({size_kb:.0f} KB)')
 
 
+def point_in_polygon(px, py, ring):
+    """Ray casting point-in-polygon test."""
+    inside = False
+    j = len(ring) - 1
+    for i, (xi, yi) in enumerate([(p[0], p[1]) for p in ring]):
+        xj, yj = ring[j][0], ring[j][1]
+        if ((yi > py) != (yj > py)) and px < (xj - xi) * (py - yi) / (yj - yi) + xi:
+            inside = not inside
+        j = i
+    return inside
+
+
+def fetch_dnr_easement_streams():
+    """Intersect easement polygons with DNR stream segments.
+    Outputs stream segments that fall inside easement polygons as a clean line layer.
+    """
+    print('Computing easement stream sections...')
+
+    with open(MANAGED_LANDS_PATH, encoding='utf-8') as f:
+        lands = json.load(f)
+
+    # Extract easement rings with bounding boxes
+    easement_rings = []
+    for feat in lands['features']:
+        if str(feat['properties'].get('TRANS_TYPE', '')) != '2':
+            continue
+        geom   = feat.get('geometry') or {}
+        gt     = geom.get('type', '')
+        coords = geom.get('coordinates', [])
+        rings  = [coords[0]] if gt == 'Polygon' else ([p[0] for p in coords] if gt == 'MultiPolygon' else [])
+        for ring in rings:
+            if not ring:
+                continue
+            xs = [p[0] for p in ring]
+            ys = [p[1] for p in ring]
+            easement_rings.append((ring, min(xs), min(ys), max(xs), max(ys)))
+
+    print(f'  {len(easement_rings)} easement rings')
+
+    with open(DNR_OUTPUT_PATH, encoding='utf-8') as f:
+        gj = json.load(f)
+
+    seen = set()
+    out_features = []
+
+    for feat in gj['features']:
+        geom   = feat.get('geometry') or {}
+        gt     = geom.get('type', '')
+        coords = geom.get('coordinates', [])
+        lines  = [coords] if gt == 'LineString' else (coords if gt == 'MultiLineString' else [])
+
+        for line in lines:
+            for i in range(len(line) - 1):
+                ax, ay = line[i][0],   line[i][1]
+                bx, by = line[i+1][0], line[i+1][1]
+                key    = (ax, ay, bx, by)
+                if key in seen:
+                    continue
+
+                mx, my     = (ax + bx) / 2, (ay + by) / 2
+                seg_minx   = min(ax, bx)
+                seg_maxx   = max(ax, bx)
+                seg_miny   = min(ay, by)
+                seg_maxy   = max(ay, by)
+
+                for ring, ex1, ey1, ex2, ey2 in easement_rings:
+                    if seg_maxx < ex1 or seg_minx > ex2 or seg_maxy < ey1 or seg_miny > ey2:
+                        continue
+                    if (point_in_polygon(mx, my, ring) or
+                            point_in_polygon(ax, ay, ring) or
+                            point_in_polygon(bx, by, ring)):
+                        seen.add(key)
+                        out_features.append({
+                            'type': 'Feature',
+                            'geometry': {'type': 'LineString', 'coordinates': [[ax, ay], [bx, by]]},
+                            'properties': {},
+                        })
+                        break
+
+    geojson = {'type': 'FeatureCollection', 'features': out_features}
+    with open(EASEMENT_STREAMS_PATH, 'w', encoding='utf-8') as f:
+        json.dump(geojson, f, separators=(',', ':'))
+    size_kb = os.path.getsize(EASEMENT_STREAMS_PATH) / 1024
+    print(f'  {len(out_features)} stream segments within easements ({size_kb:.0f} KB)')
+
+
 def main():
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
 
@@ -454,6 +541,7 @@ def main():
 
     stream_segs = load_stream_segs()
     fetch_dnr_managed_lands(stream_segs)
+    fetch_dnr_easement_streams()
     fetch_dnr_parking(stream_segs)
     fetch_dnr_habitat_projects()
 

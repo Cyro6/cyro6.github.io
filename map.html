@@ -649,9 +649,10 @@ async function loadDNRLayer() {
 
 // ── Managed Land Overlay ──────────────────────────────────────────────────────
 
-let landEnabled = false;
-let landLayer   = L.layerGroup();
-let landGeoJSON = null;
+let landEnabled     = false;
+let landLayer       = L.layerGroup();
+let landGeoJSON     = null;
+let easementGeoJSON = null;
 
 function toggleLandLayer() {
   landEnabled = !landEnabled;
@@ -670,13 +671,10 @@ async function loadLandLayer() {
     } catch (e) { console.error('Managed land layer failed:', e); return; }
   }
   landLayer.clearLayers();
+  // Fee-simple owned parcels — filled polygons
   L.geoJSON(landGeoJSON, {
-    style: f => {
-      const easement = String(f.properties.TRANS_TYPE) === '2';
-      return easement
-        ? { color: '#15803d', weight: 1.5, opacity: 0.6, fill: false, dashArray: '4 4' }
-        : { color: '#15803d', weight: 1,   opacity: 0.7, fillColor: '#16a34a', fillOpacity: 0.15 };
-    },
+    filter: f => String(f.properties.TRANS_TYPE) !== '2',
+    style: () => ({ color: '#15803d', weight: 1, opacity: 0.7, fillColor: '#16a34a', fillOpacity: 0.15 }),
     onEachFeature: (f, l) => {
       const p = f.properties;
       l.bindPopup(
@@ -686,6 +684,20 @@ async function loadLandLayer() {
       );
     }
   }).addTo(landLayer);
+  // Easements — highlight the actual stream segments that fall inside them
+  if (!easementGeoJSON) {
+    try {
+      const r = await fetch('/assets/data/dnr_easement_streams.geojson');
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      easementGeoJSON = await r.json();
+    } catch (e) { console.error('Easement streams load failed:', e); }
+  }
+  if (easementGeoJSON) {
+    L.geoJSON(easementGeoJSON, {
+      style: () => ({ color: '#4ade80', weight: 4, opacity: 0.7 }),
+      interactive: false,
+    }).addTo(landLayer);
+  }
 }
 
 // ── Parking Overlay ───────────────────────────────────────────────────────────
