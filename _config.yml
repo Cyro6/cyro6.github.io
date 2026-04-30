@@ -32,7 +32,5 @@ navigation_header:
     url: /planner
   - title: Resources
     url: /resources
-  - title: YouTube
-    url: /youtube
   - title: About
     url: /about

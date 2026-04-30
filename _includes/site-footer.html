@@ -1,13 +1,9 @@
 <footer style="background:#242e2b;color:#a8adac;padding:1.25rem 0;margin-top:2rem;font-family:'Inter',sans-serif;font-size:.85rem;">
   <div style="max-width:1200px;margin:0 auto;padding:0 5%;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;">
     <span>&copy; {{ site.title }} {{ site.time | date: '%Y' }}</span>
-    <nav style="display:flex;gap:1.25rem;flex-wrap:wrap;">
-      <a href="/map"       style="color:#a8adac;text-decoration:none;">Map</a>
-      <a href="/insights"  style="color:#a8adac;text-decoration:none;">Insights</a>
-      <a href="/planner"   style="color:#a8adac;text-decoration:none;">Planner</a>
+    <nav style="display:flex;gap:1.25rem;align-items:center;">
       <a href="/resources" style="color:#a8adac;text-decoration:none;">Resources</a>
-      <a href="/youtube"   style="color:#a8adac;text-decoration:none;">YouTube</a>
-      <a href="/about"     style="color:#a8adac;text-decoration:none;">About</a>
+      <a href="{{ site.youtube_url }}" target="_blank" rel="noopener" style="color:#a8adac;text-decoration:none;">YouTube</a>
     </nav>
   </div>
 </footer>
