@@ -694,7 +694,7 @@ async function loadLandLayer() {
   }
   if (easementGeoJSON) {
     L.geoJSON(easementGeoJSON, {
-      style: () => ({ color: '#4ade80', weight: 10, opacity: 0.35 }),
+      style: () => ({ color: '#4ade80', weight: 20, opacity: 0.35 }),
       interactive: false,
     }).addTo(landLayer);
   }
