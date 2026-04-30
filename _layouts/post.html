@@ -101,6 +101,12 @@ layout: default
     var dayColors = ['#2596be','#cc2c3f','#cc852b','#ccc62b','#9b29cb'];
     var bounds = [];
 
+    fetch('/assets/data/dnr_streams.geojson')
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        L.geoJSON(data, { style: { color: '#4a90d9', weight: 1.5, opacity: 0.45, interactive: false } }).addTo(map);
+      });
+
     {% if page.campsite.lat %}
     var campsiteMarker = L.circleMarker([{{ page.campsite.lat }}, {{ page.campsite.lng }}], {
       radius: 9, fillColor: '#39b831', fillOpacity: 0.9, color: 'rgba(255,255,255,0.8)', weight: 2
