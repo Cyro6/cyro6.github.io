@@ -24,8 +24,6 @@ navigation_pages:
 navigation_header:
   - title: Home
     url: /
-  - title: Analytics
-    url: /Analytics
   - title: Map
     url: /map
   - title: Insights
