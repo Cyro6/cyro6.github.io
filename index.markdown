@@ -128,6 +128,8 @@ title: Driftless Trout Fishing Trip Log
   </div>
 </div>
 
+<script>window._miniMaps = [];</script>
+
 <div style="max-width: 1100px; margin: 0 auto;">
 {% for post in site.posts %}
 {% assign has_coords = false %}
@@ -206,12 +208,21 @@ title: Driftless Trout Fishing Trip Log
   bounds.push([{{ spot.lat }}, {{ spot.lng }}]);
   {% endif %}{% endfor %}{% endfor %}
   if (bounds.length > 0) map.fitBounds(bounds, { padding: [12, 12] });
+  window._miniMaps.push(map);
 })();
 </script>
 {% endif %}
 {% endfor %}
 </div>
 <script>
+fetch('/assets/data/dnr_streams.geojson')
+  .then(function(r){ return r.json(); })
+  .then(function(data){
+    window._miniMaps.forEach(function(m){
+      L.geoJSON(data, { style: { color: '#4a90d9', weight: 1, opacity: 0.45, interactive: false } }).addTo(m);
+    });
+  });
+
 if (!window.matchMedia('(hover: hover)').matches) {
   document.querySelectorAll('.cost-badge').forEach(function(badge) {
     badge.addEventListener('click', function(e) {
