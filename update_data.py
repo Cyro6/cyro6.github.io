@@ -25,13 +25,28 @@ SOURCE_URL = f'https://docs.google.com/spreadsheets/d/e/{SHEET_ID}/pub?gid={SOUR
 CAMPSITE_URL = f'https://docs.google.com/spreadsheets/d/e/{SHEET_ID}/pub?gid={CAMPSITE_GID}&single=true&output=csv'
 STREAM_INFO_URL = f'https://docs.google.com/spreadsheets/d/e/{SHEET_ID}/pub?gid={STREAM_INFO_GID}&single=true&output=csv'
 
-OUTPUT_PATH     = os.path.join(os.path.dirname(__file__), 'assets', 'data', 'streams.json')
-CACHE_PATH      = os.path.join(os.path.dirname(__file__), 'assets', 'data', 'weather_cache.json')
-DNR_OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'assets', 'data', 'dnr_streams.geojson')
+OUTPUT_PATH          = os.path.join(os.path.dirname(__file__), 'assets', 'data', 'streams.json')
+CACHE_PATH           = os.path.join(os.path.dirname(__file__), 'assets', 'data', 'weather_cache.json')
+DNR_OUTPUT_PATH      = os.path.join(os.path.dirname(__file__), 'assets', 'data', 'dnr_streams.geojson')
+MANAGED_LANDS_PATH   = os.path.join(os.path.dirname(__file__), 'assets', 'data', 'dnr_managed_lands.geojson')
+PARKING_PATH         = os.path.join(os.path.dirname(__file__), 'assets', 'data', 'dnr_parking.geojson')
+HABITAT_PATH         = os.path.join(os.path.dirname(__file__), 'assets', 'data', 'dnr_habitat_projects.geojson')
 
 DNR_QUERY_URL = (
     'https://dnrmaps.wi.gov/arcgis/rest/services/FM_Trout/'
     'FM_TROUT_REGS_WTM_Ext/MapServer/0/query'
+)
+MANAGED_LANDS_URL = (
+    'https://dnrmaps.wi.gov/arcgis/rest/services/LF_DML/'
+    'LF_DNR_MGD_PROP_WTM_Ext/MapServer/0/query'
+)
+PARKING_URL = (
+    'https://dnrmaps.wi.gov/arcgis/rest/services/LF_DML/'
+    'LF_DNR_BOAT_BoatAccess_WTM_Ext/MapServer/6/query'
+)
+HABITAT_URL = (
+    'https://dnrmaps.wi.gov/arcgis/rest/services/FM_Trout/'
+    'FM_TROUT_HAB_SITES_WTM_Ext/MapServer/1/query'
 )
 
 FIELD_MAP = [
@@ -150,6 +165,14 @@ def fetch_dnr_attributes():
     return lookup
 
 
+def pt_seg_dsq(px, py, ax, ay, bx, by):
+    dx, dy = bx - ax, by - ay
+    if dx == 0 and dy == 0:
+        return (px - ax) ** 2 + (py - ay) ** 2
+    t = max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy)))
+    return (px - ax - t * dx) ** 2 + (py - ay - t * dy) ** 2
+
+
 def build_dnr_lookup_by_gps(source_rows, dnr_attr_lookup):
     """Match user stream names to DNR regulations using GPS proximity.
     Uses the already-saved dnr_streams.geojson for geometry and
@@ -178,13 +201,6 @@ def build_dnr_lookup_by_gps(source_rows, dnr_attr_lookup):
         ]
         if segs:
             dnr_segs.append((name, segs))
-
-    def pt_seg_dsq(px, py, ax, ay, bx, by):
-        dx, dy = bx - ax, by - ay
-        if dx == 0 and dy == 0:
-            return (px - ax) ** 2 + (py - ay) ** 2
-        t = max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy)))
-        return (px - ax - t * dx) ** 2 + (py - ay - t * dy) ** 2
 
     def nearest_dnr(lon, lat):
         best_dsq, best_name = float('inf'), None
@@ -286,6 +302,132 @@ def fetch_dnr_streams():
     print(f'  Saved {len(all_features)} stream segments to dnr_streams.geojson ({size_kb:.0f} KB)')
 
 
+def load_stream_segs():
+    """Load trout stream polyline segments for proximity filtering."""
+    with open(DNR_OUTPUT_PATH, encoding='utf-8') as f:
+        gj = json.load(f)
+    segs = []
+    for feat in gj['features']:
+        geom  = feat.get('geometry') or {}
+        gt    = geom.get('type', '')
+        coords = geom.get('coordinates', [])
+        lines  = [coords] if gt == 'LineString' else (coords if gt == 'MultiLineString' else [])
+        for line in lines:
+            for i in range(len(line) - 1):
+                segs.append((line[i][0], line[i][1], line[i+1][0], line[i+1][1]))
+    return segs
+
+
+def min_stream_dsq(lon, lat, segs):
+    return min((pt_seg_dsq(lon, lat, ax, ay, bx, by) for ax, ay, bx, by in segs), default=float('inf'))
+
+
+def _fetch_arcgis_geojson(query_url, params_extra, label):
+    """Paginate an ArcGIS REST endpoint and return all GeoJSON features."""
+    all_features = []
+    offset = 0
+    page_size = 1000
+    while True:
+        params = urllib.parse.urlencode({
+            'where': '1=1',
+            'outSR': '4326',
+            'geometryPrecision': 4,
+            'f': 'geojson',
+            'resultOffset': offset,
+            'resultRecordCount': page_size,
+            **params_extra,
+        })
+        url = f'{query_url}?{params}'
+        try:
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                data = json.loads(resp.read().decode('utf-8'))
+        except Exception as e:
+            print(f'  ERROR at offset {offset}: {e}')
+            break
+        features = data.get('features', [])
+        all_features.extend(features)
+        print(f'  Page {offset // page_size + 1}: {len(features)} features (total: {len(all_features)})')
+        if len(features) < page_size:
+            break
+        offset += page_size
+    return all_features
+
+
+def fetch_dnr_managed_lands(stream_segs):
+    """Download DNR managed land polygons, keep only those within ~2 km of a trout stream."""
+    MAX_DSQ = 0.02 ** 2
+    print('Fetching DNR managed lands...')
+    features = _fetch_arcgis_geojson(MANAGED_LANDS_URL, {
+        'outFields': 'PROP_NAME,ACRES,PUBLIC_ACCESS,TRANS_TYPE',
+        'maxAllowableOffset': 0.001,
+    }, 'managed lands')
+
+    kept = []
+    for feat in features:
+        geom   = feat.get('geometry') or {}
+        gt     = geom.get('type', '')
+        coords = geom.get('coordinates', [])
+        if gt == 'Polygon':
+            ring = coords[0] if coords else []
+        elif gt == 'MultiPolygon':
+            ring = coords[0][0] if coords and coords[0] else []
+        else:
+            continue
+        if not ring:
+            continue
+        cx = sum(p[0] for p in ring) / len(ring)
+        cy = sum(p[1] for p in ring) / len(ring)
+        if min_stream_dsq(cx, cy, stream_segs) <= MAX_DSQ:
+            kept.append(feat)
+
+    geojson = {'type': 'FeatureCollection', 'features': kept}
+    with open(MANAGED_LANDS_PATH, 'w', encoding='utf-8') as f:
+        json.dump(geojson, f, separators=(',', ':'))
+    size_kb = os.path.getsize(MANAGED_LANDS_PATH) / 1024
+    print(f'  Kept {len(kept)} of {len(features)} properties near trout streams ({size_kb:.0f} KB)')
+
+
+def fetch_dnr_parking(stream_segs):
+    """Download DNR parking lots, keep only those within ~1 km of a trout stream."""
+    MAX_DSQ = 0.01 ** 2
+    print('Fetching DNR parking lots...')
+    features = _fetch_arcgis_geojson(PARKING_URL, {
+        'outFields': 'PARKING_LOT_NAME,LOCATION_DESC',
+    }, 'parking')
+
+    kept = []
+    for feat in features:
+        geom   = feat.get('geometry') or {}
+        coords = geom.get('coordinates', [])
+        if not coords or len(coords) < 2:
+            continue
+        lon, lat = coords[0], coords[1]
+        if min_stream_dsq(lon, lat, stream_segs) <= MAX_DSQ:
+            kept.append(feat)
+
+    geojson = {'type': 'FeatureCollection', 'features': kept}
+    with open(PARKING_PATH, 'w', encoding='utf-8') as f:
+        json.dump(geojson, f, separators=(',', ':'))
+    size_kb = os.path.getsize(PARKING_PATH) / 1024
+    print(f'  Kept {len(kept)} of {len(features)} parking lots near trout streams ({size_kb:.0f} KB)')
+
+
+def fetch_dnr_habitat_projects():
+    """Download trout habitat project reaches (polylines)."""
+    print('Fetching trout habitat projects...')
+    features = _fetch_arcgis_geojson(HABITAT_URL, {
+        'outFields': 'WATERBODYNAMECOMBINED,SITENAMECOMBINED,FISCALYEAR,PROJECTPURPOSE,TARGETSPECIES,TECHNIQUESSTRUCTURES',
+        'maxAllowableOffset': 0.0003,
+    }, 'habitat projects')
+
+    geojson = {'type': 'FeatureCollection', 'features': features}
+    with open(HABITAT_PATH, 'w', encoding='utf-8') as f:
+        json.dump(geojson, f, separators=(',', ':'))
+    size_kb = os.path.getsize(HABITAT_PATH) / 1024
+    print(f'  Saved {len(features)} habitat project reaches ({size_kb:.0f} KB)')
+
+
 def main():
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
 
@@ -309,6 +451,11 @@ def main():
 
     size_kb = os.path.getsize(OUTPUT_PATH) / 1024
     print(f'Saved to {OUTPUT_PATH} ({size_kb:.1f} KB)')
+
+    stream_segs = load_stream_segs()
+    fetch_dnr_managed_lands(stream_segs)
+    fetch_dnr_parking(stream_segs)
+    fetch_dnr_habitat_projects()
 
 
 if __name__ == '__main__':

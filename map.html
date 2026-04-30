@@ -293,8 +293,11 @@ body.dark-theme .legend-item { color: #e5e7eb; }
 
     <div class="ctrl-group">
       <span class="ctrl-label">Overlays</span>
-      <div class="ctrl-toggle">
-        <button id="btn-dnr" onclick="toggleDNRLayer()" style="flex:none;padding:5px 10px;">DNR Regs</button>
+      <div class="ctrl-toggle" style="flex-direction:column;gap:5px;">
+        <button id="btn-dnr"     onclick="toggleDNRLayer()">DNR Regs</button>
+        <button id="btn-land"    onclick="toggleLandLayer()">Managed Land</button>
+        <button id="btn-parking" onclick="toggleParkingLayer()">Parking</button>
+        <button id="btn-habitat" onclick="toggleHabitatLayer()">Habitat Projects</button>
       </div>
       <div id="dnr-legend-inline" style="display:none;margin-top:8px;">
         <div style="display:flex;flex-direction:column;gap:4px;">
@@ -642,6 +645,117 @@ async function loadDNRLayer() {
       );
     }
   }).addTo(dnrLayer);
+}
+
+// ── Managed Land Overlay ──────────────────────────────────────────────────────
+
+let landEnabled = false;
+let landLayer   = L.layerGroup();
+let landGeoJSON = null;
+
+function toggleLandLayer() {
+  landEnabled = !landEnabled;
+  document.getElementById('btn-land').classList.toggle('active', landEnabled);
+  if (landEnabled) { landLayer.addTo(map); loadLandLayer(); }
+  else { map.removeLayer(landLayer); }
+}
+
+async function loadLandLayer() {
+  if (!landEnabled) return;
+  if (!landGeoJSON) {
+    try {
+      const r = await fetch('/assets/data/dnr_managed_lands.geojson');
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      landGeoJSON = await r.json();
+    } catch (e) { console.error('Managed land layer failed:', e); return; }
+  }
+  landLayer.clearLayers();
+  L.geoJSON(landGeoJSON, {
+    style: () => ({ color: '#15803d', weight: 1, opacity: 0.7, fillColor: '#16a34a', fillOpacity: 0.15 }),
+    onEachFeature: (f, l) => {
+      const p = f.properties;
+      l.bindPopup(
+        `<strong>${p.PROP_NAME || 'DNR Property'}</strong><br>` +
+        `${p.ACRES ? Math.round(p.ACRES) + ' acres' : ''}` +
+        `${p.PUBLIC_ACCESS ? '<br>' + p.PUBLIC_ACCESS : ''}`
+      );
+    }
+  }).addTo(landLayer);
+}
+
+// ── Parking Overlay ───────────────────────────────────────────────────────────
+
+let parkingEnabled = false;
+let parkingLayer   = L.layerGroup();
+let parkingGeoJSON = null;
+
+function toggleParkingLayer() {
+  parkingEnabled = !parkingEnabled;
+  document.getElementById('btn-parking').classList.toggle('active', parkingEnabled);
+  if (parkingEnabled) { parkingLayer.addTo(map); loadParkingLayer(); }
+  else { map.removeLayer(parkingLayer); }
+}
+
+async function loadParkingLayer() {
+  if (!parkingEnabled) return;
+  if (!parkingGeoJSON) {
+    try {
+      const r = await fetch('/assets/data/dnr_parking.geojson');
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      parkingGeoJSON = await r.json();
+    } catch (e) { console.error('Parking layer failed:', e); return; }
+  }
+  parkingLayer.clearLayers();
+  L.geoJSON(parkingGeoJSON, {
+    pointToLayer: (f, latlng) => L.circleMarker(latlng, {
+      radius: 7, fillColor: '#2563eb', fillOpacity: 0.85,
+      color: 'rgba(255,255,255,.8)', weight: 1.5,
+    }),
+    onEachFeature: (f, l) => {
+      const p = f.properties;
+      l.bindPopup(
+        `<strong>P ${p.PARKING_LOT_NAME || 'DNR Parking'}</strong>` +
+        `${p.LOCATION_DESC ? '<br>' + p.LOCATION_DESC : ''}`
+      );
+    }
+  }).addTo(parkingLayer);
+}
+
+// ── Habitat Projects Overlay ──────────────────────────────────────────────────
+
+let habitatEnabled = false;
+let habitatLayer   = L.layerGroup();
+let habitatGeoJSON = null;
+
+function toggleHabitatLayer() {
+  habitatEnabled = !habitatEnabled;
+  document.getElementById('btn-habitat').classList.toggle('active', habitatEnabled);
+  if (habitatEnabled) { habitatLayer.addTo(map); loadHabitatLayer(); }
+  else { map.removeLayer(habitatLayer); }
+}
+
+async function loadHabitatLayer() {
+  if (!habitatEnabled) return;
+  if (!habitatGeoJSON) {
+    try {
+      const r = await fetch('/assets/data/dnr_habitat_projects.geojson');
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      habitatGeoJSON = await r.json();
+    } catch (e) { console.error('Habitat layer failed:', e); return; }
+  }
+  habitatLayer.clearLayers();
+  L.geoJSON(habitatGeoJSON, {
+    style: () => ({ color: '#f97316', weight: 3, opacity: 0.85 }),
+    onEachFeature: (f, l) => {
+      const p = f.properties;
+      l.bindPopup(
+        `<strong>${p.SITENAMECOMBINED || p.WATERBODYNAMECOMBINED || 'Habitat Project'}</strong>` +
+        `${p.FISCALYEAR ? '<br>FY ' + p.FISCALYEAR : ''}` +
+        `${p.PROJECTPURPOSE ? '<br>' + p.PROJECTPURPOSE : ''}` +
+        `${p.TECHNIQUESSTRUCTURES ? '<br><em>' + p.TECHNIQUESSTRUCTURES + '</em>' : ''}`
+      );
+    }
+  }).addTo(habitatLayer);
 }
 
 // ── Legend ────────────────────────────────────────────────────────────────────
