@@ -314,7 +314,24 @@ body.dark-theme .legend-item { color: #e5e7eb; }
       </select>
     </div>
 
+    <div class="ctrl-group">
+      <span class="ctrl-label">Overlays</span>
+      <div class="ctrl-toggle">
+        <button id="btn-dnr" onclick="toggleDNRLayer()" style="flex:none;padding:5px 10px;">DNR Regs</button>
+      </div>
+    </div>
+
     <div class="map-stat" id="map-stat">Loading…</div>
+  </div>
+
+  <div class="map-legend" id="dnr-legend" style="display:none;bottom:32px;left:150px;">
+    <div class="legend-title">DNR Category</div>
+    <div class="legend-items" style="flex-direction:column;gap:4px;">
+      <div class="legend-item"><span class="legend-dot" style="background:#22c55e;border-radius:2px;width:18px;height:5px;"></span>5 trout, any</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#f59e0b;border-radius:2px;width:18px;height:5px;"></span>3 trout, 8"</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#ef4444;border-radius:2px;width:18px;height:5px;"></span>Varies</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#3b82f6;border-radius:2px;width:18px;height:5px;"></span>Great Lake Trib</div>
+    </div>
   </div>
 
   <div class="map-legend" id="map-legend">
@@ -369,7 +386,7 @@ L.tileLayer(tileUrl, {
   maxZoom: 18
 }).addTo(map);
 
-['map-controls','map-legend'].forEach(id => {
+['map-controls','map-legend','dnr-legend'].forEach(id => {
   const el = document.getElementById(id);
   if (!el) return;
   ['click','mousedown','wheel','touchstart','dblclick'].forEach(evt =>
@@ -587,6 +604,61 @@ function handleZoomChange() {
 }
 
 map.on('zoomend', handleZoomChange);
+
+// ── DNR Regulation Overlay ────────────────────────────────────────────────────
+
+const REGCAT_LINE_COLORS = {
+  '5 Trout in Total of Any Length':                   '#22c55e',
+  '3 Trout in Total Over 8 inches':                   '#f59e0b',
+  'Length, Bag and Possession Limits Vary by Water':  '#ef4444',
+  'Great Lake Tributary':                             '#3b82f6',
+};
+
+let dnrEnabled = false;
+let dnrLayer   = L.layerGroup();
+let dnrGeoJSON = null; // cached after first load
+
+function toggleDNRLayer() {
+  dnrEnabled = !dnrEnabled;
+  document.getElementById('btn-dnr').classList.toggle('active', dnrEnabled);
+  document.getElementById('dnr-legend').style.display = dnrEnabled ? 'block' : 'none';
+  if (dnrEnabled) {
+    dnrLayer.addTo(map);
+    loadDNRLayer();
+  } else {
+    map.removeLayer(dnrLayer);
+  }
+}
+
+async function loadDNRLayer() {
+  if (!dnrEnabled) return;
+  if (!dnrGeoJSON) {
+    try {
+      const r = await fetch('/assets/data/dnr_streams.geojson');
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      dnrGeoJSON = await r.json();
+    } catch (e) {
+      console.error('DNR layer load failed:', e);
+      return;
+    }
+  }
+  dnrLayer.clearLayers();
+  L.geoJSON(dnrGeoJSON, {
+    style: f => ({
+      color:   REGCAT_LINE_COLORS[f.properties.REGCAT] || '#9ca3af',
+      weight:  2.5,
+      opacity: 0.75,
+    }),
+    onEachFeature: (f, l) => {
+      const p = f.properties;
+      l.bindPopup(
+        `<strong>${p.STREAM || 'Trout Stream'}</strong><br>` +
+        `Category: ${p.REGCAT || '—'}<br>` +
+        `Bag limit: ${p.BAG_LMT || '—'}`
+      );
+    }
+  }).addTo(dnrLayer);
+}
 
 // ── Legend ────────────────────────────────────────────────────────────────────
 

@@ -555,6 +555,8 @@ const MAX_RETRIES = 3;
 const BATCH_SIZE = 5;
 const CONFIDENCE_C = 4; // visits needed to fully trust a rating
 
+let dnrRegData = {};
+
 let globalAvgRating = 3.5; // updated after data loads
 let sourceData = null;
 let campsiteData = null;
@@ -943,9 +945,11 @@ function displayTripPlan(tripPlan, containerEl, prefix) {
         if (plan.primary.stream !== 'None') {
             const m = document.createElement('div');
             m.className = 'plan-meta';
+            const pBag = dnrRegData[plan.primary.stream]?.BAG_LMT || '—';
             m.innerHTML =
                 `<span>💧 3-day rain: <span id="${uid('pp-past')}">${plan.primaryPrecipitationPast}</span></span>` +
-                `<span>🌦 4-day fcst: <span id="${uid('pp-future')}">${plan.primaryPrecipitationFuture}</span></span>`;
+                `<span>🌦 4-day fcst: <span id="${uid('pp-future')}">${plan.primaryPrecipitationFuture}</span></span>` +
+                `<span>🎣 Bag limit: ${pBag}</span>`;
             primarySection.appendChild(m);
         }
         card.appendChild(primarySection);
@@ -975,9 +979,11 @@ function displayTripPlan(tripPlan, containerEl, prefix) {
         backupSection.appendChild(backupRow);
         let metaHtml = '';
         if (plan.backup.stream !== 'None') {
+            const bBag = dnrRegData[plan.backup.stream]?.BAG_LMT || '—';
             metaHtml +=
                 `<span>💧 3-day rain: <span id="${uid('bp-past')}">${plan.backupPrecipitationPast}</span></span>` +
-                `<span>🌦 4-day fcst: <span id="${uid('bp-future')}">${plan.backupPrecipitationFuture}</span></span>`;
+                `<span>🌦 4-day fcst: <span id="${uid('bp-future')}">${plan.backupPrecipitationFuture}</span></span>` +
+                `<span>🎣 Bag limit: ${bBag}</span>`;
         }
         if (plan.straightDistance !== 'N/A') metaHtml += `<span>📏 ${plan.straightDistance} mi from primary</span>`;
         if (metaHtml) {
@@ -1407,6 +1413,7 @@ async function fetchSourceData() {
         if (!data.source || !data.campsites) throw new Error('Invalid data format in streams.json');
         sourceData   = data.source;
         campsiteData = data.campsites;
+        dnrRegData   = data.dnr_regulations || {};
         processSourceData();
         populateMonthDropdown();
         populateCampsiteDropdown();

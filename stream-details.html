@@ -628,7 +628,8 @@ body.dark-theme .sd-page {
                     <h2>Stream Information</h2>
                     <button class="stream-info-toggle" data-toggle="stream-info-content" onclick="toggleSection('stream-info-content')">Expand</button>
                     <div class="stream-info-content" id="stream-info-content">
-                        <p><strong>Regulation:</strong> <span id="stream-regulation"></span></p>
+                        <p><strong>Regulation:</strong> <span id="stream-regulation"></span> <span id="stream-reg-source" style="font-size:.75rem;color:#9ca3af;"></span></p>
+                        <p><strong>Bag Limit:</strong> <span id="stream-bag-limit">—</span></p>
                         <p id="stream-special-regulations-container"><strong>Special Regulations:</strong> <span id="stream-special-regulations"></span></p>
                         <p id="stream-gear-restrictions-container"><strong>Gear Restrictions:</strong> <span id="stream-gear-restrictions"></span></p>
                         <p><strong>Season Information:</strong> <span id="stream-season-info"></span></p>
@@ -825,6 +826,7 @@ body.dark-theme .sd-page {
 
     let sourceData = null;
     let streamInfoData = null;
+    let dnrRegData = null;
     let spotsData = [];
     let filteredSpotsData = [];
     let sortSpotsColumn = 1;
@@ -993,6 +995,10 @@ body.dark-theme .sd-page {
         await fetchData();
         displayStreamDetails();
 
+        const regs = dnrRegData?.[streamName];
+        if (regs) applyDNRRegs(regs);
+        else document.getElementById('stream-reg-source').textContent = '(not in DNR)';
+
         if (window.innerWidth <= 600) {
             document.getElementById('stats-content').classList.add('active');
             document.getElementById('weather-content').classList.add('active');
@@ -1007,6 +1013,7 @@ body.dark-theme .sd-page {
             const json = await response.json();
             sourceData = json.source;
             streamInfoData = json.stream_info;
+            dnrRegData = json.dnr_regulations || {};
         } catch (error) {
             document.getElementById('error').textContent = `Error loading data: ${error.message}`;
             document.getElementById('error').style.display = 'block';
@@ -1351,6 +1358,39 @@ body.dark-theme .sd-page {
 
         document.getElementById('stream-details').style.display = 'block';
         document.getElementById('loading').style.display = 'none';
+    }
+
+    // ── WI DNR Regulations (baked into streams.json at data pull time) ──────────
+    function regcatBadgeStyle(rc) {
+        if (!rc) return 'background:#9ca3af;color:#fff';
+        if (rc.includes('5 Trout'))    return 'background:#22c55e;color:#fff';
+        if (rc.includes('3 Trout'))    return 'background:#f59e0b;color:#000';
+        if (rc.includes('Vary'))       return 'background:#ef4444;color:#fff';
+        if (rc.includes('Great Lake')) return 'background:#3b82f6;color:#fff';
+        return 'background:#9ca3af;color:#fff';
+    }
+
+    function applyDNRRegs(regs) {
+        const rc = (regs.REGCAT || '').trim();
+        document.getElementById('stream-regulation').innerHTML =
+            `<span style="display:inline-block;padding:1px 10px;border-radius:4px;${regcatBadgeStyle(rc)};font-weight:700;font-size:.82rem;" title="${rc}">${rc || '—'}</span>`;
+        document.getElementById('stream-reg-source').textContent = '· WI DNR';
+
+        document.getElementById('stream-bag-limit').textContent = (regs.BAG_LMT || '').trim() || '—';
+
+        if (regs.SEASON_TXT) document.getElementById('stream-season-info').textContent = regs.SEASON_TXT;
+        if (regs.EARLY_SEASON_TXT) document.getElementById('stream-early-season').textContent = regs.EARLY_SEASON_TXT;
+
+        const gear = (regs.GEAR_RESTRICTIONS || '').trim();
+        if (gear && gear.toUpperCase() !== 'N/A') {
+            document.getElementById('stream-gear-restrictions').textContent = gear;
+            document.getElementById('stream-gear-restrictions-container').style.display = 'block';
+        }
+        const spec = (regs.SPECIALREG1 || '').trim();
+        if (spec && spec.toUpperCase() !== 'N/A') {
+            document.getElementById('stream-special-regulations').textContent = spec;
+            document.getElementById('stream-special-regulations-container').style.display = 'block';
+        }
     }
 
     document.addEventListener('DOMContentLoaded', init);
