@@ -335,7 +335,12 @@ body.dark-theme .legend-item { color: #e5e7eb; }
 
   <div class="map-controls" id="map-controls">
     <div class="map-controls-title" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleControls()">
-      <span>🗺 Stream Map</span>
+      <span style="display:flex;align-items:center;gap:6px;">
+        <svg viewBox="0 0 55 65" width="11" height="14" style="display:block;fill:#05bf85;flex-shrink:0;" aria-hidden="true">
+          <path d="M3,22 L2,12 L8,5 L25,3 L32,5 L42,18 L44,27 L49,20 L46,29 L42,33 L43,52 L43,62 L12,62 L4,55 L3,40 Z"/>
+        </svg>
+        Stream Map
+      </span>
       <span style="display:flex;align-items:center;gap:6px;">
         <span class="view-mode-badge streams" id="view-badge">Streams</span>
         <span id="ctrl-chevron" style="font-size:.75rem;color:#9ca3af;">▲</span>
