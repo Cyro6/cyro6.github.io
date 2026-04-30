@@ -418,7 +418,7 @@ function makeIcon(displayRating, visits) {
   const r   = Math.max(13, Math.min(22, 9 + Math.sqrt(visits) * 2.4));
   const sz  = Math.round(r * 2);
   const fs  = r < 17 ? 9 : 10;
-  const pad = 24; // transparent touch buffer on each side
+  const pad = 12; // transparent touch buffer on each side
   const hit = sz + pad * 2;
   return L.divIcon({
     html: `<div style="width:${hit}px;height:${hit}px;display:flex;align-items:center;justify-content:center;">` +
@@ -621,12 +621,18 @@ async function loadDNRLayer() {
     }
   }
   dnrLayer.clearLayers();
+  // Visible colored lines
   L.geoJSON(dnrGeoJSON, {
     style: f => ({
       color:   REGCAT_LINE_COLORS[f.properties.REGCAT] || '#9ca3af',
       weight:  2.5,
       opacity: 0.75,
     }),
+    interactive: false,
+  }).addTo(dnrLayer);
+  // Invisible wide stroke for hit detection
+  L.geoJSON(dnrGeoJSON, {
+    style: () => ({ color: 'transparent', weight: 20, opacity: 0 }),
     onEachFeature: (f, l) => {
       const p = f.properties;
       l.bindPopup(
