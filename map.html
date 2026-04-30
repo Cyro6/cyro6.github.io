@@ -122,27 +122,75 @@ body.dark-theme .ctrl-select {
   color: #e5e7eb;
   border-color: #4b5563;
 }
-.ctrl-number {
-  width: 58px;
-  padding: 4px 4px 4px 8px;
+.ctrl-num-wrap {
+  display: flex;
+  flex-shrink: 0;
+  width: 62px;
   border: 1.5px solid #d1d5db;
   border-radius: 6px;
+  overflow: hidden;
+}
+.ctrl-num-wrap input[type="number"] {
+  width: 100%;
+  min-width: 0;
+  border: none;
+  outline: none;
+  padding: 4px 2px 4px 8px;
   font-size: .82rem;
   font-family: 'Inter', sans-serif;
   background: white;
   color: #384743;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.ctrl-num-wrap input[type="number"]::-webkit-inner-spin-button,
+.ctrl-num-wrap input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.ctrl-num-btns {
+  display: flex;
+  flex-direction: column;
+  border-left: 1.5px solid #d1d5db;
   flex-shrink: 0;
 }
-.ctrl-number::-webkit-inner-spin-button,
-.ctrl-number::-webkit-outer-spin-button {
-  opacity: 1;
-  height: auto;
+.ctrl-num-btns button {
+  flex: 1;
+  width: 20px;
+  padding: 0;
+  border: none;
+  background: #f3f4f6;
+  color: #6b7280;
   cursor: pointer;
+  font-size: .55rem;
+  line-height: 1;
+  transition: background .1s, color .1s;
 }
-body.dark-theme .ctrl-number {
+.ctrl-num-btns button:first-child {
+  border-bottom: 1px solid #d1d5db;
+}
+.ctrl-num-btns button:hover {
+  background: #05bf85;
+  color: white;
+}
+body.dark-theme .ctrl-num-wrap {
+  border-color: #4b5563;
+}
+body.dark-theme .ctrl-num-wrap input[type="number"] {
   background: #2d3748;
   color: #e5e7eb;
-  border-color: #4b5563;
+}
+body.dark-theme .ctrl-num-btns {
+  border-left-color: #4b5563;
+}
+body.dark-theme .ctrl-num-btns button {
+  background: #374151;
+  color: #9ca3af;
+  border-bottom-color: #4b5563;
+}
+body.dark-theme .ctrl-num-btns button:hover {
+  background: #05bf85;
+  color: white;
 }
 #ctrl-body {
   max-height: calc(100vh - 160px);
@@ -316,11 +364,23 @@ body.dark-theme .legend-item { color: #e5e7eb; }
       <span class="ctrl-label">Data</span>
       <div style="display:flex;flex-direction:column;gap:4px;margin-top:2px;">
         <div style="display:flex;align-items:center;gap:8px;">
-          <input type="number" id="map-min-visits" class="ctrl-number" min="1" max="50" value="2" title="Only show streams visited at least this many times in the selected time window" onchange="renderMarkers()">
+          <div class="ctrl-num-wrap" title="Only show streams visited at least this many times in the selected time window">
+            <input type="number" id="map-min-visits" min="1" max="50" value="2" onchange="renderMarkers()">
+            <div class="ctrl-num-btns">
+              <button onclick="stepNum('map-min-visits',1)">▲</button>
+              <button onclick="stepNum('map-min-visits',-1)">▼</button>
+            </div>
+          </div>
           <span class="ctrl-check" style="cursor:default;">Min Visits</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
-          <input type="number" id="map-years" class="ctrl-number" min="0" max="20" value="2" title="Only count trips within this time period. 0 = all time." onchange="renderMarkers()">
+          <div class="ctrl-num-wrap" title="Only count trips within this time period. 0 = all time.">
+            <input type="number" id="map-years" min="0" max="20" value="2" onchange="renderMarkers()">
+            <div class="ctrl-num-btns">
+              <button onclick="stepNum('map-years',1)">▲</button>
+              <button onclick="stepNum('map-years',-1)">▼</button>
+            </div>
+          </div>
           <span class="ctrl-check" style="cursor:default;">Window (yrs)</span>
         </div>
       </div>
@@ -424,6 +484,15 @@ function setColorMode(mode) {
   document.getElementById('btn-recent').classList.toggle('active', mode === 'recent');
   document.getElementById('btn-avg').classList.toggle('active', mode === 'avg');
   renderMarkers();
+}
+
+function stepNum(id, delta) {
+  const el = document.getElementById(id);
+  const val = parseInt(el.value, 10) || parseInt(el.min, 10) || 1;
+  const min = parseInt(el.min, 10);
+  const max = parseInt(el.max, 10);
+  el.value = Math.max(min, Math.min(max, val + delta));
+  el.dispatchEvent(new Event('change'));
 }
 
 function updateLogFilter() {
