@@ -141,7 +141,7 @@ body.dark-theme .legend-item { color: #e5e7eb; }
   box-shadow: 0 6px 24px rgba(0,0,0,.18) !important;
 }
 .leaflet-popup-content { margin: 0.25rem !important; }
-.leaflet-popup-tip-container { display: none; }
+.leaflet-popup-tip { background: #fff !important; box-shadow: none !important; }
 .stream-popup {
   padding: 18px 20px;
   min-width: 270px;
@@ -418,7 +418,7 @@ function makeIcon(displayRating, visits) {
   const r   = Math.max(13, Math.min(22, 9 + Math.sqrt(visits) * 2.4));
   const sz  = Math.round(r * 2);
   const fs  = r < 17 ? 9 : 10;
-  const pad = 10; // transparent touch buffer on each side
+  const pad = 16; // transparent touch buffer on each side
   const hit = sz + pad * 2;
   return L.divIcon({
     html: `<div style="width:${hit}px;height:${hit}px;display:flex;align-items:center;justify-content:center;">` +
