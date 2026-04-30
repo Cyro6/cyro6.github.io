@@ -143,9 +143,10 @@ body.dark-theme .legend-item { color: #e5e7eb; }
 .leaflet-popup-content { margin: 0 !important; width: auto !important; }
 .leaflet-popup-tip-container { display: none; }
 .stream-popup {
-  padding: 14px 16px;
-  min-width: 220px;
+  padding: 18px 20px;
+  min-width: 270px;
   font-family: 'Inter', sans-serif;
+  box-sizing: border-box;
 }
 .sp-name {
   font-size: 1rem;
@@ -206,9 +207,10 @@ body.dark-theme .legend-item { color: #e5e7eb; }
 
 /* ── Trip circle popup ───────────────────────────────────────────────────── */
 .trip-popup {
-  padding: 12px 15px;
-  min-width: 200px;
+  padding: 18px 20px;
+  min-width: 260px;
   font-family: 'Inter', sans-serif;
+  box-sizing: border-box;
 }
 .tp-name {
   font-size: .95rem;
@@ -413,18 +415,21 @@ function toggleControls() {
 function makeIcon(displayRating, visits) {
   const color = ratingColor(displayRating);
   const label = ratingToLetter(displayRating);
-  const r  = Math.max(13, Math.min(22, 9 + Math.sqrt(visits) * 2.4));
-  const sz = Math.round(r * 2);
-  const fs = r < 17 ? 9 : 10;
+  const r   = Math.max(13, Math.min(22, 9 + Math.sqrt(visits) * 2.4));
+  const sz  = Math.round(r * 2);
+  const fs  = r < 17 ? 9 : 10;
+  const pad = 10; // transparent touch buffer on each side
+  const hit = sz + pad * 2;
   return L.divIcon({
-    html: `<div style="width:${sz}px;height:${sz}px;background:${color};border-radius:50%;` +
+    html: `<div style="width:${hit}px;height:${hit}px;display:flex;align-items:center;justify-content:center;">` +
+          `<div style="width:${sz}px;height:${sz}px;background:${color};border-radius:50%;` +
           `display:flex;align-items:center;justify-content:center;` +
           `color:#fff;font-weight:700;font-size:${fs}px;font-family:'Inter',sans-serif;` +
-          `border:2.5px solid rgba(255,255,255,.85);box-shadow:0 2px 7px rgba(0,0,0,.35);">${label}</div>`,
+          `border:2.5px solid rgba(255,255,255,.85);box-shadow:0 2px 7px rgba(0,0,0,.35);">${label}</div></div>`,
     className: '',
-    iconSize:   [sz, sz],
-    iconAnchor: [r,  r],
-    popupAnchor:[0, -r - 2]
+    iconSize:   [hit, hit],
+    iconAnchor: [hit / 2, hit / 2],
+    popupAnchor:[0, -(hit / 2) - 2]
   });
 }
 
@@ -500,7 +505,7 @@ function renderMarkers() {
                    recentDate: recentTrip.date, avgRating, bestMonth };
 
     const marker = L.marker([s.lat, s.lon], { icon: makeIcon(displayRating, trips.length) });
-    marker.bindPopup(makePopup(info), { maxWidth: 280, closeButton: true });
+    marker.bindPopup(makePopup(info), { maxWidth: 340, closeButton: true });
     streamLayer.addLayer(marker);
     bounds.push([s.lat, s.lon]);
     count++;
@@ -537,7 +542,7 @@ function renderTripMarkers() {
       color:       'rgba(255,255,255,.75)',
       weight:      1.5
     });
-    cm.bindPopup(makeTripPopup(t), { maxWidth: 260, closeButton: true });
+    cm.bindPopup(makeTripPopup(t), { maxWidth: 320, closeButton: true });
     tripLayer.addLayer(cm);
     count++;
   });
