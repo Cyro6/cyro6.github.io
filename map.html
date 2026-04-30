@@ -101,6 +101,10 @@ body.dark-theme .ctrl-select {
   color: #e5e7eb;
   border-color: #4b5563;
 }
+#ctrl-body {
+  max-height: calc(100vh - 160px);
+  overflow-y: auto;
+}
 .map-stat {
   font-size: .73rem;
   color: #9ca3af;
@@ -319,19 +323,17 @@ body.dark-theme .legend-item { color: #e5e7eb; }
       <div class="ctrl-toggle">
         <button id="btn-dnr" onclick="toggleDNRLayer()" style="flex:none;padding:5px 10px;">DNR Regs</button>
       </div>
+      <div id="dnr-legend-inline" style="display:none;margin-top:8px;">
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <div class="legend-item"><span class="legend-dot" style="background:#22c55e;border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>5 trout, any length</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#f59e0b;border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>3 trout, 8"+ only</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#ef4444;border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>Varies by water</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#3b82f6;border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>Great Lake trib</div>
+        </div>
+      </div>
     </div>
 
     <div class="map-stat" id="map-stat">Loading…</div>
-  </div>
-
-  <div class="map-legend" id="dnr-legend" style="display:none;bottom:32px;left:150px;">
-    <div class="legend-title">DNR Category</div>
-    <div class="legend-items" style="flex-direction:column;gap:4px;">
-      <div class="legend-item"><span class="legend-dot" style="background:#22c55e;border-radius:2px;width:18px;height:5px;"></span>5 trout, any</div>
-      <div class="legend-item"><span class="legend-dot" style="background:#f59e0b;border-radius:2px;width:18px;height:5px;"></span>3 trout, 8"</div>
-      <div class="legend-item"><span class="legend-dot" style="background:#ef4444;border-radius:2px;width:18px;height:5px;"></span>Varies</div>
-      <div class="legend-item"><span class="legend-dot" style="background:#3b82f6;border-radius:2px;width:18px;height:5px;"></span>Great Lake Trib</div>
-    </div>
   </div>
 
   <div class="map-legend" id="map-legend">
@@ -386,7 +388,7 @@ L.tileLayer(tileUrl, {
   maxZoom: 18
 }).addTo(map);
 
-['map-controls','map-legend','dnr-legend'].forEach(id => {
+['map-controls','map-legend'].forEach(id => {
   const el = document.getElementById(id);
   if (!el) return;
   ['click','mousedown','wheel','touchstart','dblclick'].forEach(evt =>
@@ -621,7 +623,7 @@ let dnrGeoJSON = null; // cached after first load
 function toggleDNRLayer() {
   dnrEnabled = !dnrEnabled;
   document.getElementById('btn-dnr').classList.toggle('active', dnrEnabled);
-  document.getElementById('dnr-legend').style.display = dnrEnabled ? 'block' : 'none';
+  document.getElementById('dnr-legend-inline').style.display = dnrEnabled ? 'block' : 'none';
   if (dnrEnabled) {
     dnrLayer.addTo(map);
     loadDNRLayer();
