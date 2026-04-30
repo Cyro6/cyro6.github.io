@@ -30,7 +30,5 @@ navigation_header:
     url: /insights
   - title: Planner
     url: /planner
-  - title: Resources
-    url: /resources
   - title: About
     url: /about
