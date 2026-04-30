@@ -60,8 +60,8 @@ body.dark-theme .map-controls {
 }
 .ctrl-toggle button {
   flex: 1;
-  padding: 5px 0;
-  font-size: .78rem;
+  padding: 3px 0;
+  font-size: .73rem;
   font-weight: 600;
   border: 1.5px solid #d1d5db;
   border-radius: 6px;
@@ -106,7 +106,8 @@ body.dark-theme .ctrl-toggle button.active {
   flex-shrink: 0;
 }
 body.dark-theme .ctrl-check { color: #9ca3af; }
-.ctrl-select {
+.ctrl-select,
+.ctrl-number {
   width: 100%;
   padding: 5px 8px;
   border: 1.5px solid #d1d5db;
@@ -115,8 +116,10 @@ body.dark-theme .ctrl-check { color: #9ca3af; }
   font-family: 'Inter', sans-serif;
   background: white;
   color: #384743;
+  box-sizing: border-box;
 }
-body.dark-theme .ctrl-select {
+body.dark-theme .ctrl-select,
+body.dark-theme .ctrl-number {
   background: #2d3748;
   color: #e5e7eb;
   border-color: #4b5563;
@@ -291,23 +294,12 @@ body.dark-theme .legend-item { color: #e5e7eb; }
 
     <div class="ctrl-group">
       <label class="ctrl-label" for="map-min-visits" title="Only show streams visited at least this many times in the selected time window">Min Visits</label>
-      <select id="map-min-visits" class="ctrl-select" title="Only show streams visited at least this many times in the selected time window" onchange="renderMarkers()">
-        <option value="1">Any</option>
-        <option value="2" selected>2+</option>
-        <option value="3">3+</option>
-        <option value="5">5+</option>
-        <option value="10">10+</option>
-      </select>
+      <input type="number" id="map-min-visits" class="ctrl-number" min="1" max="50" value="2" title="Only show streams visited at least this many times in the selected time window" onchange="renderMarkers()">
     </div>
 
     <div class="ctrl-group">
-      <label class="ctrl-label" for="map-years" title="Only count trips within this time period when calculating ratings and visit counts">Data Window</label>
-      <select id="map-years" class="ctrl-select" title="Only count trips within this time period when calculating ratings and visit counts" onchange="renderMarkers()">
-        <option value="2" selected>Last 2 yrs</option>
-        <option value="4">Last 4 yrs</option>
-        <option value="6">Last 6 yrs</option>
-        <option value="0">All time</option>
-      </select>
+      <label class="ctrl-label" for="map-years" title="Only count trips within this time period. 0 = all time.">Data Window (yrs)</label>
+      <input type="number" id="map-years" class="ctrl-number" min="0" max="20" value="2" title="Only count trips within this time period. 0 = all time." onchange="renderMarkers()">
     </div>
 
     <div class="ctrl-group">
