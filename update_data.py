@@ -91,10 +91,16 @@ def apply_weather_cache(rows):
     return applied
 
 
-def fetch_dnr_regulations(source_rows):
-    """Fetch DNR regulation attributes (no geometry) and match to user stream names."""
-    import re
-    print('Fetching WI DNR regulation details (attributes only)...')
+EXCLUDED_STREAMS = {'Unknown', 'Central Sands', 'Minnesota', 'Southern WI'}
+
+REG_FIELDS = ['REGCAT', 'BAG_LMT', 'SEASON_TXT', 'EARLY_SEASON_TXT', 'GEAR_RESTRICTIONS', 'SPECIALREG1']
+
+
+def fetch_dnr_attributes():
+    """Fetch DNR regulation attributes (no geometry).
+    Returns: {dnr_stream_name_lowercase: {REGCAT, BAG_LMT, SEASON_TXT, ...}}
+    """
+    print('Fetching WI DNR regulation attributes...')
     all_attrs = []
     offset = 0
     page_size = 1000
@@ -102,7 +108,7 @@ def fetch_dnr_regulations(source_rows):
     while True:
         params = urllib.parse.urlencode({
             'where': '1=1',
-            'outFields': 'STREAM,REGCAT,BAG_LMT,SEASON_TXT,EARLY_SEASON_TXT,GEAR_RESTRICTIONS,SPECIALREG1',
+            'outFields': ','.join(['STREAM'] + REG_FIELDS),
             'returnGeometry': 'false',
             'f': 'json',
             'resultOffset': offset,
@@ -116,58 +122,110 @@ def fetch_dnr_regulations(source_rows):
         except Exception as e:
             print(f'  ERROR at offset {offset}: {e}')
             break
-
         features = data.get('features', [])
         all_attrs.extend(a['attributes'] for a in features)
         if len(features) < page_size:
             break
         offset += page_size
 
-    print(f'  Downloaded {len(all_attrs)} regulation records')
-
-    # Build DNR lookup: DNR stream name -> most common regulation entry
-    dnr_by_name = {}
-    fields = ['REGCAT', 'BAG_LMT', 'SEASON_TXT', 'EARLY_SEASON_TXT', 'GEAR_RESTRICTIONS', 'SPECIALREG1']
+    # Build lookup keyed by lowercase DNR stream name; pick most common REGCAT per name
+    by_name = {}
     for a in all_attrs:
-        name = (a.get('STREAM') or '').strip()
-        rc = (a.get('REGCAT') or '').strip()
+        name = (a.get('STREAM') or '').strip().lower()
+        rc   = (a.get('REGCAT') or '').strip()
         if not name or not rc:
             continue
-        if name not in dnr_by_name:
-            dnr_by_name[name] = {}
-        if rc not in dnr_by_name[name]:
-            dnr_by_name[name][rc] = {f: (a.get(f) or '').strip() for f in fields}
-            dnr_by_name[name][rc]['_count'] = 0
-        dnr_by_name[name][rc]['_count'] += 1
+        by_name.setdefault(name, {})
+        if rc not in by_name[name]:
+            by_name[name][rc] = {f: (a.get(f) or '').strip() for f in REG_FIELDS}
+            by_name[name][rc]['_cnt'] = 0
+        by_name[name][rc]['_cnt'] += 1
 
-    # Build lookup with lowercase keys for case-insensitive matching
-    dnr_lookup = {}
-    for dnr_name, regcats in dnr_by_name.items():
-        best = max(regcats.values(), key=lambda x: x['_count'])
-        dnr_lookup[dnr_name.lower().strip()] = {f: best[f] for f in fields}
+    lookup = {}
+    for dnr_name, regcats in by_name.items():
+        best = max(regcats.values(), key=lambda x: x['_cnt'])
+        lookup[dnr_name] = {f: best[f] for f in REG_FIELDS}
 
-    # Match user stream names -> DNR entries
-    qualifier_re = re.compile(
-        r'\b(big|little|small|upper|lower|north|south|east|west|main|branch|trib|tributary)\b',
-        re.IGNORECASE,
-    )
-    user_names = list({(row[2] or '').strip() for row in source_rows if (row[2] or '').strip()})
+    print(f'  {len(all_attrs)} records, {len(lookup)} unique DNR streams')
+    return lookup
+
+
+def build_dnr_lookup_by_gps(source_rows, dnr_attr_lookup):
+    """Match user stream names to DNR regulations using GPS proximity.
+    Uses the already-saved dnr_streams.geojson for geometry and
+    dnr_attr_lookup (from fetch_dnr_attributes) for full detail fields.
+    Returns: {user_stream_name: {REGCAT, BAG_LMT, SEASON_TXT, ...}}
+    """
+    MAX_DSQ = 0.02 ** 2  # ~2 km threshold in degrees-squared
+
+    print('Matching user streams to DNR regulations by GPS proximity...')
+
+    with open(DNR_OUTPUT_PATH, encoding='utf-8') as f:
+        gj = json.load(f)
+
+    # Pre-process geometry into flat list of (dnr_name_lower, [(ax,ay,bx,by),...])
+    dnr_segs = []
+    for feat in gj['features']:
+        name  = (feat['properties'].get('STREAM') or '').strip().lower()
+        geom  = feat.get('geometry') or {}
+        gt    = geom.get('type', '')
+        coords = geom.get('coordinates', [])
+        lines  = [coords] if gt == 'LineString' else (coords if gt == 'MultiLineString' else [])
+        segs = [
+            (line[i][0], line[i][1], line[i+1][0], line[i+1][1])
+            for line in lines
+            for i in range(len(line) - 1)
+        ]
+        if segs:
+            dnr_segs.append((name, segs))
+
+    def pt_seg_dsq(px, py, ax, ay, bx, by):
+        dx, dy = bx - ax, by - ay
+        if dx == 0 and dy == 0:
+            return (px - ax) ** 2 + (py - ay) ** 2
+        t = max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy)))
+        return (px - ax - t * dx) ** 2 + (py - ay - t * dy) ** 2
+
+    def nearest_dnr(lon, lat):
+        best_dsq, best_name = float('inf'), None
+        for name, segs in dnr_segs:
+            for ax, ay, bx, by in segs:
+                d = pt_seg_dsq(lon, lat, ax, ay, bx, by)
+                if d < best_dsq:
+                    best_dsq, best_name = d, name
+        return best_name, best_dsq
+
+    # Collect GPS points per user stream (GeoJSON order: lon, lat)
+    stream_gps = {}
+    for row in source_rows:
+        name = (row[2] or '').strip()
+        if not name or name in EXCLUDED_STREAMS:
+            continue
+        try:
+            lat = float(row[12])
+            lon = float(row[13])
+        except (ValueError, IndexError):
+            continue
+        if abs(lat) < 0.001 or abs(lon) < 0.001:
+            continue
+        stream_gps.setdefault(name, []).append((lon, lat))
+
+    # Vote: for each GPS point find nearest DNR segment; most votes wins
     result = {}
-    for user_name in user_names:
-        key = qualifier_re.sub('', user_name).strip().lower()
-        key = ' '.join(key.split())
-        if not key:
-            continue
-        if key in dnr_lookup:
-            result[user_name] = dnr_lookup[key]
-            continue
-        words = key.split()
-        matches = [(n, d) for n, d in dnr_lookup.items() if all(w in n for w in words)]
-        if matches:
-            matches.sort(key=lambda x: len(x[0]))
-            result[user_name] = matches[0][1]
+    for user_name, points in stream_gps.items():
+        votes = {}
+        for lon, lat in points:
+            dnr_name, dsq = nearest_dnr(lon, lat)
+            if dnr_name and dsq < MAX_DSQ:
+                votes[dnr_name] = votes.get(dnr_name, 0) + 1
+        if votes:
+            best = max(votes, key=votes.get)
+            attrs = dnr_attr_lookup.get(best)
+            if attrs:
+                result[user_name] = attrs
+                print(f'    {user_name!r:35s} -> {best!r}')
 
-    print(f'  Matched {len(result)} of {len(user_names)} user streams to DNR data')
+    print(f'  GPS-matched {len(result)} of {len(stream_gps)} streams')
     return result
 
 
@@ -241,7 +299,9 @@ def main():
     if applied:
         print(f'Applied weather cache to {applied} rows')
 
-    dnr_regulations = fetch_dnr_regulations(source['rows'])
+    fetch_dnr_streams()
+    dnr_attrs = fetch_dnr_attributes()
+    dnr_regulations = build_dnr_lookup_by_gps(source['rows'], dnr_attrs)
     output['dnr_regulations'] = dnr_regulations
 
     with open(OUTPUT_PATH, 'w', encoding='utf-8') as f:
@@ -249,8 +309,6 @@ def main():
 
     size_kb = os.path.getsize(OUTPUT_PATH) / 1024
     print(f'Saved to {OUTPUT_PATH} ({size_kb:.1f} KB)')
-
-    fetch_dnr_streams()
 
 
 if __name__ == '__main__':
