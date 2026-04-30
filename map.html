@@ -585,6 +585,7 @@ function handleZoomChange() {
 }
 
 map.on('zoomend', handleZoomChange);
+map.on('zoomend', () => { if (easementLayer) easementLayer.setStyle({ weight: easementWeight() }); });
 
 // ── DNR Regulation Overlay ────────────────────────────────────────────────────
 
@@ -653,6 +654,11 @@ let landEnabled     = false;
 let landLayer       = L.layerGroup();
 let landGeoJSON     = null;
 let easementGeoJSON = null;
+let easementLayer   = null;
+
+function easementWeight() {
+  return Math.max(2, Math.round(3 + (map.getZoom() - 8) * 2.5));
+}
 
 function toggleLandLayer() {
   landEnabled = !landEnabled;
@@ -693,8 +699,8 @@ async function loadLandLayer() {
     } catch (e) { console.error('Easement streams load failed:', e); }
   }
   if (easementGeoJSON) {
-    L.geoJSON(easementGeoJSON, {
-      style: () => ({ color: '#4ade80', weight: 20, opacity: 0.35 }),
+    easementLayer = L.geoJSON(easementGeoJSON, {
+      style: () => ({ color: '#4ade80', weight: easementWeight(), opacity: 0.35 }),
       interactive: false,
     }).addTo(landLayer);
   }
