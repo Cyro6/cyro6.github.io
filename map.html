@@ -124,15 +124,20 @@ body.dark-theme .ctrl-select {
 }
 .ctrl-number {
   width: 58px;
-  padding: 4px 6px;
+  padding: 4px 4px 4px 8px;
   border: 1.5px solid #d1d5db;
   border-radius: 6px;
   font-size: .82rem;
   font-family: 'Inter', sans-serif;
   background: white;
   color: #384743;
-  text-align: center;
   flex-shrink: 0;
+}
+.ctrl-number::-webkit-inner-spin-button,
+.ctrl-number::-webkit-outer-spin-button {
+  opacity: 1;
+  height: auto;
+  cursor: pointer;
 }
 body.dark-theme .ctrl-number {
   background: #2d3748;
