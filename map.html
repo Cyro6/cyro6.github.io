@@ -18,17 +18,20 @@ title: Stream Map
 }
 
 /* ── Floating controls ───────────────────────────────────────────────────── */
+:root { --rh: 19px; }
+
 .map-controls {
   position: absolute;
   top: 14px;
   right: 14px;
   z-index: 900;
   background: rgba(255,255,255,0.96);
-  border-radius: 12px;
-  padding: 14px 16px;
+  border-radius: 10px;
+  padding: 10px 12px 8px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-  min-width: 210px;
+  width: 180px;
   backdrop-filter: blur(6px);
+  box-sizing: border-box;
 }
 body.dark-theme .map-controls {
   background: rgba(26,36,31,0.96);
@@ -36,107 +39,110 @@ body.dark-theme .map-controls {
   box-shadow: 0 4px 20px rgba(0,0,0,0.45);
 }
 .map-controls-title {
-  font-size: .9rem;
+  font-size: .88rem;
   font-weight: 700;
   color: #05bf85;
-  margin: 0 0 12px;
+  margin: 0 0 8px;
   letter-spacing: .02em;
 }
+#ctrl-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+}
 .ctrl-group {
-  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding-top: 5px;
+  margin-top: 4px;
+  border-top: 1px solid #e9eaec;
 }
+.ctrl-group:first-child {
+  padding-top: 0;
+  margin-top: 0;
+  border-top: none;
+}
+body.dark-theme .ctrl-group { border-top-color: #374151; }
 .ctrl-label {
-  display: block;
-  font-size: .7rem;
-  font-weight: 700;
+  font-size: .59rem;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: .07em;
-  color: #9ca3af;
-  margin-bottom: 4px;
+  letter-spacing: .09em;
+  color: #c0c5cc;
+  line-height: 1;
+  margin-bottom: 2px;
 }
+body.dark-theme .ctrl-label { color: #6b7280; }
+
+/* ── Toggle buttons (Color By) ── */
 .ctrl-toggle {
   display: flex;
-  gap: 4px;
+  gap: 3px;
+  height: var(--rh);
 }
 .ctrl-toggle button {
   flex: 1;
-  padding: 3px 0;
-  font-size: .73rem;
+  height: 100%;
+  padding: 0;
+  font-size: .69rem;
   font-weight: 600;
   border: 1.5px solid #d1d5db;
-  border-radius: 6px;
+  border-radius: 5px;
   background: white;
   color: #6b7280;
   cursor: pointer;
   transition: all .15s;
   font-family: 'Inter', sans-serif;
+  line-height: 1;
 }
-.ctrl-toggle button.active {
-  background: #05bf85;
-  color: white;
-  border-color: #05bf85;
-}
-body.dark-theme .ctrl-toggle button {
-  background: #374151;
-  color: #9ca3af;
-  border-color: #4b5563;
-}
-body.dark-theme .ctrl-toggle button.active {
-  background: #05bf85;
-  color: white;
-  border-color: #05bf85;
-}
+.ctrl-toggle button.active { background: #05bf85; color: white; border-color: #05bf85; }
+body.dark-theme .ctrl-toggle button { background: #374151; color: #9ca3af; border-color: #4b5563; }
+body.dark-theme .ctrl-toggle button.active { background: #05bf85; color: white; border-color: #05bf85; }
+
+/* ── Checkbox rows ── */
 .ctrl-check {
   display: flex;
   align-items: center;
-  gap: 7px;
-  font-size: .78rem;
-  font-weight: 600;
+  gap: 5px;
+  height: var(--rh);
+  font-size: .71rem;
+  font-weight: 500;
   color: #6b7280;
   cursor: pointer;
   user-select: none;
-  padding: 1px 0;
-  margin-bottom: 0;
+  line-height: 1;
 }
 .ctrl-check input[type="checkbox"] {
   accent-color: #05bf85;
-  width: 13px;
-  height: 13px;
+  width: 11px;
+  height: 11px;
+  margin: 0;
   cursor: pointer;
   flex-shrink: 0;
 }
 body.dark-theme .ctrl-check { color: #9ca3af; }
-.ctrl-select {
-  width: 100%;
-  padding: 5px 8px;
-  border: 1.5px solid #d1d5db;
-  border-radius: 6px;
-  font-size: .82rem;
-  font-family: 'Inter', sans-serif;
-  background: white;
-  color: #384743;
-  box-sizing: border-box;
-}
-body.dark-theme .ctrl-select {
-  background: #2d3748;
-  color: #e5e7eb;
-  border-color: #4b5563;
-}
+
+/* ── Number spinner ── */
 .ctrl-num-wrap {
   display: flex;
+  height: var(--rh);
+  width: 50px;
   flex-shrink: 0;
-  width: 62px;
   border: 1.5px solid #d1d5db;
-  border-radius: 6px;
+  border-radius: 5px;
   overflow: hidden;
 }
 .ctrl-num-wrap input[type="number"] {
   width: 100%;
   min-width: 0;
+  height: 100%;
   border: none;
   outline: none;
-  padding: 4px 2px 4px 8px;
-  font-size: .82rem;
+  padding: 0 0 0 5px;
+  font-size: .74rem;
   font-family: 'Inter', sans-serif;
   background: white;
   color: #384743;
@@ -151,58 +157,50 @@ body.dark-theme .ctrl-select {
 .ctrl-num-btns {
   display: flex;
   flex-direction: column;
-  border-left: 1.5px solid #d1d5db;
+  border-left: 1px solid #d1d5db;
   flex-shrink: 0;
 }
 .ctrl-num-btns button {
   flex: 1;
-  width: 20px;
+  width: 15px;
   padding: 0;
   border: none;
   background: #f3f4f6;
   color: #6b7280;
   cursor: pointer;
-  font-size: .55rem;
+  font-size: .48rem;
   line-height: 1;
   transition: background .1s, color .1s;
-  margin-bottom: 0;
 }
-.ctrl-num-btns button:first-child {
-  border-bottom: 1px solid #d1d5db;
+.ctrl-num-btns button:first-child { border-bottom: 1px solid #d1d5db; }
+.ctrl-num-btns button:hover { background: #05bf85; color: white; }
+body.dark-theme .ctrl-num-wrap { border-color: #4b5563; }
+body.dark-theme .ctrl-num-wrap input[type="number"] { background: #2d3748; color: #e5e7eb; }
+body.dark-theme .ctrl-num-btns { border-left-color: #4b5563; }
+body.dark-theme .ctrl-num-btns button { background: #374151; color: #9ca3af; border-bottom-color: #4b5563; }
+body.dark-theme .ctrl-num-btns button:hover { background: #05bf85; color: white; }
+
+/* ── Number rows (label beside spinner) ── */
+.ctrl-num-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--rh);
 }
-.ctrl-num-btns button:hover {
-  background: #05bf85;
-  color: white;
+.ctrl-num-label {
+  font-size: .71rem;
+  font-weight: 500;
+  color: #6b7280;
+  line-height: 1;
 }
-body.dark-theme .ctrl-num-wrap {
-  border-color: #4b5563;
-}
-body.dark-theme .ctrl-num-wrap input[type="number"] {
-  background: #2d3748;
-  color: #e5e7eb;
-}
-body.dark-theme .ctrl-num-btns {
-  border-left-color: #4b5563;
-}
-body.dark-theme .ctrl-num-btns button {
-  background: #374151;
-  color: #9ca3af;
-  border-bottom-color: #4b5563;
-}
-body.dark-theme .ctrl-num-btns button:hover {
-  background: #05bf85;
-  color: white;
-}
-#ctrl-body {
-  max-height: calc(100vh - 160px);
-  overflow-y: auto;
-}
+body.dark-theme .ctrl-num-label { color: #9ca3af; }
+
 .map-stat {
-  font-size: .73rem;
+  font-size: .69rem;
   color: #9ca3af;
   text-align: center;
-  margin-top: 10px;
-  padding-top: 8px;
+  margin-top: 8px;
+  padding-top: 6px;
   border-top: 1px solid rgba(0,0,0,.07);
 }
 body.dark-theme .map-stat { border-top-color: rgba(255,255,255,.07); }
@@ -346,57 +344,51 @@ body.dark-theme .legend-item { color: #e5e7eb; }
     <div id="ctrl-body">
 
     <div class="ctrl-group">
-      <span class="ctrl-label">Color by</span>
+      <span class="ctrl-label">Color By</span>
       <div class="ctrl-toggle">
-        <button id="btn-recent" class="active" onclick="setColorMode('recent')" title="Color each stream marker by your most recent trip rating">Recent</button>
-        <button id="btn-avg" onclick="setColorMode('avg')" title="Color each stream marker by the average rating across all trips in the window">Avg</button>
+        <button id="btn-recent" class="active" onclick="setColorMode('recent')" title="Color by most recent trip rating">Recent</button>
+        <button id="btn-avg" onclick="setColorMode('avg')" title="Color by average rating across window">Avg</button>
       </div>
     </div>
 
     <div class="ctrl-group">
       <span class="ctrl-label">Log Type</span>
-      <div style="display:flex;flex-direction:column;gap:3px;margin-top:2px;">
-        <label class="ctrl-check" title="Include trips you logged yourself"><input type="checkbox" id="chk-mine" checked onchange="updateLogFilter()"> Mine</label>
-        <label class="ctrl-check" title="Include trips logged by others in the group"><input type="checkbox" id="chk-other" checked onchange="updateLogFilter()"> Others</label>
-      </div>
+      <label class="ctrl-check" title="Include trips you logged yourself"><input type="checkbox" id="chk-mine" checked onchange="updateLogFilter()"> Mine</label>
+      <label class="ctrl-check" title="Include trips logged by others"><input type="checkbox" id="chk-other" checked onchange="updateLogFilter()"> Others</label>
     </div>
 
     <div class="ctrl-group">
       <span class="ctrl-label">Data</span>
-      <div style="display:flex;flex-direction:column;gap:4px;margin-top:2px;">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <div class="ctrl-num-wrap" title="Only show streams visited at least this many times in the selected time window">
-            <input type="number" id="map-min-visits" min="1" max="50" value="2" onchange="renderMarkers()">
-            <div class="ctrl-num-btns">
-              <button onclick="stepNum('map-min-visits',1)">▲</button>
-              <button onclick="stepNum('map-min-visits',-1)">▼</button>
-            </div>
+      <div class="ctrl-num-row">
+        <div class="ctrl-num-wrap" title="Only show streams visited at least this many times">
+          <input type="number" id="map-min-visits" min="1" max="50" value="2" onchange="renderMarkers()">
+          <div class="ctrl-num-btns">
+            <button onclick="stepNum('map-min-visits',1)">▲</button>
+            <button onclick="stepNum('map-min-visits',-1)">▼</button>
           </div>
-          <span class="ctrl-check" style="cursor:default;">Min Visits</span>
         </div>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <div class="ctrl-num-wrap" title="Only count trips within this time period. 0 = all time.">
-            <input type="number" id="map-years" min="0" max="20" value="2" onchange="renderMarkers()">
-            <div class="ctrl-num-btns">
-              <button onclick="stepNum('map-years',1)">▲</button>
-              <button onclick="stepNum('map-years',-1)">▼</button>
-            </div>
+        <span class="ctrl-num-label">Min Visits</span>
+      </div>
+      <div class="ctrl-num-row">
+        <div class="ctrl-num-wrap" title="Only count trips within this many years. 0 = all time.">
+          <input type="number" id="map-years" min="0" max="20" value="2" onchange="renderMarkers()">
+          <div class="ctrl-num-btns">
+            <button onclick="stepNum('map-years',1)">▲</button>
+            <button onclick="stepNum('map-years',-1)">▼</button>
           </div>
-          <span class="ctrl-check" style="cursor:default;">Window (yrs)</span>
         </div>
+        <span class="ctrl-num-label">Window (yrs)</span>
       </div>
     </div>
 
     <div class="ctrl-group">
       <span class="ctrl-label">Overlays</span>
-      <div style="display:flex;flex-direction:column;gap:3px;margin-top:2px;">
-        <label class="ctrl-check" title="WI DNR classified trout stream regulations colored by category"><input type="checkbox" id="chk-dnr" onchange="toggleDNRLayer()"> DNR Regs</label>
-        <label class="ctrl-check" title="DNR-owned land (filled) and stream easements (highlighted) near trout streams"><input type="checkbox" id="chk-land" onchange="toggleLandLayer()"> Managed Land</label>
-        <label class="ctrl-check" title="DNR parking lots within ~1km of a classified trout stream"><input type="checkbox" id="chk-parking" onchange="toggleParkingLayer()"> Parking</label>
-        <label class="ctrl-check" title="Trout stream habitat improvement projects"><input type="checkbox" id="chk-habitat" onchange="toggleHabitatLayer()"> Habitat Projects</label>
-      </div>
-      <div id="dnr-legend-inline" style="display:none;margin-top:8px;">
-        <div style="display:flex;flex-direction:column;gap:4px;">
+      <label class="ctrl-check" title="WI DNR classified trout stream regulations"><input type="checkbox" id="chk-dnr" onchange="toggleDNRLayer()"> DNR Regs</label>
+      <label class="ctrl-check" title="DNR-owned land and stream easements"><input type="checkbox" id="chk-land" onchange="toggleLandLayer()"> Managed Land</label>
+      <label class="ctrl-check" title="DNR parking lots near trout streams"><input type="checkbox" id="chk-parking" onchange="toggleParkingLayer()"> Parking</label>
+      <label class="ctrl-check" title="Trout stream habitat improvement projects"><input type="checkbox" id="chk-habitat" onchange="toggleHabitatLayer()"> Habitat Projects</label>
+      <div id="dnr-legend-inline" style="display:none;margin-top:4px;">
+        <div style="display:flex;flex-direction:column;gap:3px;">
           <div class="legend-item"><span class="legend-dot" style="background:#22c55e;border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>5 trout, any length</div>
           <div class="legend-item"><span class="legend-dot" style="background:#f59e0b;border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>3 trout, 8"+ only</div>
           <div class="legend-item"><span class="legend-dot" style="background:#ef4444;border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>Varies by water</div>
@@ -405,9 +397,9 @@ body.dark-theme .legend-item { color: #e5e7eb; }
       </div>
     </div>
 
-    <div class="ctrl-group" style="margin-bottom:0;">
+    <div class="ctrl-group">
       <span class="ctrl-label">Rating</span>
-      <div id="legend-items" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:2px;"></div>
+      <div id="legend-items" style="display:flex;gap:5px;flex-wrap:wrap;"></div>
     </div>
 
     <div class="map-stat" id="map-stat">Loading…</div>
