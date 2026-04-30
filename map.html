@@ -17,6 +17,19 @@ title: Stream Map
   z-index: 1;
 }
 
+/* ── Reset global theme styles leaking into the controls panel ──────────── */
+.map-controls button,
+.map-controls input,
+.map-controls select,
+.map-controls label {
+  margin-bottom: 0;
+  padding-top: 0;
+  line-height: 1;
+}
+.map-controls button {
+  padding: 0;
+}
+
 /* ── Floating controls ───────────────────────────────────────────────────── */
 :root { --rh: 19px; }
 
