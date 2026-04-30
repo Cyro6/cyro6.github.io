@@ -78,7 +78,7 @@ layout: post
 title: April Trip
 date: 2026-04-17
 youtube:
-  - title: Coming Soon
-    url: 
+  - title: April 2026 Part 3
+    url: https://youtu.be/nNvXbTmKNEI
 ---
 # April 2026
