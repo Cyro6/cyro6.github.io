@@ -502,6 +502,7 @@ let tripLayer        = L.layerGroup();
 let colorMode        = 'recent';
 let logFilter        = 'both';
 let didFitBounds     = false;
+let dnrNameMap       = {};  // {user_stream_name -> matched dnr stream name (lowercase)}
 
 map.createPane('ratedStreamsPane');
 map.getPane('ratedStreamsPane').style.zIndex = 410;
@@ -674,14 +675,44 @@ function renderStreamLines(lookup) {
   ratedStreamLayer.clearLayers();
   if (!dnrGeoJSON) return;
 
-  const key = f => (f.properties.STREAM || '').toLowerCase().trim();
+  const THRESHOLD_DSQ = 0.08 * 0.08; // ~9km — wide enough for long streams, filters distant same-name copies
+
+  // Build DNR stream name -> [candidate user streams] (multiple user streams can share a DNR name)
+  const dnrToUsers = {};
+  Object.values(lookup).forEach(info => {
+    const dnrName = (dnrNameMap[info.name] || '').toLowerCase().trim();
+    if (!dnrName) return;
+    (dnrToUsers[dnrName] = dnrToUsers[dnrName] || []).push(info);
+  });
+
+  // Precompute which DNR feature maps to which user stream info
+  const featureMatches = new Map();
+  dnrGeoJSON.features.forEach(f => {
+    const dnrName    = (f.properties.STREAM || '').toLowerCase().trim();
+    const candidates = dnrToUsers[dnrName];
+    if (!candidates) return;
+
+    const geom  = f.geometry;
+    const lines = geom.type === 'LineString' ? [geom.coordinates] : geom.coordinates;
+    let bestMatch = null, bestDsq = THRESHOLD_DSQ;
+
+    for (const line of lines) {
+      for (const [lon, lat] of line) {
+        for (const c of candidates) {
+          const dsq = (lon - c.lon) ** 2 + (lat - c.lat) ** 2;
+          if (dsq < bestDsq) { bestDsq = dsq; bestMatch = c; }
+        }
+      }
+    }
+    if (bestMatch) featureMatches.set(f, bestMatch);
+  });
 
   // Visible colored lines
   L.geoJSON(dnrGeoJSON, {
     pane: 'ratedStreamsPane',
-    filter: f => !!lookup[key(f)],
+    filter: f => featureMatches.has(f),
     style: f => {
-      const info   = lookup[key(f)];
+      const info   = featureMatches.get(f);
       const rating = colorMode === 'recent' ? info.recentRating : info.avgRating;
       return { color: ratingColor(rating), weight: 5, opacity: 0.85 };
     },
@@ -691,10 +722,10 @@ function renderStreamLines(lookup) {
   // Wide transparent hit-detection stroke for easy clicking
   L.geoJSON(dnrGeoJSON, {
     pane: 'ratedStreamsPane',
-    filter: f => !!lookup[key(f)],
+    filter: f => featureMatches.has(f),
     style: () => ({ color: 'transparent', weight: 18, opacity: 0 }),
     onEachFeature: (f, l) => {
-      const info = lookup[key(f)];
+      const info = featureMatches.get(f);
       if (info) l.bindPopup(makePopup(info), { maxWidth: 340, closeButton: true });
     },
   }).addTo(ratedStreamLayer);
@@ -1023,6 +1054,7 @@ async function init() {
     }
 
     const json = await fetch(DATA_URL).then(r => r.json());
+    dnrNameMap = json.dnr_name_map || {};
     const rows = json.source.rows;
     const raw  = {};
 

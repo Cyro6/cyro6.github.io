@@ -232,7 +232,8 @@ def build_dnr_lookup_by_gps(source_rows, dnr_attr_lookup):
         stream_gps.setdefault(name, []).append((lon, lat))
 
     # Vote: for each GPS point find nearest DNR segment; most votes wins
-    result = {}
+    result   = {}
+    name_map = {}  # user_stream_name -> matched dnr stream name (lowercase)
     for user_name, points in stream_gps.items():
         votes = {}
         for lon, lat in points:
@@ -241,13 +242,14 @@ def build_dnr_lookup_by_gps(source_rows, dnr_attr_lookup):
                 votes[dnr_name] = votes.get(dnr_name, 0) + 1
         if votes:
             best = max(votes, key=votes.get)
+            name_map[user_name] = best
             attrs = dnr_attr_lookup.get(best)
             if attrs:
                 result[user_name] = attrs
                 print(f'    {user_name!r:35s} -> {best!r}')
 
     print(f'  GPS-matched {len(result)} of {len(stream_gps)} streams')
-    return result
+    return result, name_map
 
 
 def fetch_dnr_streams():
@@ -570,8 +572,9 @@ def main():
 
     fetch_dnr_streams()
     dnr_attrs = fetch_dnr_attributes()
-    dnr_regulations = build_dnr_lookup_by_gps(source['rows'], dnr_attrs)
+    dnr_regulations, dnr_name_map = build_dnr_lookup_by_gps(source['rows'], dnr_attrs)
     output['dnr_regulations'] = dnr_regulations
+    output['dnr_name_map']    = dnr_name_map
 
     with open(OUTPUT_PATH, 'w', encoding='utf-8') as f:
         json.dump(output, f)
@@ -587,10 +590,73 @@ def main():
     fetch_bridge_crossings(stream_segs)
 
 
+def build_name_map_only():
+    """Build dnr_name_map from local files and patch it into streams.json.
+    No network calls — reads existing streams.json and dnr_streams.geojson.
+    """
+    print('Building DNR name map from local files...')
+    with open(OUTPUT_PATH, encoding='utf-8') as f:
+        data = json.load(f)
+    source_rows = data['source']['rows']
+
+    with open(DNR_OUTPUT_PATH, encoding='utf-8') as f:
+        gj = json.load(f)
+
+    MAX_DSQ = 0.02 ** 2
+    dnr_segs = []
+    for feat in gj['features']:
+        name  = (feat['properties'].get('STREAM') or '').strip().lower()
+        geom  = feat.get('geometry') or {}
+        gt    = geom.get('type', '')
+        coords = geom.get('coordinates', [])
+        lines  = [coords] if gt == 'LineString' else (coords if gt == 'MultiLineString' else [])
+        segs = [(line[i][0], line[i][1], line[i+1][0], line[i+1][1])
+                for line in lines for i in range(len(line) - 1)]
+        if segs:
+            dnr_segs.append((name, segs))
+
+    stream_gps = {}
+    for row in source_rows:
+        name = (row[2] or '').strip()
+        if not name or name in EXCLUDED_STREAMS:
+            continue
+        try:
+            lat, lon = float(row[12]), float(row[13])
+        except (ValueError, IndexError):
+            continue
+        if abs(lat) < 0.001 or abs(lon) < 0.001:
+            continue
+        stream_gps.setdefault(name, []).append((lon, lat))
+
+    name_map = {}
+    for user_name, points in stream_gps.items():
+        votes = {}
+        for lon, lat in points:
+            best_dsq, best_name = float('inf'), None
+            for dnr_name, segs in dnr_segs:
+                for ax, ay, bx, by in segs:
+                    d = pt_seg_dsq(lon, lat, ax, ay, bx, by)
+                    if d < best_dsq:
+                        best_dsq, best_name = d, dnr_name
+            if best_name and best_dsq < MAX_DSQ:
+                votes[best_name] = votes.get(best_name, 0) + 1
+        if votes:
+            best = max(votes, key=votes.get)
+            name_map[user_name] = best
+            print(f'  {user_name!r:35s} -> {best!r}')
+
+    data['dnr_name_map'] = name_map
+    with open(OUTPUT_PATH, 'w', encoding='utf-8') as f:
+        json.dump(data, f)
+    print(f'Saved {len(name_map)} name mappings to streams.json')
+
+
 if __name__ == '__main__':
     if '--bridges-only' in sys.argv:
         os.makedirs(os.path.dirname(BRIDGE_PATH), exist_ok=True)
         stream_segs = load_stream_segs()
         fetch_bridge_crossings(stream_segs)
+    elif '--name-map' in sys.argv:
+        build_name_map_only()
     else:
         main()
