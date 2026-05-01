@@ -428,7 +428,7 @@ body.dark-theme .campsite-section-header {
             <div class="filter-row">
                 <div>
                     <label for="trip-date"><span class="icon">📅</span> Trip Date:</label>
-                    <input type="date" id="trip-date" onchange="applyFilters(); clearPrecipCache();">
+                    <input type="date" id="trip-date" onchange="clearPrecipCache(); applyFilters();">
                 </div>
                 <div>
                     <label for="month-select"><span class="icon">📅</span> Month:</label>
@@ -627,24 +627,33 @@ function clearPrecipCache() {
     precipitationCache.clear();
 }
 
+function localDateStr(d) {
+    const y  = d.getFullYear();
+    const m  = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${dd}`;
+}
+
 function nextSaturday() {
     const d = new Date();
     const daysUntil = (6 - d.getDay() + 7) % 7;
     d.setDate(d.getDate() + daysUntil);
-    return d.toISOString().split('T')[0];
+    return localDateStr(d); // local date, not UTC
 }
 
 function getTripDaysOut() {
     const input = document.getElementById('trip-date');
     if (!input || !input.value) return 0;
-    const trip = new Date(input.value + 'T12:00:00');
+    const [y, m, d] = input.value.split('-').map(Number);
+    const trip  = new Date(y, m - 1, d); // local midnight — exact integer days
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return Math.max(0, Math.round((trip - today) / 86400000));
 }
 
 async function fetchPrecipForDate(lat, lon, daysOut, retryCount = 0) {
-    const N        = Math.max(0, daysOut);
+    const N = Math.max(0, daysOut);
+    if (N > 14) return { antecedent: 'N/A', tripDay: 'Beyond 14-day forecast' };
     const pastDays = Math.max(0, 7 - N);
     const fcstDays = N + 1;
     const cacheKey = `${Number(lat).toFixed(4)},${Number(lon).toFixed(4)},d${N}`;
