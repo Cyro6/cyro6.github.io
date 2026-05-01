@@ -1217,7 +1217,7 @@ async function loadBridgeLayer() {
 // ── Legend ────────────────────────────────────────────────────────────────────
 
 function buildLegend() {
-  const grades = ['E','C','B','A','S','S+'];
+  const grades = ['E','D','C','B','A','S','S+'];
   document.getElementById('legend-items').innerHTML = grades.map(g => {
     const idx = RATING_KEYS.indexOf(g);
     return `<div class="legend-item">
