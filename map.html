@@ -315,6 +315,30 @@ body.dark-theme .legend-item { color: #e5e7eb; }
   color: #f97316;
 }
 
+/* ── Campsite popup ──────────────────────────────────────────────────────── */
+.campsite-popup {
+  padding: 14px 18px;
+  min-width: 210px;
+  font-family: 'Inter', sans-serif;
+  box-sizing: border-box;
+}
+.cs-name {
+  font-size: .95rem;
+  font-weight: 700;
+  color: #2d6a4f;
+  margin-bottom: 10px;
+  line-height: 1.2;
+}
+.cs-link {
+  display: block;
+  font-size: .82rem;
+  color: #05bf85;
+  font-weight: 600;
+  text-decoration: none;
+  margin-bottom: 4px;
+}
+.cs-link:hover { color: #008000; }
+
 /* ── Trip circle popup ───────────────────────────────────────────────────── */
 .trip-popup {
   padding: 18px 20px;
@@ -503,6 +527,42 @@ let colorMode        = 'recent';
 let logFilter        = 'both';
 let didFitBounds     = false;
 let dnrNameMap       = {};  // {user_stream_name -> matched dnr stream name (lowercase)}
+let campsiteLayer    = L.layerGroup().addTo(map);
+
+const TENT_ICON = L.divIcon({
+  html: `<div style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;
+              background:#2d6a4f;border-radius:50%;border:2.5px solid rgba(255,255,255,.9);
+              box-shadow:0 2px 8px rgba(0,0,0,.35);">
+           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="17" height="17" fill="white">
+             <path d="M12 3L1 21h22L12 3zm0 4.5l7.5 13.5H4.5L12 7.5z"/>
+             <rect x="9.5" y="15" width="5" height="6" rx="0.5"/>
+           </svg>
+         </div>`,
+  className: '',
+  iconSize: [32, 32],
+  iconAnchor: [16, 16],
+  popupAnchor: [0, -20],
+});
+
+fetch('/assets/data/campsites.json')
+  .then(r => r.json())
+  .then(sites => {
+    const seen = new Set();
+    sites.forEach(s => {
+      if (!s.lat || !s.lng || seen.has(s.name)) return;
+      seen.add(s.name);
+      const gmaps = `https://www.google.com/maps/place/${s.lat},${s.lng}`;
+      const popup = `<div class="campsite-popup">
+        <div class="cs-name">⛺ ${s.name}</div>
+        ${s.url ? `<a class="cs-link" href="${s.url}" target="_blank" rel="noopener">Website &rarr;</a>` : ''}
+        <a class="cs-link" href="${gmaps}" target="_blank" rel="noopener">Google Maps &rarr;</a>
+      </div>`;
+      L.marker([s.lat, s.lng], { icon: TENT_ICON })
+        .bindPopup(popup, { maxWidth: 280, closeButton: true })
+        .addTo(campsiteLayer);
+    });
+  })
+  .catch(() => {});
 
 map.createPane('ratedStreamsPane');
 map.getPane('ratedStreamsPane').style.zIndex = 410;
