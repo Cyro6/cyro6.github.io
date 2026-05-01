@@ -502,6 +502,28 @@ let tripLayer   = L.layerGroup();
 let colorMode   = 'recent';
 let logFilter   = 'both';
 let didFitBounds = false;
+let postIndex   = {};  // stream name -> [{postDate, postDays, url, title}]
+
+fetch('/assets/data/stream_posts.json')
+  .then(r => r.json())
+  .then(entries => {
+    entries.forEach(e => {
+      (postIndex[e.stream] = postIndex[e.stream] || []).push(e);
+    });
+  })
+  .catch(() => {});
+
+function findPost(streamName, tripDate) {
+  if (!tripDate) return null;
+  const entries = postIndex[streamName] || [];
+  for (const e of entries) {
+    const start = new Date(e.postDate + 'T00:00:00');
+    const end   = new Date(start);
+    end.setDate(end.getDate() + (e.postDays || 1) - 1);
+    if (tripDate >= start && tripDate <= end) return e;
+  }
+  return null;
+}
 
 // ── Controls ──────────────────────────────────────────────────────────────────
 
@@ -591,6 +613,7 @@ function makePopup(s) {
 function makeTripPopup(t) {
   const rc = ratingColor(t.rating);
   const condParts = [t.weather, t.waterTemp ? `${t.waterTemp}° water` : ''].filter(Boolean);
+  const post = findPost(t.name, t.date);
   return `<div class="trip-popup">
     <div class="tp-name">🌊 ${t.name}</div>
     <div class="tp-row"><strong>Date:</strong> ${fmtDate(t.date)}</div>
@@ -602,6 +625,7 @@ function makeTripPopup(t) {
     ${condParts.length ? `<div class="tp-row"><strong>Conditions:</strong> ${condParts.join(' · ')}</div>` : ''}
     ${t.desc ? `<div class="tp-notes">${t.desc.length > 140 ? t.desc.slice(0, 140) + '…' : t.desc}</div>` : ''}
     <a class="tp-link" href="/stream-details?stream=${encodeURIComponent(t.name)}">View stream history &rarr;</a>
+    ${post ? `<a class="tp-link" href="${post.url}" style="border-top:none;padding-top:2px;">Read trip post &rarr;</a>` : ''}
   </div>`;
 }
 

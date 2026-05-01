@@ -1,0 +1,4 @@
+---
+layout: null
+---
+[{% assign fe = true %}{% for post in site.posts %}{% for day in post.days %}{% for spot in day.spots %}{% if spot.name %}{% unless fe %},{% endunless %}{% assign fe = false %}{"stream":{{ spot.name | jsonify }},"postDate":"{{ post.date | date: '%Y-%m-%d' }}","postDays":{{ post.days | size }},"url":"{{ post.url }}","title":{{ post.title | jsonify }}}{% endif %}{% endfor %}{% endfor %}{% endfor %}]
