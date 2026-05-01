@@ -15,6 +15,7 @@ import csv
 import json
 import os
 import io
+import sys
 
 SHEET_ID = '2PACX-1vRDZny6ZfKGXJOKIgoRo47knNJmmtDT2WTrNvOmQ0lwUiznaF1McQVgpTUa1kTMUpq5X6c3b888BGwz'
 SOURCE_GID = '491893533'
@@ -32,6 +33,9 @@ MANAGED_LANDS_PATH   = os.path.join(os.path.dirname(__file__), 'assets', 'data',
 EASEMENT_STREAMS_PATH = os.path.join(os.path.dirname(__file__), 'assets', 'data', 'dnr_easement_streams.geojson')
 PARKING_PATH         = os.path.join(os.path.dirname(__file__), 'assets', 'data', 'dnr_parking.geojson')
 HABITAT_PATH         = os.path.join(os.path.dirname(__file__), 'assets', 'data', 'dnr_habitat_projects.geojson')
+BRIDGE_PATH          = os.path.join(os.path.dirname(__file__), 'assets', 'data', 'dnr_bridge_crossings.geojson')
+
+OVERPASS_URL = 'https://overpass-api.de/api/interpreter'
 
 DNR_QUERY_URL = (
     'https://dnrmaps.wi.gov/arcgis/rest/services/FM_Trout/'
@@ -515,6 +519,42 @@ def fetch_dnr_easement_streams():
     print(f'  {len(out_features)} stream segments within easements ({size_kb:.0f} KB)')
 
 
+def fetch_bridge_crossings(stream_segs):
+    """Fetch road bridge crossings over classified trout streams via OpenStreetMap Overpass API."""
+    MAX_DSQ = 0.001 ** 2  # ~100m proximity to stream
+    print('Fetching bridge crossings from OpenStreetMap...')
+
+    query = '[out:json][timeout:90];\nway["bridge"="yes"]["highway"](42.4,-93.0,47.1,-86.8);\nout center;'
+    url = OVERPASS_URL + '?' + urllib.parse.urlencode({'data': query})
+    req = urllib.request.Request(url, headers={'User-Agent': 'curl/7.68.0', 'Accept': '*/*'})
+    with urllib.request.urlopen(req, timeout=120) as resp:
+        elements = json.loads(resp.read().decode('utf-8')).get('elements', [])
+    print(f'  Found {len(elements)} road bridges in Wisconsin')
+
+    features = []
+    for el in elements:
+        center = el.get('center')
+        if not center:
+            continue
+        lat, lon = center['lat'], center['lon']
+        if min_stream_dsq(lon, lat, stream_segs) <= MAX_DSQ:
+            tags = el.get('tags', {})
+            features.append({
+                'type': 'Feature',
+                'geometry': {'type': 'Point', 'coordinates': [lon, lat]},
+                'properties': {
+                    'name': tags.get('name', ''),
+                    'highway': tags.get('highway', ''),
+                }
+            })
+
+    geojson = {'type': 'FeatureCollection', 'features': features}
+    with open(BRIDGE_PATH, 'w', encoding='utf-8') as f:
+        json.dump(geojson, f, separators=(',', ':'))
+    size_kb = os.path.getsize(BRIDGE_PATH) // 1024
+    print(f'  Saved {len(features)} bridge crossings near trout streams ({size_kb} KB)')
+
+
 def main():
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
 
@@ -544,7 +584,13 @@ def main():
     fetch_dnr_easement_streams()
     fetch_dnr_parking(stream_segs)
     fetch_dnr_habitat_projects()
+    fetch_bridge_crossings(stream_segs)
 
 
 if __name__ == '__main__':
-    main()
+    if '--bridges-only' in sys.argv:
+        os.makedirs(os.path.dirname(BRIDGE_PATH), exist_ok=True)
+        stream_segs = load_stream_segs()
+        fetch_bridge_crossings(stream_segs)
+    else:
+        main()
