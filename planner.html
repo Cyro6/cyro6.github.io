@@ -337,6 +337,23 @@ body.dark-theme .plan-section + .plan-section {
     font-size: 0.8rem;
     color: var(--text-secondary);
 }
+.trip-forecast {
+    width: 100%;
+    margin-top: 0.3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.tf-row {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    flex-wrap: wrap;
+    font-size: 0.78rem;
+}
+.tf-date { font-weight: 600; min-width: 76px; color: var(--text-primary); }
+.tf-period { color: var(--text-secondary); }
+.tf-period b { color: var(--text-primary); }
 
 /* ── Campsite sections ────────────────────────────────────────────────────── */
 .campsite-section {
@@ -651,46 +668,102 @@ function getTripDaysOut() {
     return Math.max(0, Math.round((trip - today) / 86400000));
 }
 
-async function fetchPrecipForDate(lat, lon, daysOut, retryCount = 0) {
+function getTripDays() {
+    const sel = document.getElementById('trip-days-select');
+    return sel ? (parseInt(sel.value) || 1) : 1;
+}
+
+function renderForecastTable(el, result) {
+    if (!el) return;
+    if (!result.days || result.days.length === 0) {
+        el.innerHTML = `<span style="font-size:.78rem;color:var(--text-secondary);">${result.antecedent === 'N/A' ? 'Beyond 14-day forecast range' : ''}</span>`;
+        return;
+    }
+    el.innerHTML = result.days.map(d => {
+        const dayVal   = d.day   !== null ? `${d.day}"` : 'N/A';
+        const nightVal = d.night !== null ? `${d.night}"` : 'N/A';
+        return `<div class="tf-row">
+            <span class="tf-date">${d.label}</span>
+            <span class="tf-period">☀ 6a–6p: <b>${dayVal}</b></span>
+            <span class="tf-period">🌙 6p–6a: <b>${nightVal}</b></span>
+        </div>`;
+    }).join('');
+}
+
+async function fetchTripPrecip(lat, lon, daysOut, tripDays, retryCount = 0) {
     const N = Math.max(0, daysOut);
-    if (N > 14) return { antecedent: 'N/A', tripDay: 'Beyond 14-day forecast' };
-    const pastDays = Math.max(0, 7 - N);
-    const fcstDays = N + 1;
-    const cacheKey = `${Number(lat).toFixed(4)},${Number(lon).toFixed(4)},d${N}`;
+    if (N > 14) return { antecedent: 'N/A', days: [] };
+
+    const pastDays    = Math.max(0, 7 - N);
+    const forecastDays = Math.min(16, N + tripDays + 2); // +2: overnight window bleeds into next day
+    const cacheKey    = `${Number(lat).toFixed(4)},${Number(lon).toFixed(4)},h${N}t${tripDays}`;
     if (precipitationCache.has(cacheKey)) return precipitationCache.get(cacheKey);
 
     try {
         await rateLimit();
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=precipitation_sum&timezone=America%2FChicago&past_days=${pastDays}&forecast_days=${fcstDays}&precipitation_unit=inch`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation&timezone=America%2FChicago&past_days=${pastDays}&forecast_days=${forecastDays}&precipitation_unit=inch`;
         const res = await fetch(url);
         if (res.status === 429) {
             if (retryCount < MAX_RETRIES) {
                 await new Promise(r => setTimeout(r, RETRY_DELAY * (retryCount + 1)));
-                return fetchPrecipForDate(lat, lon, daysOut, retryCount + 1);
+                return fetchTripPrecip(lat, lon, daysOut, tripDays, retryCount + 1);
             }
             throw new Error('Rate limited');
         }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        const sums = data.daily?.precipitation_sum || [];
+        const data   = await res.json();
+        const hourly = data.hourly?.precipitation || [];
 
-        // 7-day antecedent: days (N-7) through (N-1) relative to today
-        const antStart = Math.max(0, N - 7);
-        const antEnd   = Math.max(7, N);
+        // Trip start index in the hourly array
+        const tripStartIdx = (pastDays + N) * 24;
+
+        // 7-day antecedent: 168 hours before trip start
+        const antStart = Math.max(0, tripStartIdx - 168);
         let antTotal = 0;
-        for (let i = antStart; i < Math.min(antEnd, sums.length); i++) {
-            antTotal += sums[i] || 0;
+        for (let i = antStart; i < tripStartIdx && i < hourly.length; i++) {
+            antTotal += hourly[i] || 0;
         }
 
-        // Trip day (index = pastDays + N = max(7, N))
-        const tripIdx   = Math.max(7, N);
-        const tripTotal = tripIdx < sums.length ? (sums[tripIdx] || 0) : 0;
+        // Date label helpers
+        const tripDate  = new Date();
+        tripDate.setHours(0, 0, 0, 0);
+        tripDate.setDate(tripDate.getDate() + N);
+        const DAY_NAMES   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+        const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-        const result = { antecedent: `${antTotal.toFixed(2)} in`, tripDay: `${tripTotal.toFixed(2)} in` };
+        // Per-day 12-hour windows
+        const days = [];
+        for (let d = 0; d < tripDays; d++) {
+            const base = tripStartIdx + d * 24;
+
+            // Daytime: hours 6–17 (6 AM to 6 PM)
+            let dayTotal = 0, dayOk = false;
+            for (let h = 6; h <= 17; h++) {
+                const idx = base + h;
+                if (idx < hourly.length) { dayTotal += hourly[idx] || 0; dayOk = true; }
+            }
+
+            // Overnight: hours 18–29 (6 PM to 6 AM next day)
+            let nightTotal = 0, nightOk = false;
+            for (let h = 18; h <= 29; h++) {
+                const idx = base + h;
+                if (idx < hourly.length) { nightTotal += hourly[idx] || 0; nightOk = true; }
+            }
+
+            const date = new Date(tripDate);
+            date.setDate(date.getDate() + d);
+            days.push({
+                label: `${DAY_NAMES[date.getDay()]} ${MONTH_NAMES[date.getMonth()]} ${date.getDate()}`,
+                day:   dayOk   ? dayTotal.toFixed(2)   : null,
+                night: nightOk ? nightTotal.toFixed(2) : null,
+            });
+        }
+
+        const result = { antecedent: `${antTotal.toFixed(2)} in`, days };
         precipitationCache.set(cacheKey, result);
         return result;
     } catch {
-        const err = { antecedent: 'Error', tripDay: 'Error' };
+        const err = { antecedent: 'Error', days: [] };
         precipitationCache.set(cacheKey, err);
         return err;
     }
@@ -1045,8 +1118,8 @@ function displayTripPlan(tripPlan, containerEl, prefix) {
             const pBag = dnrRegData[plan.primary.stream]?.BAG_LMT || '—';
             m.innerHTML =
                 `<span>💧 Pre-trip 7-day: <span id="${uid('pp-past')}">${plan.primaryPrecipitationPast}</span></span>` +
-                `<span>🌦 Trip day fcst: <span id="${uid('pp-future')}">${plan.primaryPrecipitationFuture}</span></span>` +
-                `<span>🎣 Bag limit: ${pBag}</span>`;
+                `<span>🎣 Bag limit: ${pBag}</span>` +
+                `<div id="${uid('pp-forecast')}" class="trip-forecast" style="color:var(--text-secondary);font-size:.78rem;">Loading…</div>`;
             primarySection.appendChild(m);
         }
         card.appendChild(primarySection);
@@ -1079,8 +1152,8 @@ function displayTripPlan(tripPlan, containerEl, prefix) {
             const bBag = dnrRegData[plan.backup.stream]?.BAG_LMT || '—';
             metaHtml +=
                 `<span>💧 Pre-trip 7-day: <span id="${uid('bp-past')}">${plan.backupPrecipitationPast}</span></span>` +
-                `<span>🌦 Trip day fcst: <span id="${uid('bp-future')}">${plan.backupPrecipitationFuture}</span></span>` +
-                `<span>🎣 Bag limit: ${bBag}</span>`;
+                `<span>🎣 Bag limit: ${bBag}</span>` +
+                `<div id="${uid('bp-forecast')}" class="trip-forecast" style="color:var(--text-secondary);font-size:.78rem;">Loading…</div>`;
         }
         if (plan.straightDistance !== 'N/A') metaHtml += `<span>📏 ${plan.straightDistance} mi from primary</span>`;
         if (metaHtml) {
@@ -1095,21 +1168,20 @@ function displayTripPlan(tripPlan, containerEl, prefix) {
 
     // Async precip updates
     tripPlan.forEach(async (plan, planIdx) => {
-        const uid = s => `${prefix}-${s}-${planIdx}`;
-        const daysOut = getTripDaysOut();
+        const uid      = s => `${prefix}-${s}-${planIdx}`;
+        const daysOut  = getTripDaysOut();
+        const tripDays = getTripDays();
         if (plan.primary.gps !== 'N/A') {
             const [lat, lon] = plan.primary.gps.split(',').map(Number);
-            const precip = await fetchPrecipForDate(lat, lon, daysOut);
+            const precip = await fetchTripPrecip(lat, lon, daysOut, tripDays);
             setPrecipCell(document.getElementById(uid('pp-past')), precip.antecedent);
-            const f = document.getElementById(uid('pp-future'));
-            if (f) f.textContent = precip.tripDay;
+            renderForecastTable(document.getElementById(uid('pp-forecast')), precip);
         }
         if (plan.backup.gps !== 'N/A') {
             const [lat, lon] = plan.backup.gps.split(',').map(Number);
-            const precip = await fetchPrecipForDate(lat, lon, daysOut);
+            const precip = await fetchTripPrecip(lat, lon, daysOut, tripDays);
             setPrecipCell(document.getElementById(uid('bp-past')), precip.antecedent);
-            const fb = document.getElementById(uid('bp-future'));
-            if (fb) fb.textContent = precip.tripDay;
+            renderForecastTable(document.getElementById(uid('bp-forecast')), precip);
         }
     });
 }
