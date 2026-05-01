@@ -393,7 +393,7 @@ body.dark-theme .legend-item { color: #e5e7eb; }
       <span class="ctrl-label">Data</span>
       <div class="ctrl-num-row">
         <div class="ctrl-num-wrap" title="Only show streams visited at least this many times">
-          <input type="number" id="map-min-visits" min="1" max="50" value="2" onchange="renderMarkers()">
+          <input type="number" id="map-min-visits" min="1" max="50" value="1" onchange="renderMarkers()">
           <div class="ctrl-num-btns">
             <button onclick="stepNum('map-min-visits',1)">▲</button>
             <button onclick="stepNum('map-min-visits',-1)">▼</button>
@@ -403,7 +403,7 @@ body.dark-theme .legend-item { color: #e5e7eb; }
       </div>
       <div class="ctrl-num-row">
         <div class="ctrl-num-wrap" title="Only count trips within this many years. 0 = all time.">
-          <input type="number" id="map-years" min="0" max="20" value="2" onchange="renderMarkers()">
+          <input type="number" id="map-years" min="0" max="20" value="0" onchange="renderMarkers()">
           <div class="ctrl-num-btns">
             <button onclick="stepNum('map-years',1)">▲</button>
             <button onclick="stepNum('map-years',-1)">▼</button>
@@ -661,11 +661,15 @@ function buildRatingLookup() {
       .map(([mo,v]) => ({ mo, avg: v.reduce((a,b)=>a+b,0)/v.length }))
       .sort((a,b) => b.avg - a.avg)[0]?.mo || null;
 
+    const gpsPoints = allTripData
+      .filter(t => t.name === s.name)
+      .map(t => [t.lon, t.lat]);
+
     lookup[s.name.toLowerCase().trim()] = {
       name: s.name, visits: trips.length,
       recentRating: recentTrip.rating, recentDate: recentTrip.date,
       avgRating, bestMonth, recentDesc: recentTrip.desc,
-      lat: s.lat, lon: s.lon
+      lat: s.lat, lon: s.lon, gpsPoints
     };
   });
   return lookup;
@@ -697,10 +701,12 @@ function renderStreamLines(lookup) {
     let bestMatch = null, bestDsq = THRESHOLD_DSQ;
 
     for (const line of lines) {
-      for (const [lon, lat] of line) {
+      for (const [vlon, vlat] of line) {
         for (const c of candidates) {
-          const dsq = (lon - c.lon) ** 2 + (lat - c.lat) ** 2;
-          if (dsq < bestDsq) { bestDsq = dsq; bestMatch = c; }
+          for (const [plon, plat] of c.gpsPoints) {
+            const dsq = (vlon - plon) ** 2 + (vlat - plat) ** 2;
+            if (dsq < bestDsq) { bestDsq = dsq; bestMatch = c; }
+          }
         }
       }
     }
