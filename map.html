@@ -495,13 +495,16 @@ L.tileLayer(tileUrl, {
 
 // ── State ─────────────────────────────────────────────────────────────────────
 
-let streamData  = [];  // aggregated per-stream objects
-let allTripData = [];  // flat individual trips: { name, lat, lon, date, rating, section, whoLog }
-let streamLayer = L.layerGroup().addTo(map);
-let tripLayer   = L.layerGroup();
-let colorMode   = 'recent';
-let logFilter   = 'both';
-let didFitBounds = false;
+let streamData       = [];
+let allTripData      = [];
+let ratedStreamLayer = L.layerGroup().addTo(map);
+let tripLayer        = L.layerGroup();
+let colorMode        = 'recent';
+let logFilter        = 'both';
+let didFitBounds     = false;
+
+map.createPane('ratedStreamsPane');
+map.getPane('ratedStreamsPane').style.zIndex = 410;
 let postIndex   = {};  // stream name -> [{postDate, postDays, url, title}]
 
 fetch('/assets/data/stream_posts.json')
@@ -631,15 +634,11 @@ function makeTripPopup(t) {
 
 // ── Render ────────────────────────────────────────────────────────────────────
 
-function renderMarkers() {
-  streamLayer.clearLayers();
-
+function buildRatingLookup() {
   const minVisits = parseInt(document.getElementById('map-min-visits').value, 10);
   const yearsBack = parseInt(document.getElementById('map-years').value) || 0;
   const cutoff    = yearsBack > 0 ? new Date(Date.now() - yearsBack * 365.25 * 86400000) : null;
-
-  let count  = 0;
-  const bounds = [];
+  const lookup    = {};
 
   streamData.forEach(s => {
     const trips = (cutoff ? s.allTrips.filter(t => t.date && t.date >= cutoff) : s.allTrips)
@@ -661,26 +660,60 @@ function renderMarkers() {
       .map(([mo,v]) => ({ mo, avg: v.reduce((a,b)=>a+b,0)/v.length }))
       .sort((a,b) => b.avg - a.avg)[0]?.mo || null;
 
-    const displayRating = colorMode === 'recent' ? recentTrip.rating : avgRating;
-    const info = { name: s.name, visits: trips.length, recentRating: recentTrip.rating,
-                   recentDate: recentTrip.date, avgRating, bestMonth,
-                   recentDesc: recentTrip.desc };
-
-    const marker = L.marker([s.lat, s.lon], { icon: makeIcon(displayRating, trips.length) });
-    marker.bindPopup(makePopup(info), { maxWidth: 340, closeButton: true });
-    streamLayer.addLayer(marker);
-    bounds.push([s.lat, s.lon]);
-    count++;
+    lookup[s.name.toLowerCase().trim()] = {
+      name: s.name, visits: trips.length,
+      recentRating: recentTrip.rating, recentDate: recentTrip.date,
+      avgRating, bestMonth, recentDesc: recentTrip.desc,
+      lat: s.lat, lon: s.lon
+    };
   });
+  return lookup;
+}
 
-  if (map.getZoom() < ZOOM_THRESHOLD) {
-    document.getElementById('map-stat').textContent =
-      `${count} stream${count !== 1 ? 's' : ''} · zoom in for trips`;
-  }
+function renderStreamLines(lookup) {
+  ratedStreamLayer.clearLayers();
+  if (!dnrGeoJSON) return;
 
+  const key = f => (f.properties.STREAM || '').toLowerCase().trim();
+
+  // Visible colored lines
+  L.geoJSON(dnrGeoJSON, {
+    pane: 'ratedStreamsPane',
+    filter: f => !!lookup[key(f)],
+    style: f => {
+      const info   = lookup[key(f)];
+      const rating = colorMode === 'recent' ? info.recentRating : info.avgRating;
+      return { color: ratingColor(rating), weight: 5, opacity: 0.85 };
+    },
+    interactive: false,
+  }).addTo(ratedStreamLayer);
+
+  // Wide transparent hit-detection stroke for easy clicking
+  L.geoJSON(dnrGeoJSON, {
+    pane: 'ratedStreamsPane',
+    filter: f => !!lookup[key(f)],
+    style: () => ({ color: 'transparent', weight: 18, opacity: 0 }),
+    onEachFeature: (f, l) => {
+      const info = lookup[key(f)];
+      if (info) l.bindPopup(makePopup(info), { maxWidth: 340, closeButton: true });
+    },
+  }).addTo(ratedStreamLayer);
+}
+
+function renderMarkers() {
+  const lookup = buildRatingLookup();
+  renderStreamLines(lookup);
+
+  const bounds = Object.values(lookup).map(s => [s.lat, s.lon]);
   if (!didFitBounds && bounds.length > 0) {
     map.fitBounds(L.latLngBounds(bounds).pad(0.12));
     didFitBounds = true;
+  }
+
+  const count = Object.keys(lookup).length;
+  if (map.getZoom() < ZOOM_THRESHOLD) {
+    document.getElementById('map-stat').textContent =
+      `${count} stream${count !== 1 ? 's' : ''} · zoom in for trips`;
   }
 
   renderTripMarkers();
@@ -698,6 +731,7 @@ function renderTripMarkers() {
     if (!matchesLogFilter(t.whoLog)) return;
 
     const cm = L.circleMarker([t.lat, t.lon], {
+      pane:        'markerPane',
       radius:      7,
       fillColor:   ratingColor(t.rating),
       fillOpacity: 0.88,
@@ -722,24 +756,22 @@ function handleZoomChange() {
   const badge = document.getElementById('view-badge');
 
   if (zoom >= ZOOM_THRESHOLD) {
-    if (map.hasLayer(streamLayer)) map.removeLayer(streamLayer);
-    if (!map.hasLayer(tripLayer))  tripLayer.addTo(map);
+    if (!map.hasLayer(tripLayer)) tripLayer.addTo(map);
     badge.className   = 'view-mode-badge trips';
     badge.textContent = 'Trips';
-    // recount filtered trips for the stat
-    const yb = parseInt(document.getElementById('map-years').value) || 0;
-    const co = yb > 0 ? new Date(Date.now() - yb * 365.25 * 86400000) : null;
-    const cnt = allTripData.filter(t => !co || !t.date || t.date >= co).length;
+    const yb  = parseInt(document.getElementById('map-years').value) || 0;
+    const co  = yb > 0 ? new Date(Date.now() - yb * 365.25 * 86400000) : null;
+    const cnt = allTripData.filter(t => (!co || !t.date || t.date >= co) && matchesLogFilter(t.whoLog)).length;
     document.getElementById('map-stat').textContent = `${cnt} trip${cnt !== 1 ? 's' : ''} shown`;
   } else {
-    if (map.hasLayer(tripLayer))    map.removeLayer(tripLayer);
-    if (!map.hasLayer(streamLayer)) streamLayer.addTo(map);
+    if (map.hasLayer(tripLayer)) map.removeLayer(tripLayer);
     badge.className   = 'view-mode-badge streams';
     badge.textContent = 'Streams';
     let cnt = 0;
-    streamLayer.eachLayer(() => cnt++);
+    ratedStreamLayer.eachLayer(() => cnt++);
+    const streams = Math.round(cnt / 2); // two layers per stream (visible + hit)
     document.getElementById('map-stat').textContent =
-      `${cnt} stream${cnt !== 1 ? 's' : ''} · zoom in for trips`;
+      `${streams} stream${streams !== 1 ? 's' : ''} · zoom in for trips`;
   }
 }
 
@@ -984,6 +1016,12 @@ function buildLegend() {
 
 async function init() {
   try {
+    // Preload stream geometry so it's ready for renderStreamLines
+    if (!dnrGeoJSON) {
+      const r = await fetch('/assets/data/dnr_streams.geojson');
+      if (r.ok) dnrGeoJSON = await r.json();
+    }
+
     const json = await fetch(DATA_URL).then(r => r.json());
     const rows = json.source.rows;
     const raw  = {};
