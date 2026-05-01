@@ -1,9 +1,13 @@
-<footer style="background:#242e2b;color:#a8adac;padding:1.25rem 0;margin-top:2rem;font-family:'Inter',sans-serif;font-size:.85rem;">
+<footer style="position:sticky;bottom:0;z-index:1000;background:#242e2b;color:#a8adac;padding:.75rem 0;font-family:'Inter',sans-serif;font-size:.85rem;">
   <div style="max-width:1200px;margin:0 auto;padding:0 5%;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;">
     <span>&copy; {{ site.title }} {{ site.time | date: '%Y' }}</span>
     <nav style="display:flex;gap:1.25rem;align-items:center;">
       <a href="/resources" style="color:#a8adac;text-decoration:none;">Resources</a>
-      <a href="{{ site.youtube_url }}" target="_blank" rel="noopener" style="color:#a8adac;text-decoration:none;">YouTube</a>
+      <a href="{{ site.youtube_url }}" target="_blank" rel="noopener" style="color:#a8adac;display:flex;align-items:center;" title="YouTube">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-label="YouTube">
+          <path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8zM9.75 15.5v-7l6.5 3.5-6.5 3.5z"/>
+        </svg>
+      </a>
     </nav>
   </div>
 </footer>
