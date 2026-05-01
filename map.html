@@ -405,6 +405,7 @@ body.dark-theme .legend-item { color: #e5e7eb; }
       <label class="ctrl-check" title="DNR-owned land and stream easements"><input type="checkbox" id="chk-land" onchange="toggleLandLayer()"> Managed Land</label>
       <label class="ctrl-check" title="DNR parking lots near trout streams"><input type="checkbox" id="chk-parking" onchange="toggleParkingLayer()"> Parking</label>
       <label class="ctrl-check" title="Trout stream habitat improvement projects"><input type="checkbox" id="chk-habitat" onchange="toggleHabitatLayer()"> Habitat Projects</label>
+      <label class="ctrl-check" title="Road bridges crossing classified trout streams"><input type="checkbox" id="chk-bridge" onchange="toggleBridgeLayer()"> Bridge Crossings</label>
       <div id="dnr-legend-inline" style="display:none;margin-top:4px;">
         <div style="display:flex;flex-direction:column;gap:3px;">
           <div class="legend-item"><span class="legend-dot" style="background:#22c55e;border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>5 trout, any length</div>
@@ -886,6 +887,41 @@ async function loadHabitatLayer() {
       );
     }
   }).addTo(habitatLayer);
+}
+
+let bridgeEnabled = false;
+let bridgeLayer   = L.layerGroup();
+let bridgeGeoJSON = null;
+
+function toggleBridgeLayer() {
+  bridgeEnabled = document.getElementById('chk-bridge').checked;
+  if (bridgeEnabled) { bridgeLayer.addTo(map); loadBridgeLayer(); }
+  else { map.removeLayer(bridgeLayer); }
+}
+
+async function loadBridgeLayer() {
+  if (!bridgeEnabled) return;
+  if (!bridgeGeoJSON) {
+    try {
+      const r = await fetch('/assets/data/dnr_bridge_crossings.geojson');
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      bridgeGeoJSON = await r.json();
+    } catch (e) { console.error('Bridge layer failed:', e); return; }
+  }
+  bridgeLayer.clearLayers();
+  L.geoJSON(bridgeGeoJSON, {
+    pointToLayer: (f, latlng) => L.circleMarker(latlng, {
+      radius: 4,
+      fillColor: '#78716c',
+      fillOpacity: 0.9,
+      color: 'rgba(255,255,255,0.8)',
+      weight: 1.5
+    }),
+    onEachFeature: (f, l) => {
+      const name = f.properties.name || f.properties.highway || 'Bridge';
+      l.bindTooltip(name, { direction: 'top' });
+    }
+  }).addTo(bridgeLayer);
 }
 
 // ── Legend ────────────────────────────────────────────────────────────────────
