@@ -457,12 +457,6 @@ body.dark-theme .legend-item { color: #e5e7eb; }
     <div class="ctrl-group">
       <span class="ctrl-label">Rating</span>
       <div id="legend-items" style="display:flex;gap:5px;flex-wrap:wrap;"></div>
-      <div id="conditions-legend" style="display:none;margin-top:6px;">
-        <div class="legend-item"><span class="legend-dot" style="background:#05bf85;border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>Dry (&lt;0.5")</div>
-        <div class="legend-item"><span class="legend-dot" style="background:#f59e0b;border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>Elevated (0.5–1.5")</div>
-        <div class="legend-item"><span class="legend-dot" style="background:#f97316;border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>High Risk (1.5–2.5")</div>
-        <div class="legend-item"><span class="legend-dot" style="background:#ef4444;border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>Likely Blown Out (&gt;2.5")</div>
-      </div>
     </div>
 
     <div class="ctrl-group">
@@ -471,6 +465,12 @@ body.dark-theme .legend-item { color: #e5e7eb; }
         <button id="btn-conditions" onclick="toggleConditions()" title="Fetch 7-day accumulated rainfall per stream and color by runoff risk">Live Conditions</button>
       </div>
       <div id="conditions-status" style="font-size:.75rem;color:#9ca3af;margin-top:3px;display:none;"></div>
+      <div id="conditions-legend" style="visibility:hidden;margin-top:6px;">
+        <div class="legend-item"><span class="legend-dot" style="background:#05bf85;border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>Dry (&lt;0.5")</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#f59e0b;border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>Elevated (0.5–1.5")</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#f97316;border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>High Risk (1.5–2.5")</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#ef4444;border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>Likely Blown Out (&gt;2.5")</div>
+      </div>
     </div>
 
     <div class="map-stat" id="map-stat">Loading…</div>
@@ -683,8 +683,7 @@ async function toggleConditions() {
   if (!conditionsMode) {
     btn.classList.remove('active');
     btn.textContent = 'Live Conditions';
-    document.getElementById('conditions-legend').style.display = 'none';
-    document.getElementById('legend-items').style.display = 'flex';
+    document.getElementById('conditions-legend').style.visibility = 'hidden';
     renderMarkers();
     return;
   }
@@ -700,8 +699,7 @@ async function toggleConditions() {
 
   btn.textContent = 'Conditions On';
   btn.classList.add('active');
-  document.getElementById('legend-items').style.display = 'none';
-  document.getElementById('conditions-legend').style.display = 'block';
+  document.getElementById('conditions-legend').style.visibility = 'visible';
   renderMarkers();
 }
 
