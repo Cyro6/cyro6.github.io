@@ -542,7 +542,8 @@ let logFilter        = 'both';
 let didFitBounds     = false;
 let dnrNameMap       = {};  // {user_stream_name -> matched dnr stream name (lowercase)}
 let campsiteLayer    = L.layerGroup().addTo(map);
-let conditionsData   = null; // {gridKey: totalInches} when live conditions are active
+let conditionsData   = null; // {gridKey: totalInches} — fetched once, kept across toggles
+let conditionsMode   = false; // whether conditions coloring is currently active
 
 const TENT_ICON = L.divIcon({
   html: `<div style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;
@@ -677,8 +678,9 @@ async function fetchStreamConditions(lookup) {
 
 async function toggleConditions() {
   const btn = document.getElementById('btn-conditions');
-  if (conditionsData) {
-    conditionsData = null;
+  conditionsMode = !conditionsMode;
+
+  if (!conditionsMode) {
     btn.classList.remove('active');
     btn.textContent = 'Live Conditions';
     document.getElementById('conditions-legend').style.display = 'none';
@@ -686,11 +688,16 @@ async function toggleConditions() {
     renderMarkers();
     return;
   }
-  btn.textContent = 'Loading…';
-  btn.disabled = true;
-  const lookup = buildRatingLookup();
-  conditionsData = await fetchStreamConditions(lookup);
-  btn.disabled = false;
+
+  // Fetch only if we don't already have data
+  if (!conditionsData) {
+    btn.textContent = 'Loading…';
+    btn.disabled = true;
+    const lookup = buildRatingLookup();
+    conditionsData = await fetchStreamConditions(lookup);
+    btn.disabled = false;
+  }
+
   btn.textContent = 'Conditions On';
   btn.classList.add('active');
   document.getElementById('legend-items').style.display = 'none';
@@ -879,7 +886,7 @@ function renderStreamLines(lookup) {
     filter: f => featureMatches.has(f),
     style: f => {
       const info = featureMatches.get(f);
-      if (conditionsData) {
+      if (conditionsMode && conditionsData) {
         const key   = conditionsGridKey(info.lat, info.lon);
         const total = conditionsData[key] ?? null;
         return { color: precipCondColor(total), weight: 5, opacity: 0.85 };
@@ -898,7 +905,7 @@ function renderStreamLines(lookup) {
     onEachFeature: (f, l) => {
       const info = featureMatches.get(f);
       if (!info) return;
-      if (conditionsData) {
+      if (conditionsMode && conditionsData) {
         const key   = conditionsGridKey(info.lat, info.lon);
         const total = conditionsData[key] ?? null;
         const label = total != null ? `${total.toFixed(2)}" in last 7 days — ${precipCondLabel(total)}` : 'No conditions data';
