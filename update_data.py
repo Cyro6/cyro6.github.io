@@ -668,5 +668,12 @@ if __name__ == '__main__':
         fetch_bridge_crossings(stream_segs)
     elif '--name-map' in sys.argv:
         build_name_map_only()
+    elif '--campsites-only' in sys.argv:
+        with open(OUTPUT_PATH, encoding='utf-8') as f:
+            data = json.load(f)
+        data['campsites'] = fetch_csv(CAMPSITE_URL, 'campsite data')
+        with open(OUTPUT_PATH, 'w', encoding='utf-8') as f:
+            json.dump(data, f)
+        print('Updated campsites in streams.json')
     else:
         main()
