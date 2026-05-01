@@ -544,25 +544,32 @@ const TENT_ICON = L.divIcon({
   popupAnchor: [0, -20],
 });
 
-fetch('/assets/data/campsites.json')
-  .then(r => r.json())
-  .then(sites => {
-    const seen = new Set();
-    sites.forEach(s => {
-      if (!s.lat || !s.lng || seen.has(s.name)) return;
-      seen.add(s.name);
-      const gmaps = `https://www.google.com/maps/place/${s.lat},${s.lng}`;
-      const popup = `<div class="campsite-popup">
-        <div class="cs-name">⛺ ${s.name}</div>
-        ${s.url ? `<a class="cs-link" href="${s.url}" target="_blank" rel="noopener">Website &rarr;</a>` : ''}
-        <a class="cs-link" href="${gmaps}" target="_blank" rel="noopener">Google Maps &rarr;</a>
-      </div>`;
-      L.marker([s.lat, s.lng], { icon: TENT_ICON })
-        .bindPopup(popup, { maxWidth: 280, closeButton: true })
-        .addTo(campsiteLayer);
-    });
-  })
-  .catch(() => {});
+function renderCampsites(rows) {
+  campsiteLayer.clearLayers();
+  rows.forEach(row => {
+    const name    = row[0]?.trim();
+    const gpsStr  = row[1]?.trim();
+    const website = row[2]?.trim();
+    const gmapsUrl = row[3]?.trim();
+    const notes   = row[6]?.trim();
+    if (!name || !gpsStr) return;
+
+    const [latStr, lngStr] = gpsStr.split(',');
+    const lat = parseFloat(latStr), lng = parseFloat(lngStr);
+    if (isNaN(lat) || isNaN(lng)) return;
+
+    const gmaps = gmapsUrl || `https://www.google.com/maps/place/${lat},${lng}`;
+    const popup = `<div class="campsite-popup">
+      <div class="cs-name">⛺ ${name}</div>
+      ${website ? `<a class="cs-link" href="${website}" target="_blank" rel="noopener">Website &rarr;</a>` : ''}
+      <a class="cs-link" href="${gmaps}" target="_blank" rel="noopener">Google Maps &rarr;</a>
+      ${notes ? `<div style="font-size:.78rem;color:#6b7280;font-style:italic;margin-top:6px;">${notes}</div>` : ''}
+    </div>`;
+    L.marker([lat, lng], { icon: TENT_ICON })
+      .bindPopup(popup, { maxWidth: 300, closeButton: true })
+      .addTo(campsiteLayer);
+  });
+}
 
 map.createPane('ratedStreamsPane');
 map.getPane('ratedStreamsPane').style.zIndex = 410;
@@ -1121,6 +1128,7 @@ async function init() {
 
     const json = await fetch(DATA_URL).then(r => r.json());
     dnrNameMap = json.dnr_name_map || {};
+    renderCampsites(json.campsites?.rows || []);
     const rows = json.source.rows;
     const raw  = {};
 
