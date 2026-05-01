@@ -645,6 +645,16 @@ def build_name_map_only():
             name_map[user_name] = best
             print(f'  {user_name!r:35s} -> {best!r}')
 
+    # Manual overrides: GPS voting can fail for streams whose lower (unclassified)
+    # sections pull votes toward a neighboring classified stream.
+    MANUAL_OVERRIDES = {
+        'Harvey Creek': 'harvey creek',  # lower section near Peeso Creek skews voting
+    }
+    for user_name, dnr_name in MANUAL_OVERRIDES.items():
+        if user_name in name_map and name_map[user_name] != dnr_name:
+            print(f'  OVERRIDE {user_name!r}: {name_map[user_name]!r} -> {dnr_name!r}')
+        name_map[user_name] = dnr_name
+
     data['dnr_name_map'] = name_map
     with open(OUTPUT_PATH, 'w', encoding='utf-8') as f:
         json.dump(data, f)
