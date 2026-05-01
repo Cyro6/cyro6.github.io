@@ -457,6 +457,20 @@ body.dark-theme .legend-item { color: #e5e7eb; }
     <div class="ctrl-group">
       <span class="ctrl-label">Rating</span>
       <div id="legend-items" style="display:flex;gap:5px;flex-wrap:wrap;"></div>
+      <div id="conditions-legend" style="display:none;margin-top:6px;">
+        <div class="legend-item"><span class="legend-dot" style="background:#05bf85;border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>Dry (&lt;0.5")</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#f59e0b;border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>Elevated (0.5–1.5")</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#f97316;border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>High Risk (1.5–2.5")</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#ef4444;border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>Likely Blown Out (&gt;2.5")</div>
+      </div>
+    </div>
+
+    <div class="ctrl-group">
+      <span class="ctrl-label">Stream Conditions</span>
+      <div class="ctrl-toggle">
+        <button id="btn-conditions" onclick="toggleConditions()" title="Fetch 7-day accumulated rainfall per stream and color by runoff risk">Live Conditions</button>
+      </div>
+      <div id="conditions-status" style="font-size:.75rem;color:#9ca3af;margin-top:3px;display:none;"></div>
     </div>
 
     <div class="map-stat" id="map-stat">Loading…</div>
@@ -528,6 +542,7 @@ let logFilter        = 'both';
 let didFitBounds     = false;
 let dnrNameMap       = {};  // {user_stream_name -> matched dnr stream name (lowercase)}
 let campsiteLayer    = L.layerGroup().addTo(map);
+let conditionsData   = null; // {gridKey: totalInches} when live conditions are active
 
 const TENT_ICON = L.divIcon({
   html: `<div style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;
@@ -602,6 +617,84 @@ function setColorMode(mode) {
   colorMode = mode;
   document.getElementById('btn-recent').classList.toggle('active', mode === 'recent');
   document.getElementById('btn-avg').classList.toggle('active', mode === 'avg');
+  renderMarkers();
+}
+
+function conditionsGridKey(lat, lon) {
+  return `${(Math.round(lat * 2) / 2).toFixed(1)},${(Math.round(lon * 2) / 2).toFixed(1)}`;
+}
+
+function precipCondColor(inches) {
+  if (inches == null) return '#9ca3af';
+  if (inches < 0.5)   return '#05bf85';
+  if (inches < 1.5)   return '#f59e0b';
+  if (inches < 2.5)   return '#f97316';
+  return '#ef4444';
+}
+
+function precipCondLabel(inches) {
+  if (inches == null) return 'No data';
+  if (inches < 0.5)   return 'Dry';
+  if (inches < 1.5)   return 'Elevated';
+  if (inches < 2.5)   return 'High Risk';
+  return 'Likely Blown Out';
+}
+
+async function fetchStreamConditions(lookup) {
+  const delay = ms => new Promise(r => setTimeout(r, ms));
+  const gridCells = {};
+  Object.values(lookup).forEach(s => {
+    const key = conditionsGridKey(s.lat, s.lon);
+    if (!gridCells[key]) {
+      gridCells[key] = {
+        lat: Math.round(s.lat * 2) / 2,
+        lon: Math.round(s.lon * 2) / 2
+      };
+    }
+  });
+
+  const status = document.getElementById('conditions-status');
+  status.style.display = 'block';
+  const results = {};
+  const keys = Object.keys(gridCells);
+  for (let i = 0; i < keys.length; i++) {
+    const key = keys[i];
+    const { lat, lon } = gridCells[key];
+    status.textContent = `Fetching ${i + 1}/${keys.length}…`;
+    try {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=precipitation_sum&past_days=7&forecast_days=0&precipitation_unit=inch&timezone=America%2FChicago`;
+      const res = await fetch(url);
+      const data = await res.json();
+      results[key] = (data.daily?.precipitation_sum || []).reduce((a, b) => a + (b || 0), 0);
+    } catch {
+      results[key] = null;
+    }
+    if (i < keys.length - 1) await delay(200);
+  }
+  status.style.display = 'none';
+  return results;
+}
+
+async function toggleConditions() {
+  const btn = document.getElementById('btn-conditions');
+  if (conditionsData) {
+    conditionsData = null;
+    btn.classList.remove('active');
+    btn.textContent = 'Live Conditions';
+    document.getElementById('conditions-legend').style.display = 'none';
+    document.getElementById('legend-items').style.display = 'flex';
+    renderMarkers();
+    return;
+  }
+  btn.textContent = 'Loading…';
+  btn.disabled = true;
+  const lookup = buildRatingLookup();
+  conditionsData = await fetchStreamConditions(lookup);
+  btn.disabled = false;
+  btn.textContent = 'Conditions On';
+  btn.classList.add('active');
+  document.getElementById('legend-items').style.display = 'none';
+  document.getElementById('conditions-legend').style.display = 'block';
   renderMarkers();
 }
 
@@ -785,7 +878,12 @@ function renderStreamLines(lookup) {
     pane: 'ratedStreamsPane',
     filter: f => featureMatches.has(f),
     style: f => {
-      const info   = featureMatches.get(f);
+      const info = featureMatches.get(f);
+      if (conditionsData) {
+        const key   = conditionsGridKey(info.lat, info.lon);
+        const total = conditionsData[key] ?? null;
+        return { color: precipCondColor(total), weight: 5, opacity: 0.85 };
+      }
       const rating = colorMode === 'recent' ? info.recentRating : info.avgRating;
       return { color: ratingColor(rating), weight: 5, opacity: 0.85 };
     },
@@ -799,7 +897,15 @@ function renderStreamLines(lookup) {
     style: () => ({ color: 'transparent', weight: 18, opacity: 0 }),
     onEachFeature: (f, l) => {
       const info = featureMatches.get(f);
-      if (info) l.bindPopup(makePopup(info), { maxWidth: 340, closeButton: true });
+      if (!info) return;
+      if (conditionsData) {
+        const key   = conditionsGridKey(info.lat, info.lon);
+        const total = conditionsData[key] ?? null;
+        const label = total != null ? `${total.toFixed(2)}" in last 7 days — ${precipCondLabel(total)}` : 'No conditions data';
+        l.bindPopup(`<b>${info.name}</b><br><span style="color:${precipCondColor(total)};font-weight:600;">${label}</span>`, { maxWidth: 260 });
+      } else {
+        l.bindPopup(makePopup(info), { maxWidth: 340, closeButton: true });
+      }
     },
   }).addTo(ratedStreamLayer);
 }

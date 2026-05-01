@@ -427,6 +427,10 @@ body.dark-theme .campsite-section-header {
         <div class="filter-section">
             <div class="filter-row">
                 <div>
+                    <label for="trip-date"><span class="icon">📅</span> Trip Date:</label>
+                    <input type="date" id="trip-date" onchange="applyFilters(); clearPrecipCache();">
+                </div>
+                <div>
                     <label for="month-select"><span class="icon">📅</span> Month:</label>
                     <select id="month-select" onchange="applyFilters()">
                         <option value="ALL">ALL</option>
@@ -591,12 +595,96 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
 
 function calculateTotalRainfall(data, isPast) {
     let total = 0;
-    const start = isPast ? 1 : 4;
-    const end   = isPast ? 4 : 8;
+    const start = isPast ? 0 : 7;
+    const end   = isPast ? 7 : 11;
     for (let i = start; i < end; i++) {
         total += data.daily.precipitation_sum[i] || 0;
     }
     return total.toFixed(2);
+}
+
+function precipRisk(inStr) {
+    const v = parseFloat(inStr);
+    if (isNaN(v)) return null;
+    if (v < 0.5)  return { label: 'Dry',      color: '#05bf85' };
+    if (v < 1.5)  return { label: 'Elevated',  color: '#f59e0b' };
+    if (v < 2.5)  return { label: 'High',      color: '#f97316' };
+    return              { label: 'Risk',       color: '#ef4444' };
+}
+
+function precipRiskBadge(inStr) {
+    const r = precipRisk(inStr);
+    if (!r) return '';
+    return `<span style="background:${r.color};color:#fff;font-size:.68rem;font-weight:700;padding:1px 5px;border-radius:4px;margin-left:4px;white-space:nowrap;">${r.label}</span>`;
+}
+
+function setPrecipCell(el, val) {
+    if (!el) return;
+    el.innerHTML = val + precipRiskBadge(val);
+}
+
+function clearPrecipCache() {
+    precipitationCache.clear();
+}
+
+function nextSaturday() {
+    const d = new Date();
+    const daysUntil = (6 - d.getDay() + 7) % 7;
+    d.setDate(d.getDate() + daysUntil);
+    return d.toISOString().split('T')[0];
+}
+
+function getTripDaysOut() {
+    const input = document.getElementById('trip-date');
+    if (!input || !input.value) return 0;
+    const trip = new Date(input.value + 'T12:00:00');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return Math.max(0, Math.round((trip - today) / 86400000));
+}
+
+async function fetchPrecipForDate(lat, lon, daysOut, retryCount = 0) {
+    const N        = Math.max(0, daysOut);
+    const pastDays = Math.max(0, 7 - N);
+    const fcstDays = N + 1;
+    const cacheKey = `${Number(lat).toFixed(4)},${Number(lon).toFixed(4)},d${N}`;
+    if (precipitationCache.has(cacheKey)) return precipitationCache.get(cacheKey);
+
+    try {
+        await rateLimit();
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=precipitation_sum&timezone=America%2FChicago&past_days=${pastDays}&forecast_days=${fcstDays}&precipitation_unit=inch`;
+        const res = await fetch(url);
+        if (res.status === 429) {
+            if (retryCount < MAX_RETRIES) {
+                await new Promise(r => setTimeout(r, RETRY_DELAY * (retryCount + 1)));
+                return fetchPrecipForDate(lat, lon, daysOut, retryCount + 1);
+            }
+            throw new Error('Rate limited');
+        }
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const sums = data.daily?.precipitation_sum || [];
+
+        // 7-day antecedent: days (N-7) through (N-1) relative to today
+        const antStart = Math.max(0, N - 7);
+        const antEnd   = Math.max(7, N);
+        let antTotal = 0;
+        for (let i = antStart; i < Math.min(antEnd, sums.length); i++) {
+            antTotal += sums[i] || 0;
+        }
+
+        // Trip day (index = pastDays + N = max(7, N))
+        const tripIdx   = Math.max(7, N);
+        const tripTotal = tripIdx < sums.length ? (sums[tripIdx] || 0) : 0;
+
+        const result = { antecedent: `${antTotal.toFixed(2)} in`, tripDay: `${tripTotal.toFixed(2)} in` };
+        precipitationCache.set(cacheKey, result);
+        return result;
+    } catch {
+        const err = { antecedent: 'Error', tripDay: 'Error' };
+        precipitationCache.set(cacheKey, err);
+        return err;
+    }
 }
 
 async function rateLimit() {
@@ -609,7 +697,7 @@ async function fetchPrecipitationData(lat, lon, retryCount = 0) {
 
     try {
         await rateLimit();
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=precipitation_sum&timezone=America%2FChicago&past_days=4&forecast_days=4&precipitation_unit=inch`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=precipitation_sum&timezone=America%2FChicago&past_days=7&forecast_days=4&precipitation_unit=inch`;
         const response = await fetch(url);
         if (response.status === 429) {
             if (retryCount < MAX_RETRIES) {
@@ -947,8 +1035,8 @@ function displayTripPlan(tripPlan, containerEl, prefix) {
             m.className = 'plan-meta';
             const pBag = dnrRegData[plan.primary.stream]?.BAG_LMT || '—';
             m.innerHTML =
-                `<span>💧 3-day rain: <span id="${uid('pp-past')}">${plan.primaryPrecipitationPast}</span></span>` +
-                `<span>🌦 4-day fcst: <span id="${uid('pp-future')}">${plan.primaryPrecipitationFuture}</span></span>` +
+                `<span>💧 Pre-trip 7-day: <span id="${uid('pp-past')}">${plan.primaryPrecipitationPast}</span></span>` +
+                `<span>🌦 Trip day fcst: <span id="${uid('pp-future')}">${plan.primaryPrecipitationFuture}</span></span>` +
                 `<span>🎣 Bag limit: ${pBag}</span>`;
             primarySection.appendChild(m);
         }
@@ -981,8 +1069,8 @@ function displayTripPlan(tripPlan, containerEl, prefix) {
         if (plan.backup.stream !== 'None') {
             const bBag = dnrRegData[plan.backup.stream]?.BAG_LMT || '—';
             metaHtml +=
-                `<span>💧 3-day rain: <span id="${uid('bp-past')}">${plan.backupPrecipitationPast}</span></span>` +
-                `<span>🌦 4-day fcst: <span id="${uid('bp-future')}">${plan.backupPrecipitationFuture}</span></span>` +
+                `<span>💧 Pre-trip 7-day: <span id="${uid('bp-past')}">${plan.backupPrecipitationPast}</span></span>` +
+                `<span>🌦 Trip day fcst: <span id="${uid('bp-future')}">${plan.backupPrecipitationFuture}</span></span>` +
                 `<span>🎣 Bag limit: ${bBag}</span>`;
         }
         if (plan.straightDistance !== 'N/A') metaHtml += `<span>📏 ${plan.straightDistance} mi from primary</span>`;
@@ -999,21 +1087,20 @@ function displayTripPlan(tripPlan, containerEl, prefix) {
     // Async precip updates
     tripPlan.forEach(async (plan, planIdx) => {
         const uid = s => `${prefix}-${s}-${planIdx}`;
+        const daysOut = getTripDaysOut();
         if (plan.primary.gps !== 'N/A') {
             const [lat, lon] = plan.primary.gps.split(',').map(Number);
-            const precip = await fetchPrecipitationData(lat, lon);
-            const p = document.getElementById(uid('pp-past'));
+            const precip = await fetchPrecipForDate(lat, lon, daysOut);
+            setPrecipCell(document.getElementById(uid('pp-past')), precip.antecedent);
             const f = document.getElementById(uid('pp-future'));
-            if (p) p.textContent = precip.past;
-            if (f) f.textContent = precip.future;
+            if (f) f.textContent = precip.tripDay;
         }
         if (plan.backup.gps !== 'N/A') {
             const [lat, lon] = plan.backup.gps.split(',').map(Number);
-            const precip = await fetchPrecipitationData(lat, lon);
-            const p = document.getElementById(uid('bp-past'));
-            const f = document.getElementById(uid('bp-future'));
-            if (p) p.textContent = precip.past;
-            if (f) f.textContent = precip.future;
+            const precip = await fetchPrecipForDate(lat, lon, daysOut);
+            setPrecipCell(document.getElementById(uid('bp-past')), precip.antecedent);
+            const fb = document.getElementById(uid('bp-future'));
+            if (fb) fb.textContent = precip.tripDay;
         }
     });
 }
@@ -1099,14 +1186,14 @@ function displayStreamPool(rows) {
     const noResultsDiv = document.getElementById('no-pool-results');
     if (!headerRow || !tableBody || !table || !noResultsDiv) return;
 
-    const headers = ['Stream', 'Visits', 'Rating', 'Section', 'Precip Past', 'Precip Future', 'Midpoint'];
+    const headers = ['Stream', 'Visits', 'Rating', 'Section', '7-Day Rain', '4-Day Fcst', 'Midpoint'];
     const iconMap = {
         'Stream':       '🌊',
         'Visits':       '👣',
         'Rating':       '⭐',
         'Section':      '📍',
-        'Precip Past':  '💧',
-        'Precip Future':'🌦️',
+        '7-Day Rain':  '💧',
+        '4-Day Fcst':  '🌦️',
         'Midpoint':     '🗺️'
     };
 
@@ -1115,7 +1202,7 @@ function displayStreamPool(rows) {
     headers.forEach(header => {
         const th = document.createElement('th');
         th.setAttribute('title', header);
-        if (header === 'Precip Past' || header === 'Precip Future') th.classList.add('precipitation');
+        if (header === '7-Day Rain' || header === '4-Day Fcst') th.classList.add('precipitation');
         if (header === 'Midpoint') th.classList.add('midpoint');
         const contentDiv = document.createElement('div');
         contentDiv.className = 'header-content';
@@ -1183,7 +1270,12 @@ function displayStreamPool(rows) {
         const tdPPast = document.createElement('td');
         tdPPast.classList.add('precipitation');
         tdPPast.id = `sp-past-${rowIdx}`;
-        tdPPast.textContent = row.precipitationPast || '...';
+        const pv = row.precipitationPast;
+        if (pv && pv !== '...' && pv !== 'N/A' && pv !== 'Error') {
+            setPrecipCell(tdPPast, pv);
+        } else {
+            tdPPast.textContent = pv || '...';
+        }
         tr.appendChild(tdPPast);
 
         // Precip Future
@@ -1220,7 +1312,7 @@ function displayStreamPool(rows) {
             row.precipitationFuture = precip.future;
             const pastCell   = document.getElementById(`sp-past-${rowIdx}`);
             const futureCell = document.getElementById(`sp-future-${rowIdx}`);
-            if (pastCell)   pastCell.textContent   = precip.past;
+            if (pastCell)   setPrecipCell(pastCell, precip.past);
             if (futureCell) futureCell.textContent = precip.future;
         }
     });
@@ -1234,8 +1326,8 @@ function rebuildStreamPool() {
         'Visits':       'visits',
         'Rating':       'rating',
         'Section':      'section',
-        'Precip Past':  'precipitationPast',
-        'Precip Future':'precipitationFuture',
+        '7-Day Rain':   'precipitationPast',
+        '4-Day Fcst':   'precipitationFuture',
         'Midpoint':     'midpoint'
     };
 
@@ -1427,8 +1519,10 @@ async function fetchSourceData() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const isMobile = window.matchMedia('(max-width: 600px)').matches;
-    // Stream pool hidden by default on mobile (and desktop — user toggles it)
+    // Default trip date to next Saturday
+    const dateInput = document.getElementById('trip-date');
+    if (dateInput) dateInput.value = nextSaturday();
+
     isStreamPoolVisible = false;
     fetchSourceData();
 });

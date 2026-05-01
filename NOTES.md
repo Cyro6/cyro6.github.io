@@ -18,6 +18,24 @@ Only needs to run when new trips have been added that are missing weather. Exist
 
 **Note:** 224 trips have blank/zero coordinates in the sheet and cannot be auto-filled. Add real coordinates to those rows in the sheet first, then re-run.
 
+### Targeted updates (faster alternatives to full pipeline)
+
+**Refresh campsites only** — pulls latest campsite data from the Google Sheet Campgrounds tab without re-downloading everything else:
+```
+python update_data.py --campsites-only
+```
+
+**Rebuild stream→DNR name mapping** — re-runs GPS proximity matching to re-link user stream names to DNR geometry names. Uses only local files (no network calls). Run this if stream lines appear in wrong locations on the map:
+```
+python update_data.py --name-map
+```
+Note: `MANUAL_OVERRIDES` in `update_data.py` ensures problem streams (e.g. Harvey Creek) survive a re-run.
+
+**Regenerate bridge crossings** — rebuilds `assets/data/bridge_crossings.json` from the local DNR stream segments. Only needs to run if stream geometry changes:
+```
+python update_data.py --bridges-only
+```
+
 ### 3. Commit and push
 ```
 git add assets/data/
@@ -35,6 +53,7 @@ git push
 | `fill_weather.py` | Backfills weather for trips with GPS coords |
 | `assets/data/streams.json` | Main data file used by all pages |
 | `assets/data/weather_cache.json` | Cached weather keyed by date+location — survives sheet re-downloads |
+| `assets/data/bridge_crossings.json` | Road–stream bridge locations near trout streams (from OpenStreetMap) |
 
 ## Pages
 

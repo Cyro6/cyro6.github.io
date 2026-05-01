@@ -109,6 +109,13 @@ body.dark-theme .matrix-table td { border-color: #374151; }
     </div>
 
     <div class="pa-card">
+      <h2>Antecedent Conditions (4-day total)</h2>
+      <p class="card-note">Day-of + 3-day prior rainfall combined — a proxy for how saturated the watershed was heading into the trip. Higher totals mean more runoff risk regardless of what fell on the day itself.</p>
+      <div class="chart-wrap"><canvas id="antChart"></canvas></div>
+      <div class="insight-box" id="antInsight"></div>
+    </div>
+
+    <div class="pa-card">
       <h2>Conditions Matrix</h2>
       <p class="card-note">Avg rating by combination of day-of weather and recent prior rainfall. Each cell shows avg rating and trip count.</p>
       <div style="overflow-x:auto">
@@ -253,6 +260,77 @@ async function main() {
   document.getElementById('priorInsight').textContent =
     `Best: "${priorLabels[bestPriorIdx]}" (avg ${priorAvgs[bestPriorIdx].toFixed(2)}, ${priorCounts[bestPriorIdx]} trips). ` +
     `Worst: "${priorLabels[worstPriorIdx]}" (avg ${priorAvgs[worstPriorIdx].toFixed(2)}, ${priorCounts[worstPriorIdx]} trips).`;
+
+  // Antecedent conditions: 4-day total (day-of + 3-day prior)
+  const antBuckets = {
+    'Dry (< 0.5")':        [],
+    'Moderate (0.5–1.5")': [],
+    'High (1.5–2.5")':     [],
+    'Saturated (> 2.5")':  []
+  };
+  const antColors = ['#05bf85', '#f59e0b', '#f97316', '#ef4444'];
+  const antRisk   = ['Normal conditions', 'Some elevation likely', 'Elevated — use caution', 'Blown-out risk'];
+
+  rows.forEach(r => {
+    const dayP   = parseFloat(r[24]);
+    const priorP = parseFloat(r[25]);
+    const val    = RATING_MAP[r[17]];
+    if (isNaN(dayP) || isNaN(priorP) || val === undefined || val === 0) return;
+    const total = dayP + priorP;
+    if (total < 0.5)        antBuckets['Dry (< 0.5")'].push(val);
+    else if (total < 1.5)   antBuckets['Moderate (0.5–1.5")'].push(val);
+    else if (total < 2.5)   antBuckets['High (1.5–2.5")'].push(val);
+    else                    antBuckets['Saturated (> 2.5")'].push(val);
+  });
+
+  const antLabels = Object.keys(antBuckets).filter(k => antBuckets[k].length > 0);
+  const antAvgs   = antLabels.map(k => antBuckets[k].reduce((a,b)=>a+b,0)/antBuckets[k].length);
+  const antCounts = antLabels.map(k => antBuckets[k].length);
+  const antBgColors = antLabels.map(k => antColors[Object.keys(antBuckets).indexOf(k)]);
+
+  new Chart(document.getElementById('antChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: antLabels,
+      datasets: [{ data: antAvgs, backgroundColor: antBgColors, borderRadius: 5 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const v = ctx.parsed.y;
+              const c = antCounts[ctx.dataIndex];
+              const risk = antRisk[Object.keys(antBuckets).indexOf(antLabels[ctx.dataIndex])];
+              return [`Avg: ${v.toFixed(2)} (${ratingLabel(v)}) · ${c} trips`, risk];
+            }
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { color: textColor }, grid: { color: gridColor } },
+        y: {
+          min: 0, max: 7,
+          ticks: { stepSize: 1, callback: v => RATING_KEYS[v] || '', color: textColor },
+          grid: { color: gridColor }
+        }
+      }
+    }
+  });
+
+  if (antLabels.length > 0) {
+    const bestAnt  = antAvgs.indexOf(Math.max(...antAvgs));
+    const worstAnt = antAvgs.indexOf(Math.min(...antAvgs));
+    const threshold = antBuckets['Saturated (> 2.5")'].length > 0
+      ? ` Saturated watersheds (>2.5"): avg ${(antBuckets['Saturated (> 2.5")'].reduce((a,b)=>a+b,0)/antBuckets['Saturated (> 2.5")'].length).toFixed(2)} across ${antBuckets['Saturated (> 2.5")'].length} trips.`
+      : '';
+    document.getElementById('antInsight').textContent =
+      `Best: "${antLabels[bestAnt]}" — avg ${antAvgs[bestAnt].toFixed(2)} (${ratingLabel(antAvgs[bestAnt])}) · ${antCounts[bestAnt]} trips. ` +
+      `Worst: "${antLabels[worstAnt]}" — avg ${antAvgs[worstAnt].toFixed(2)} · ${antCounts[worstAnt]} trips.` +
+      threshold;
+  }
 
   // Conditions matrix: dry/wet day × dry/wet prior
   const matrix = {
