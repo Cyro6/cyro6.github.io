@@ -582,8 +582,7 @@ function makePopup(s) {
       &nbsp;${s.avgRating.toFixed(2)} &middot; ${s.visits} visits
     </div>
     ${s.bestMonth ? `<div class="sp-row"><strong>Best month:</strong> ${s.bestMonth}</div>` : ''}
-    ${s.recentSpecies ? `<div class="sp-row"><strong>Species:</strong> ${s.recentSpecies}</div>` : ''}
-    ${s.recentNotes ? `<div class="sp-notes">${s.recentNotes}</div>` : ''}
+    ${s.recentDesc ? `<div class="sp-notes">${s.recentDesc.length > 120 ? s.recentDesc.slice(0, 120) + '…' : s.recentDesc}</div>` : ''}
     <hr class="sp-divider">
     <a class="sp-link" href="/stream-details?stream=${encodeURIComponent(s.name)}">View full history &rarr;</a>
   </div>`;
@@ -600,9 +599,8 @@ function makeTripPopup(t) {
       <span class="rating-pill" style="background:${rc}">${ratingToLetter(t.rating)}</span>
     </div>
     ${t.section ? `<div class="tp-row"><strong>Section:</strong> ${t.section}</div>` : ''}
-    ${t.species ? `<div class="tp-row"><strong>Species:</strong> ${t.species}</div>` : ''}
     ${condParts.length ? `<div class="tp-row"><strong>Conditions:</strong> ${condParts.join(' · ')}</div>` : ''}
-    ${t.notes ? `<div class="tp-notes">${t.notes}</div>` : ''}
+    ${t.desc ? `<div class="tp-notes">${t.desc.length > 140 ? t.desc.slice(0, 140) + '…' : t.desc}</div>` : ''}
     <a class="tp-link" href="/stream-details?stream=${encodeURIComponent(t.name)}">View stream history &rarr;</a>
   </div>`;
 }
@@ -642,7 +640,7 @@ function renderMarkers() {
     const displayRating = colorMode === 'recent' ? recentTrip.rating : avgRating;
     const info = { name: s.name, visits: trips.length, recentRating: recentTrip.rating,
                    recentDate: recentTrip.date, avgRating, bestMonth,
-                   recentSpecies: recentTrip.species, recentNotes: recentTrip.notes };
+                   recentDesc: recentTrip.desc };
 
     const marker = L.marker([s.lat, s.lon], { icon: makeIcon(displayRating, trips.length) });
     marker.bindPopup(makePopup(info), { maxWidth: 340, closeButton: true });
@@ -982,17 +980,16 @@ async function init() {
       const date     = m ? new Date(+m[3], +m[1]-1, +m[2]) : null;
       const section  = row[15]?.trim() || '';
       const whoLog   = row[37]?.trim().toUpperCase() || '';
-      const species  = row[20]?.trim() || '';
-      const weather  = row[23]?.trim() || '';
+      const weather   = row[23]?.trim() || '';
       const waterTemp = row[30]?.trim() || '';
-      const notes    = row[33]?.trim() || '';
+      const desc      = row[18]?.trim() || '';
 
       if (!raw[stream]) raw[stream] = { lats:[], lons:[], trips:[] };
       raw[stream].lats.push(lat);
       raw[stream].lons.push(lon);
-      raw[stream].trips.push({ date, rating, whoLog, species, notes });
+      raw[stream].trips.push({ date, rating, whoLog, desc });
 
-      allTripData.push({ name: stream, lat, lon, date, rating, section, whoLog, species, weather, waterTemp, notes });
+      allTripData.push({ name: stream, lat, lon, date, rating, section, whoLog, weather, waterTemp, desc });
     });
 
     streamData = Object.entries(raw).map(([name, d]) => ({
