@@ -124,7 +124,6 @@ body.dark-theme #btn-grid.active { background: #05bf85; color: white; border-col
 .preset-btn.active { background:#05bf85; color:white; border-color:#05bf85; }
 body.dark-theme .preset-btn { background:#374151; color:#9ca3af; border-color:#4b5563; }
 body.dark-theme .preset-btn.active { background:#05bf85; color:white; border-color:#05bf85; }
-body.dark-theme #conditions-status > div { background:#374151; }
 
 /* ── Checkbox rows ── */
 .ctrl-check {
@@ -475,11 +474,6 @@ body.dark-theme .legend-item { color: #e5e7eb; }
       <div class="ctrl-toggle">
         <button id="btn-conditions" onclick="toggleConditions()" title="Fetch 7-day accumulated rainfall per stream and color by runoff risk">Live Conditions</button>
       </div>
-      <div id="conditions-status" style="margin-top:4px;display:none;">
-        <div style="width:100%;height:3px;background:#e5e7eb;border-radius:2px;overflow:hidden;">
-          <div id="conditions-progress-fill" style="height:100%;background:#05bf85;width:0%;transition:width .1s linear;"></div>
-        </div>
-      </div>
       <div id="conditions-presets" style="display:none;margin-top:5px;">
         <div style="font-size:.68rem;color:#9ca3af;margin-bottom:3px;">Forecast window</div>
         <div style="display:flex;gap:3px;flex-wrap:wrap;">
@@ -644,6 +638,22 @@ function findPost(streamName, tripDate) {
 
 // ── Controls ──────────────────────────────────────────────────────────────────
 
+function setConditionsButtonProgress(pct) {
+  const btn = document.getElementById('btn-conditions');
+  const dark = document.body.classList.contains('dark-theme');
+  const empty = dark ? '#374151' : '#e9eaec';
+  const p = Math.round(pct * 100);
+  if (pct >= 1) {
+    btn.style.background = '';
+    btn.style.color = '';
+    btn.style.borderColor = '';
+  } else {
+    btn.style.background = `linear-gradient(to right, #05bf85 ${p}%, ${empty} ${p}%)`;
+    btn.style.color = p > 45 ? 'white' : '';
+    btn.style.borderColor = '#05bf85';
+  }
+}
+
 function setColorMode(mode) {
   colorMode = mode;
   document.getElementById('btn-recent').classList.toggle('active', mode === 'recent');
@@ -671,7 +681,7 @@ function precipCondLabel(inches) {
   return 'Likely Blown Out';
 }
 
-async function fetchStreamConditions(lookup, daysOut = 0) {
+async function fetchStreamConditions(lookup, daysOut = 0, onProgress = null) {
   const delay = ms => new Promise(r => setTimeout(r, ms));
   const gridCells = {};
   Object.values(lookup).forEach(s => {
@@ -687,16 +697,12 @@ async function fetchStreamConditions(lookup, daysOut = 0) {
   const pastDays     = daysOut === 0 ? 7 : Math.max(0, 7 - daysOut);
   const forecastDays = daysOut === 0 ? 0 : daysOut + 1;
 
-  const status = document.getElementById('conditions-status');
-  const fill   = document.getElementById('conditions-progress-fill');
-  status.style.display = 'block';
-  fill.style.width = '0%';
   const results = {};
   const keys = Object.keys(gridCells);
   for (let i = 0; i < keys.length; i++) {
     const key = keys[i];
     const { lat, lon } = gridCells[key];
-    fill.style.width = `${Math.round(((i + 1) / keys.length) * 100)}%`;
+    if (onProgress) onProgress((i + 1) / keys.length);
     try {
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=precipitation_sum&past_days=${pastDays}&forecast_days=${forecastDays}&precipitation_unit=inch&timezone=America%2FChicago`;
       const res = await fetch(url);
@@ -716,8 +722,7 @@ async function fetchStreamConditions(lookup, daysOut = 0) {
     }
     if (i < keys.length - 1) await delay(200);
   }
-  fill.style.width = '100%';
-  setTimeout(() => { status.style.display = 'none'; fill.style.width = '0%'; }, 400);
+  if (onProgress) onProgress(1);
   return results;
 }
 
@@ -739,7 +744,8 @@ async function toggleConditions() {
   // Fetch for current offset if not yet cached
   if (!conditionsCache[conditionsDaysOut]) {
     const lookup = buildRatingLookup();
-    conditionsCache[conditionsDaysOut] = await fetchStreamConditions(lookup, conditionsDaysOut);
+    conditionsCache[conditionsDaysOut] = await fetchStreamConditions(lookup, conditionsDaysOut, setConditionsButtonProgress);
+    setConditionsButtonProgress(1);
   }
 
   btn.textContent = 'Conditions On';
@@ -757,7 +763,8 @@ async function setConditionsOffset(n) {
   clearGrid();
   if (!conditionsCache[n]) {
     const lookup = buildRatingLookup();
-    conditionsCache[n] = await fetchStreamConditions(lookup, n);
+    conditionsCache[n] = await fetchStreamConditions(lookup, n, setConditionsButtonProgress);
+    setConditionsButtonProgress(1);
   }
   renderMarkers();
 }
