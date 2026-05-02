@@ -114,6 +114,9 @@ body.dark-theme .ctrl-label { color: #6b7280; }
 .ctrl-toggle button.active { background: #05bf85; color: white; border-color: #05bf85; }
 body.dark-theme .ctrl-toggle button { background: #374151; color: #9ca3af; border-color: #4b5563; }
 body.dark-theme .ctrl-toggle button.active { background: #05bf85; color: white; border-color: #05bf85; }
+#btn-grid.active { background: #05bf85; color: white; border-color: #05bf85; }
+body.dark-theme #btn-grid { background: #374151; color: #9ca3af; border-color: #4b5563; }
+body.dark-theme #btn-grid.active { background: #05bf85; color: white; border-color: #05bf85; }
 
 /* ── Checkbox rows ── */
 .ctrl-check {
@@ -465,6 +468,9 @@ body.dark-theme .legend-item { color: #e5e7eb; }
         <button id="btn-conditions" onclick="toggleConditions()" title="Fetch 7-day accumulated rainfall per stream and color by runoff risk">Live Conditions</button>
       </div>
       <div id="conditions-status" style="font-size:.75rem;color:#9ca3af;margin-top:3px;display:none;"></div>
+      <div id="conditions-grid-row" style="display:none;margin-top:4px;">
+        <button id="btn-grid" onclick="toggleGrid()" style="font-size:.75rem;padding:2px 8px;border:1px solid #d1d5db;border-radius:4px;background:transparent;cursor:pointer;color:inherit;">Show Grid</button>
+      </div>
       <div id="conditions-legend" style="display:none;margin-top:6px;">
         <div class="legend-item"><span class="legend-dot" style="background:#05bf85;border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>Dry (&lt;0.5")</div>
         <div class="legend-item"><span class="legend-dot" style="background:#f59e0b;border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>Elevated (0.5–1.5")</div>
@@ -544,6 +550,8 @@ let dnrNameMap       = {};  // {user_stream_name -> matched dnr stream name (low
 let campsiteLayer    = L.layerGroup().addTo(map);
 let conditionsData   = null; // {gridKey: totalInches} — fetched once, kept across toggles
 let conditionsMode   = false; // whether conditions coloring is currently active
+let gridMode         = false; // whether the precipitation grid overlay is shown
+let conditionsGridLayer = L.layerGroup().addTo(map);
 
 const TENT_ICON = L.divIcon({
   html: `<div style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;
@@ -684,6 +692,8 @@ async function toggleConditions() {
     btn.classList.remove('active');
     btn.textContent = 'Live Conditions';
     document.getElementById('conditions-legend').style.display = 'none';
+    document.getElementById('conditions-grid-row').style.display = 'none';
+    clearGrid();
     renderMarkers();
     return;
   }
@@ -700,7 +710,44 @@ async function toggleConditions() {
   btn.textContent = 'Conditions On';
   btn.classList.add('active');
   document.getElementById('conditions-legend').style.display = 'block';
+  document.getElementById('conditions-grid-row').style.display = 'block';
   renderMarkers();
+}
+
+function clearGrid() {
+  conditionsGridLayer.clearLayers();
+  gridMode = false;
+  const btn = document.getElementById('btn-grid');
+  if (btn) { btn.classList.remove('active'); btn.textContent = 'Show Grid'; }
+}
+
+function toggleGrid() {
+  const btn = document.getElementById('btn-grid');
+  gridMode = !gridMode;
+  if (!gridMode) {
+    conditionsGridLayer.clearLayers();
+    btn.classList.remove('active');
+    btn.textContent = 'Show Grid';
+    return;
+  }
+  btn.classList.add('active');
+  btn.textContent = 'Hide Grid';
+  Object.entries(conditionsData).forEach(([key, total]) => {
+    const [lat, lon] = key.split(',').map(Number);
+    const bounds = [[lat - 0.25, lon - 0.25], [lat + 0.25, lon + 0.25]];
+    const color = precipCondColor(total);
+    const rect = L.rectangle(bounds, {
+      color,
+      weight: 1,
+      opacity: 0.5,
+      fillColor: color,
+      fillOpacity: 0.18,
+      interactive: true
+    });
+    const label = total != null ? `${total.toFixed(2)}" over 7 days — ${precipCondLabel(total)}` : 'No data';
+    rect.bindPopup(`<b>Precip Cell</b><br><span style="color:${color};font-weight:600;">${label}</span>`, { maxWidth: 200 });
+    conditionsGridLayer.addLayer(rect);
+  });
 }
 
 function stepNum(id, delta) {
