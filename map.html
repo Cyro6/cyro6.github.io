@@ -117,6 +117,13 @@ body.dark-theme .ctrl-toggle button.active { background: #05bf85; color: white; 
 #btn-grid.active { background: #05bf85; color: white; border-color: #05bf85; }
 body.dark-theme #btn-grid { background: #374151; color: #9ca3af; border-color: #4b5563; }
 body.dark-theme #btn-grid.active { background: #05bf85; color: white; border-color: #05bf85; }
+.preset-btn {
+  font-size:.68rem; padding:2px 6px; border:1px solid #d1d5db;
+  border-radius:4px; background:transparent; cursor:pointer; color:inherit; line-height:1.4;
+}
+.preset-btn.active { background:#05bf85; color:white; border-color:#05bf85; }
+body.dark-theme .preset-btn { background:#374151; color:#9ca3af; border-color:#4b5563; }
+body.dark-theme .preset-btn.active { background:#05bf85; color:white; border-color:#05bf85; }
 
 /* ── Checkbox rows ── */
 .ctrl-check {
@@ -468,6 +475,15 @@ body.dark-theme .legend-item { color: #e5e7eb; }
         <button id="btn-conditions" onclick="toggleConditions()" title="Fetch 7-day accumulated rainfall per stream and color by runoff risk">Live Conditions</button>
       </div>
       <div id="conditions-status" style="font-size:.75rem;color:#9ca3af;margin-top:3px;display:none;"></div>
+      <div id="conditions-presets" style="display:none;margin-top:5px;">
+        <div style="font-size:.68rem;color:#9ca3af;margin-bottom:3px;">Forecast window</div>
+        <div style="display:flex;gap:3px;flex-wrap:wrap;">
+          <button class="preset-btn active" onclick="setConditionsOffset(0)">Today</button>
+          <button class="preset-btn" onclick="setConditionsOffset(3)">+3d</button>
+          <button class="preset-btn" onclick="setConditionsOffset(7)">+7d</button>
+          <button class="preset-btn" onclick="setConditionsOffset(14)">+14d</button>
+        </div>
+      </div>
       <div id="conditions-grid-row" style="display:none;margin-top:4px;">
         <button id="btn-grid" onclick="toggleGrid()" style="font-size:.75rem;padding:2px 8px;border:1px solid #d1d5db;border-radius:4px;background:transparent;cursor:pointer;color:inherit;">Show Grid</button>
       </div>
@@ -548,7 +564,8 @@ let logFilter        = 'both';
 let didFitBounds     = false;
 let dnrNameMap       = {};  // {user_stream_name -> matched dnr stream name (lowercase)}
 let campsiteLayer    = L.layerGroup().addTo(map);
-let conditionsData   = null; // {gridKey: totalInches} — fetched once, kept across toggles
+let conditionsCache  = {};    // {daysOut: {gridKey: totalInches}} — cached per offset
+let conditionsDaysOut = 0;   // currently selected forecast offset
 let conditionsMode   = false; // whether conditions coloring is currently active
 let gridMode         = false; // whether the precipitation grid overlay is shown
 let conditionsGridLayer = L.layerGroup().addTo(map);
@@ -649,7 +666,7 @@ function precipCondLabel(inches) {
   return 'Likely Blown Out';
 }
 
-async function fetchStreamConditions(lookup) {
+async function fetchStreamConditions(lookup, daysOut = 0) {
   const delay = ms => new Promise(r => setTimeout(r, ms));
   const gridCells = {};
   Object.values(lookup).forEach(s => {
@@ -662,6 +679,9 @@ async function fetchStreamConditions(lookup) {
     }
   });
 
+  const pastDays     = daysOut === 0 ? 7 : Math.max(0, 7 - daysOut);
+  const forecastDays = daysOut === 0 ? 0 : daysOut + 1;
+
   const status = document.getElementById('conditions-status');
   status.style.display = 'block';
   const results = {};
@@ -671,10 +691,19 @@ async function fetchStreamConditions(lookup) {
     const { lat, lon } = gridCells[key];
     status.textContent = `Fetching ${i + 1}/${keys.length}…`;
     try {
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=precipitation_sum&past_days=7&forecast_days=0&precipitation_unit=inch&timezone=America%2FChicago`;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=precipitation_sum&past_days=${pastDays}&forecast_days=${forecastDays}&precipitation_unit=inch&timezone=America%2FChicago`;
       const res = await fetch(url);
       const data = await res.json();
-      results[key] = (data.daily?.precipitation_sum || []).reduce((a, b) => a + (b || 0), 0);
+      const sums = data.daily?.precipitation_sum || [];
+      let total;
+      if (daysOut === 0) {
+        total = sums.reduce((a, b) => a + (b || 0), 0);
+      } else {
+        const endIdx = pastDays + daysOut;
+        const startIdx = Math.max(0, endIdx - 6);
+        total = sums.slice(startIdx, endIdx + 1).reduce((a, b) => a + (b || 0), 0);
+      }
+      results[key] = total;
     } catch {
       results[key] = null;
     }
@@ -692,25 +721,44 @@ async function toggleConditions() {
     btn.classList.remove('active');
     btn.textContent = 'Live Conditions';
     document.getElementById('conditions-legend').style.display = 'none';
+    document.getElementById('conditions-presets').style.display = 'none';
     document.getElementById('conditions-grid-row').style.display = 'none';
     clearGrid();
     renderMarkers();
     return;
   }
 
-  // Fetch only if we don't already have data
-  if (!conditionsData) {
+  // Fetch for current offset if not yet cached
+  if (!conditionsCache[conditionsDaysOut]) {
     btn.textContent = 'Loading…';
     btn.disabled = true;
     const lookup = buildRatingLookup();
-    conditionsData = await fetchStreamConditions(lookup);
+    conditionsCache[conditionsDaysOut] = await fetchStreamConditions(lookup, conditionsDaysOut);
     btn.disabled = false;
   }
 
   btn.textContent = 'Conditions On';
   btn.classList.add('active');
   document.getElementById('conditions-legend').style.display = 'block';
+  document.getElementById('conditions-presets').style.display = 'block';
   document.getElementById('conditions-grid-row').style.display = 'block';
+  renderMarkers();
+}
+
+async function setConditionsOffset(n) {
+  conditionsDaysOut = n;
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  clearGrid();
+  if (!conditionsCache[n]) {
+    const btn = document.getElementById('btn-conditions');
+    btn.textContent = 'Loading…';
+    btn.disabled = true;
+    const lookup = buildRatingLookup();
+    conditionsCache[n] = await fetchStreamConditions(lookup, n);
+    btn.textContent = 'Conditions On';
+    btn.disabled = false;
+  }
   renderMarkers();
 }
 
@@ -732,7 +780,7 @@ function toggleGrid() {
   }
   btn.classList.add('active');
   btn.textContent = 'Hide Grid';
-  Object.entries(conditionsData).forEach(([key, total]) => {
+  Object.entries(conditionsCache[conditionsDaysOut] || {}).forEach(([key, total]) => {
     const [lat, lon] = key.split(',').map(Number);
     const bounds = [[lat - 0.125, lon - 0.125], [lat + 0.125, lon + 0.125]];
     const color = precipCondColor(total);
@@ -744,7 +792,8 @@ function toggleGrid() {
       fillOpacity: 0.18,
       interactive: true
     });
-    const label = total != null ? `${total.toFixed(2)}" over 7 days — ${precipCondLabel(total)}` : 'No data';
+    const windowLabel = conditionsDaysOut === 0 ? 'past 7 days' : `7 days to +${conditionsDaysOut}d`;
+    const label = total != null ? `${total.toFixed(2)}" (${windowLabel}) — ${precipCondLabel(total)}` : 'No data';
     rect.bindPopup(`<b>Precip Cell</b><br><span style="color:${color};font-weight:600;">${label}</span>`, { maxWidth: 200 });
     conditionsGridLayer.addLayer(rect);
   });
@@ -931,9 +980,9 @@ function renderStreamLines(lookup) {
     filter: f => featureMatches.has(f),
     style: f => {
       const info = featureMatches.get(f);
-      if (conditionsMode && conditionsData) {
+      if (conditionsMode && conditionsCache[conditionsDaysOut]) {
         const key   = conditionsGridKey(info.lat, info.lon);
-        const total = conditionsData[key] ?? null;
+        const total = (conditionsCache[conditionsDaysOut])[key] ?? null;
         return { color: precipCondColor(total), weight: 5, opacity: 0.85 };
       }
       const rating = colorMode === 'recent' ? info.recentRating : info.avgRating;
@@ -950,10 +999,11 @@ function renderStreamLines(lookup) {
     onEachFeature: (f, l) => {
       const info = featureMatches.get(f);
       if (!info) return;
-      if (conditionsMode && conditionsData) {
+      if (conditionsMode && conditionsCache[conditionsDaysOut]) {
         const key   = conditionsGridKey(info.lat, info.lon);
-        const total = conditionsData[key] ?? null;
-        const label = total != null ? `${total.toFixed(2)}" in last 7 days — ${precipCondLabel(total)}` : 'No conditions data';
+        const total = (conditionsCache[conditionsDaysOut])[key] ?? null;
+        const windowLabel = conditionsDaysOut === 0 ? 'past 7 days' : `7 days to +${conditionsDaysOut}d`;
+        const label = total != null ? `${total.toFixed(2)}" (${windowLabel}) — ${precipCondLabel(total)}` : 'No conditions data';
         l.bindPopup(`<b>${info.name}</b><br><span style="color:${precipCondColor(total)};font-weight:600;">${label}</span>`, { maxWidth: 260 });
       } else {
         l.bindPopup(makePopup(info), { maxWidth: 340, closeButton: true });
