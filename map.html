@@ -124,6 +124,7 @@ body.dark-theme #btn-grid.active { background: #05bf85; color: white; border-col
 .preset-btn.active { background:#05bf85; color:white; border-color:#05bf85; }
 body.dark-theme .preset-btn { background:#374151; color:#9ca3af; border-color:#4b5563; }
 body.dark-theme .preset-btn.active { background:#05bf85; color:white; border-color:#05bf85; }
+body.dark-theme #conditions-status > div { background:#374151; }
 
 /* ── Checkbox rows ── */
 .ctrl-check {
@@ -474,7 +475,11 @@ body.dark-theme .legend-item { color: #e5e7eb; }
       <div class="ctrl-toggle">
         <button id="btn-conditions" onclick="toggleConditions()" title="Fetch 7-day accumulated rainfall per stream and color by runoff risk">Live Conditions</button>
       </div>
-      <div id="conditions-status" style="font-size:.75rem;color:#9ca3af;margin-top:3px;display:none;"></div>
+      <div id="conditions-status" style="margin-top:4px;display:none;">
+        <div style="width:100%;height:3px;background:#e5e7eb;border-radius:2px;overflow:hidden;">
+          <div id="conditions-progress-fill" style="height:100%;background:#05bf85;width:0%;transition:width .1s linear;"></div>
+        </div>
+      </div>
       <div id="conditions-presets" style="display:none;margin-top:5px;">
         <div style="font-size:.68rem;color:#9ca3af;margin-bottom:3px;">Forecast window</div>
         <div style="display:flex;gap:3px;flex-wrap:wrap;">
@@ -683,13 +688,15 @@ async function fetchStreamConditions(lookup, daysOut = 0) {
   const forecastDays = daysOut === 0 ? 0 : daysOut + 1;
 
   const status = document.getElementById('conditions-status');
+  const fill   = document.getElementById('conditions-progress-fill');
   status.style.display = 'block';
+  fill.style.width = '0%';
   const results = {};
   const keys = Object.keys(gridCells);
   for (let i = 0; i < keys.length; i++) {
     const key = keys[i];
     const { lat, lon } = gridCells[key];
-    status.textContent = `Fetching ${i + 1}/${keys.length}…`;
+    fill.style.width = `${Math.round(((i + 1) / keys.length) * 100)}%`;
     try {
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=precipitation_sum&past_days=${pastDays}&forecast_days=${forecastDays}&precipitation_unit=inch&timezone=America%2FChicago`;
       const res = await fetch(url);
@@ -709,7 +716,8 @@ async function fetchStreamConditions(lookup, daysOut = 0) {
     }
     if (i < keys.length - 1) await delay(200);
   }
-  status.style.display = 'none';
+  fill.style.width = '100%';
+  setTimeout(() => { status.style.display = 'none'; fill.style.width = '0%'; }, 400);
   return results;
 }
 
@@ -730,11 +738,8 @@ async function toggleConditions() {
 
   // Fetch for current offset if not yet cached
   if (!conditionsCache[conditionsDaysOut]) {
-    btn.textContent = 'Loading…';
-    btn.disabled = true;
     const lookup = buildRatingLookup();
     conditionsCache[conditionsDaysOut] = await fetchStreamConditions(lookup, conditionsDaysOut);
-    btn.disabled = false;
   }
 
   btn.textContent = 'Conditions On';
@@ -751,13 +756,8 @@ async function setConditionsOffset(n) {
   event.target.classList.add('active');
   clearGrid();
   if (!conditionsCache[n]) {
-    const btn = document.getElementById('btn-conditions');
-    btn.textContent = 'Loading…';
-    btn.disabled = true;
     const lookup = buildRatingLookup();
     conditionsCache[n] = await fetchStreamConditions(lookup, n);
-    btn.textContent = 'Conditions On';
-    btn.disabled = false;
   }
   renderMarkers();
 }
