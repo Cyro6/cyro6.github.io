@@ -86,14 +86,25 @@ The **Live Conditions** button in the map controls fetches 7-day accumulated pre
    | > 2.5" | Red | Likely Blown Out |
    | No data | Gray | — |
 
-4. **Popup** — Clicking a stream in conditions mode shows the exact total and risk label instead of the normal rating popup.
+4. **Forecast presets** — After fetching, **Today / +3d / +7d / +14d** buttons appear. Each preset shows the **7-day accumulated precipitation window ending on that date** — a mix of past actuals and forecast depending on how far out:
 
-5. **Caching** — Data is fetched once per page load. Toggling conditions off and back on reuses the cached results without re-fetching. Refreshing the page triggers a new fetch.
+   | Preset | Past days included | Forecast days included |
+   |---|---|---|
+   | Today | 7 | 0 |
+   | +3d | 4 | 3 |
+   | +7d | 0 | 7 |
+   | +14d | 0 | 7 (max; limited by free tier) |
+
+   The intent is "how saturated will the watershed be by the time I get there" — not just how much it will rain between now and then. Each preset result is cached separately; switching between presets after the first fetch is instant.
+
+5. **Popup** — Clicking a stream in conditions mode shows the exact total, the window label, and the risk level instead of the normal rating popup.
+
+6. **Caching** — Each offset is fetched once per page load and cached. Toggling conditions off and back on reuses cached results. Refreshing the page clears all caches.
 
 ### Limitations
-- Precipitation is at 0.5° resolution (~35 miles), so nearby streams share the same value.
+- Precipitation is at 0.25° resolution (~17 miles), so nearby streams share the same value.
 - Does not account for terrain, snowmelt, or upstream watershed size — it is purely a rainfall accumulation indicator.
-- Historical data only (past 7 days). Does not include a forecast component.
+- Forecast limit is ~16 days on the Open-Meteo free tier; +14d is near that ceiling.
 
 ---
 
