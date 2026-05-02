@@ -55,6 +55,48 @@ git push
 | `assets/data/weather_cache.json` | Cached weather keyed by date+location — survives sheet re-downloads |
 | `assets/data/bridge_crossings.json` | Road–stream bridge locations near trout streams (from OpenStreetMap) |
 
+---
+
+## Map — Live Stream Conditions
+
+The **Live Conditions** button in the map controls fetches 7-day accumulated precipitation for every visible stream and recolors the stream lines by runoff risk.
+
+### How it works
+
+1. **Grid grouping** — Each stream's GPS coordinates are rounded to the nearest 0.5° lat/lon. Streams that fall in the same cell share one API call, which keeps the request count low (typically 10–20 cells for all of Wisconsin).
+
+2. **API call** — For each unique grid cell, one request is made to the [Open-Meteo forecast API](https://open-meteo.com):
+   ```
+   https://api.open-meteo.com/v1/forecast
+     ?latitude=…&longitude=…
+     &daily=precipitation_sum
+     &past_days=7&forecast_days=0
+     &precipitation_unit=inch
+     &timezone=America/Chicago
+   ```
+   Returns the last 7 days of daily precipitation totals. These are summed into a single "7-day total" per cell.
+
+3. **Color thresholds** — Stream lines are recolored based on the 7-day total for their grid cell:
+
+   | Total | Color | Label |
+   |---|---|---|
+   | < 0.5" | Green | Dry |
+   | 0.5–1.5" | Amber | Elevated |
+   | 1.5–2.5" | Orange | High Risk |
+   | > 2.5" | Red | Likely Blown Out |
+   | No data | Gray | — |
+
+4. **Popup** — Clicking a stream in conditions mode shows the exact total and risk label instead of the normal rating popup.
+
+5. **Caching** — Data is fetched once per page load. Toggling conditions off and back on reuses the cached results without re-fetching. Refreshing the page triggers a new fetch.
+
+### Limitations
+- Precipitation is at 0.5° resolution (~35 miles), so nearby streams share the same value.
+- Does not account for terrain, snowmelt, or upstream watershed size — it is purely a rainfall accumulation indicator.
+- Historical data only (past 7 days). Does not include a forecast component.
+
+---
+
 ## Pages
 
 | URL | Description |
