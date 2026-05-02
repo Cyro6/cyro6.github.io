@@ -630,7 +630,7 @@ function setColorMode(mode) {
 }
 
 function conditionsGridKey(lat, lon) {
-  return `${(Math.round(lat * 2) / 2).toFixed(1)},${(Math.round(lon * 2) / 2).toFixed(1)}`;
+  return `${(Math.round(lat * 4) / 4).toFixed(2)},${(Math.round(lon * 4) / 4).toFixed(2)}`;
 }
 
 function precipCondColor(inches) {
@@ -656,8 +656,8 @@ async function fetchStreamConditions(lookup) {
     const key = conditionsGridKey(s.lat, s.lon);
     if (!gridCells[key]) {
       gridCells[key] = {
-        lat: Math.round(s.lat * 2) / 2,
-        lon: Math.round(s.lon * 2) / 2
+        lat: Math.round(s.lat * 4) / 4,
+        lon: Math.round(s.lon * 4) / 4
       };
     }
   });
@@ -734,7 +734,7 @@ function toggleGrid() {
   btn.textContent = 'Hide Grid';
   Object.entries(conditionsData).forEach(([key, total]) => {
     const [lat, lon] = key.split(',').map(Number);
-    const bounds = [[lat - 0.25, lon - 0.25], [lat + 0.25, lon + 0.25]];
+    const bounds = [[lat - 0.125, lon - 0.125], [lat + 0.125, lon + 0.125]];
     const color = precipCondColor(total);
     const rect = L.rectangle(bounds, {
       color,
