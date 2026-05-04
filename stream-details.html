@@ -3,6 +3,7 @@ layout: default
 title: Stream Details
 ---
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <style>
 .sd-page {
     --bg-primary: #f5f0e8;
@@ -108,7 +109,8 @@ body.dark-theme .sd-page {
 .sd-page .stream-info,
 .sd-page .widnr-map-section,
 .sd-page .weather-section,
-.sd-page .spots-section {
+.sd-page .spots-section,
+.sd-page .charts-section {
     margin: 12px 0;
     padding: 14px;
     background: var(--card-bg);
@@ -129,6 +131,7 @@ body.dark-theme .sd-page {
 .sd-page .top-outings-toggle,
 .sd-page .stats-toggle,
 .sd-page .weather-toggle,
+.sd-page .charts-toggle,
 .sd-page .spots-toggle {
     padding: 10px 20px;
     background: var(--button-bg);
@@ -149,6 +152,7 @@ body.dark-theme .sd-page {
 .sd-page .top-outings-toggle:hover,
 .sd-page .stats-toggle:hover,
 .sd-page .weather-toggle:hover,
+.sd-page .charts-toggle:hover,
 .sd-page .spots-toggle:hover {
     background: var(--button-hover-bg);
     transform: translateY(-3px);
@@ -407,6 +411,21 @@ body.dark-theme .sd-page {
 .sd-page .past-weather-container.active {
     display: block;
 }
+.sd-page .charts-section canvas {
+    max-height: 260px;
+}
+.sd-page .charts-section .chart-wrap + .chart-wrap {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--text-secondary);
+}
+.sd-page .charts-section h3 {
+    font-size: .9rem;
+    color: var(--text-secondary);
+    margin: 0 0 8px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
 
 /* Two-column layout */
 @media screen and (min-width: 900px) {
@@ -573,18 +592,21 @@ body.dark-theme .sd-page {
     .sd-page .weather-section .weather-content,
     .sd-page .month-stats .month-stats-content,
     .sd-page .top-outings .top-outings-content,
+    .sd-page .charts-section .charts-content,
     .sd-page .spots-section .spots-content { display: none !important; }
     .sd-page .stream-info .stream-info-content.active,
     .sd-page .stats .stats-content.active,
     .sd-page .weather-section .weather-content.active,
     .sd-page .month-stats .month-stats-content.active,
     .sd-page .top-outings .top-outings-content.active,
+    .sd-page .charts-section .charts-content.active,
     .sd-page .spots-section .spots-content.active { display: block !important; }
     .sd-page .stream-info-toggle,
     .sd-page .stats-toggle,
     .sd-page .weather-toggle,
     .sd-page .month-stats-toggle,
     .sd-page .top-outings-toggle,
+    .sd-page .charts-toggle,
     .sd-page .spots-toggle { display: block !important; }
     .sd-page .spots-table-container {
         overflow-x: auto;
@@ -598,12 +620,14 @@ body.dark-theme .sd-page {
     .sd-page .weather-section .weather-content,
     .sd-page .month-stats .month-stats-content,
     .sd-page .top-outings .top-outings-content,
+    .sd-page .charts-section .charts-content,
     .sd-page .spots-section .spots-content { display: block !important; }
     .sd-page .stream-info-toggle,
     .sd-page .stats-toggle,
     .sd-page .weather-toggle,
     .sd-page .month-stats-toggle,
     .sd-page .top-outings-toggle,
+    .sd-page .charts-toggle,
     .sd-page .spots-toggle { display: none !important; }
     .sd-page .spots-table { font-size: 0.95rem; }
     .sd-page .filter-section select { width: 140px; }
@@ -815,6 +839,20 @@ body.dark-theme .sd-page {
                         </thead>
                         <tbody id="recent-trips-body"></tbody>
                     </table>
+                </div>
+            </div>
+            <div class="charts-section">
+                <h2>Charts</h2>
+                <button class="charts-toggle" data-toggle="charts-content" onclick="toggleSection('charts-content')">Collapse</button>
+                <div class="charts-content" id="charts-content">
+                    <div class="chart-wrap">
+                        <h3>Rating Over Time</h3>
+                        <canvas id="rating-over-time-chart"></canvas>
+                    </div>
+                    <div class="chart-wrap">
+                        <h3>Monthly Average Rating</h3>
+                        <canvas id="monthly-avg-chart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1356,8 +1394,111 @@ body.dark-theme .sd-page {
             document.getElementById('weather-location').textContent = 'Location: N/A';
         }
 
+        renderCharts(streamData, ratingReverseMap);
+
         document.getElementById('stream-details').style.display = 'block';
         document.getElementById('loading').style.display = 'none';
+    }
+
+    // ── Charts ───────────────────────────────────────────────────────────────────
+    let rotChart = null, monthlyChart = null;
+
+    function renderCharts(streamData, ratingReverseMap) {
+        if (!streamData || streamData.length === 0) return;
+
+        const RATING_COLORS = ['#dc2626','#f97316','#eab308','#22c55e','#05bf85','#3b82f6','#8b5cf6'];
+        const gridColor = 'rgba(156,163,175,0.2)';
+        const tickColor = '#9ca3af';
+        const yAxis = {
+            min: -0.5, max: 6.5,
+            ticks: { stepSize: 1, callback: v => ratingReverseMap[v] || '', color: tickColor },
+            grid: { color: gridColor }
+        };
+
+        // Rating Over Time — scatter
+        const sorted = streamData.slice().sort((a, b) => a.date - b.date);
+        if (rotChart) rotChart.destroy();
+        rotChart = new Chart(document.getElementById('rating-over-time-chart'), {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    data: sorted.map(d => ({ x: d.date.getTime(), y: d.rating })),
+                    backgroundColor: sorted.map(d => RATING_COLORS[d.rating] || '#9ca3af'),
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => {
+                                const d = sorted[ctx.dataIndex];
+                                return `${d.date.toLocaleDateString()} · ${ratingReverseMap[d.rating]}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'linear',
+                        ticks: {
+                            maxTicksLimit: 6,
+                            color: tickColor,
+                            callback: v => {
+                                const d = new Date(v);
+                                return `${d.toLocaleString('default',{month:'short'})} '${String(d.getFullYear()).slice(2)}`;
+                            }
+                        },
+                        grid: { color: gridColor }
+                    },
+                    y: yAxis
+                }
+            }
+        });
+
+        // Monthly Average Rating — bar
+        const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        const groups = {};
+        streamData.forEach(d => { (groups[d.month] = groups[d.month] || []).push(d.rating); });
+        const months = MONTHS.filter(m => groups[m]);
+        const avgs = months.map(m => {
+            const r = groups[m];
+            return Math.round((r.reduce((s, v) => s + v, 0) / r.length) * 100) / 100;
+        });
+
+        if (monthlyChart) monthlyChart.destroy();
+        monthlyChart = new Chart(document.getElementById('monthly-avg-chart'), {
+            type: 'bar',
+            data: {
+                labels: months.map(m => m.slice(0, 3)),
+                datasets: [{
+                    data: avgs,
+                    backgroundColor: avgs.map(a => RATING_COLORS[Math.round(a)] || '#9ca3af'),
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => {
+                                const v = ctx.parsed.y;
+                                return `Avg: ${ratingReverseMap[Math.round(v)] || '?'} (${v.toFixed(2)})`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { ticks: { color: tickColor }, grid: { display: false } },
+                    y: yAxis
+                }
+            }
+        });
     }
 
     // ── WI DNR Regulations (baked into streams.json at data pull time) ──────────
