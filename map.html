@@ -1003,9 +1003,10 @@ function makePopup(s) {
                        : rc.includes('3 Trout') ? 'background:#f59e0b;color:#000'
                        : rc.includes('Vary')    ? 'background:#ef4444;color:#fff'
                        : 'background:#9ca3af;color:#fff';
-      const badge = rc ? `<span style="display:inline-block;padding:2px 10px;border-radius:4px;${badgeStyle};font-weight:700;font-size:.78rem;">${rc}</span>` : '';
-      const season = r.SEASON_TXT ? `<div class="sp-reg-text">${r.SEASON_TXT}</div>` : '';
-      const early  = r.EARLY_SEASON_TXT ? `<div class="sp-reg-text">${r.EARLY_SEASON_TXT}</div>` : '';
+      const bag = (r.BAG_LMT || '').trim();
+      const badge = bag ? `<span style="display:inline-block;padding:2px 10px;border-radius:4px;${badgeStyle};font-weight:700;font-size:.78rem;">${bag}</span>` : '';
+      const season = r.SEASON_TXT ? `<div class="sp-reg-text"><strong>Season:</strong> ${r.SEASON_TXT}</div>` : '';
+      const early  = r.EARLY_SEASON_TXT ? `<div class="sp-reg-text"><strong>Early Season:</strong> ${r.EARLY_SEASON_TXT}</div>` : '';
       return `<div class="sp-regs">${badge}${season}${early}</div>`;
     })()}
     <hr class="sp-divider">
