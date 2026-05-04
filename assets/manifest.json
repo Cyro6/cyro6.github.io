@@ -4,21 +4,46 @@ layout: null
 sitemap: false
 ---
 {
-  "lang": "{{ site.lang | default: "en-US" }}",
-  "name": "{{ site.title }}",
-  "short_name": "{{ site.short_name | default: site.title | replace: ' ', '' }}",
-  "theme_color": "{{ site.manifest.theme_color | default: '#24292e' }}",
-  "background_color": "{{ site.manifest.background_color | default: '#ffffff' }}",
-  {% if site.favicons -%}
-    "icons": [
-      {% for icon in site.favicons -%}
-      {
-        "src": "{{ icon[1] | relative_url }}",
-        "sizes": "{{ icon[0] }}x{{ icon[0] }}"
-      }{% if forloop.last != true %},{% endif %}
-      {% endfor %}
-    ],
-  {% endif -%}
-  "start_url": "/",
-  "display": "standalone"
+  "lang": "en-US",
+  "name": "Driftless Trout",
+  "short_name": "DTF",
+  "description": "Stream map and trip planner for Driftless trout fishing",
+  "theme_color": "#05bf85",
+  "background_color": "#1a241f",
+  "start_url": "/map",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/assets/logos/logo@144px.png",
+      "sizes": "144x144",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/logos/logo@180px.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/logos/logo@512px.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Map",
+      "short_name": "Map",
+      "url": "/map",
+      "icons": [{ "src": "/assets/logos/logo@144px.png", "sizes": "144x144" }]
+    },
+    {
+      "name": "Planner",
+      "short_name": "Planner",
+      "url": "/planner",
+      "icons": [{ "src": "/assets/logos/logo@144px.png", "sizes": "144x144" }]
+    }
+  ]
 }
