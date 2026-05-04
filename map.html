@@ -418,6 +418,14 @@ body.dark-theme .legend-item { color: #e5e7eb; }
     </div>
 
     <div class="ctrl-group">
+      <span class="ctrl-label">Base Map</span>
+      <div class="ctrl-toggle">
+        <button id="btn-map-street" class="active" onclick="setBaseMap('street')">Street</button>
+        <button id="btn-map-satellite" onclick="setBaseMap('satellite')">Satellite</button>
+      </div>
+    </div>
+
+    <div class="ctrl-group">
       <span class="ctrl-label">Log Type</span>
       <label class="ctrl-check" title="Include trips you logged yourself"><input type="checkbox" id="chk-mine" checked onchange="updateLogFilter()"> Mine</label>
       <label class="ctrl-check" title="Include trips logged by others"><input type="checkbox" id="chk-other" checked onchange="updateLogFilter()"> Others</label>
@@ -539,10 +547,27 @@ const tileUrl = isDark
   : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
 
 const map = L.map('stream-map', { zoomControl: true });
-L.tileLayer(tileUrl, {
+let baseLayer = L.tileLayer(tileUrl, {
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
   maxZoom: 18
 }).addTo(map);
+
+function setBaseMap(mode) {
+  document.getElementById('btn-map-street').classList.toggle('active', mode === 'street');
+  document.getElementById('btn-map-satellite').classList.toggle('active', mode === 'satellite');
+  map.removeLayer(baseLayer);
+  if (mode === 'satellite') {
+    baseLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: '&copy; <a href="https://www.esri.com/">Esri</a>',
+      maxZoom: 19
+    }).addTo(map);
+  } else {
+    baseLayer = L.tileLayer(tileUrl, {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+      maxZoom: 18
+    }).addTo(map);
+  }
+}
 
 ['map-controls'].forEach(id => {
   const el = document.getElementById(id);
