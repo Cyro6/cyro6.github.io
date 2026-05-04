@@ -1379,9 +1379,28 @@ body.dark-theme .sd-page {
             const dnrName = (dnrNameMap[streamName] || streamName).toLowerCase().trim();
             const resp = await fetch('/assets/data/dnr_streams.geojson');
             const gj = await resp.json();
-            const matched = gj.features.filter(f =>
-                (f.properties.STREAM || '').toLowerCase().trim() === dnrName
+
+            const validSpots = streamData.filter(d =>
+                !isNaN(d.lat) && !isNaN(d.lon) && Math.abs(d.lat) > 0.001
             );
+
+            const matched = gj.features.filter(f => {
+                if ((f.properties.STREAM || '').toLowerCase().trim() !== dnrName) return false;
+                if (validSpots.length === 0) return true;
+                const geom = f.geometry;
+                if (!geom) return false;
+                const lines = geom.type === 'LineString' ? [geom.coordinates] : geom.coordinates;
+                for (const line of lines) {
+                    for (const [lon, lat] of line) {
+                        for (const sp of validSpots) {
+                            const dlat = lat - sp.lat, dlon = lon - sp.lon;
+                            if (dlat * dlat + dlon * dlon < 0.25 * 0.25) return true;
+                        }
+                    }
+                }
+                return false;
+            });
+
             if (matched.length > 0) {
                 L.geoJSON({ type: 'FeatureCollection', features: matched }, {
                     style: { color: '#05bf85', weight: 4, opacity: 0.9 }
