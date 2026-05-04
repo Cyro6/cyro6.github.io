@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script>if(window.matchMedia('(display-mode:standalone)').matches||navigator.standalone)document.documentElement.classList.add('pwa');</script>
     {% seo %}
     <link rel="manifest" href="{{ "/manifest.json" | relative_url }}">
     <meta name="theme-color" content="#242e2b"/>
@@ -36,11 +37,9 @@
       }
       .pwa-tab svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
       .pwa-tab.active { color: #05bf85; }
-      @media (display-mode: standalone) {
-        .header { display: none !important; }
-        .pwa-tabbar { display: flex; }
-        .main { padding-bottom: 56px; }
-      }
+      html.pwa .header { display: none !important; }
+      html.pwa .pwa-tabbar { display: flex; }
+      html.pwa .main { padding-bottom: 56px; }
     </style>
   </head>
   <body class="layout-{{ page.layout }} {{ page.title | slugify }}">
