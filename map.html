@@ -1014,6 +1014,23 @@ function makePopup(s) {
   </div>`;
 }
 
+function makeDNRPopup(p) {
+  const rc  = (p.REGCAT  || '').trim();
+  const bag = (p.BAG_LMT || '').trim();
+  const badgeStyle = rc.includes('5 Trout') ? 'background:#22c55e;color:#fff'
+                   : rc.includes('3 Trout') ? 'background:#f59e0b;color:#000'
+                   : rc.includes('Vary')    ? 'background:#ef4444;color:#fff'
+                   : 'background:#9ca3af;color:#fff';
+  const badge  = bag ? `<span style="display:inline-block;padding:2px 10px;border-radius:4px;${badgeStyle};font-weight:700;font-size:.78rem;">${bag}</span>` : '';
+  const season = p.SEASON_TXT       ? `<div class="sp-reg-text"><strong>Season:</strong> ${p.SEASON_TXT}</div>`             : '';
+  const early  = p.EARLY_SEASON_TXT ? `<div class="sp-reg-text"><strong>Early Season:</strong> ${p.EARLY_SEASON_TXT}</div>` : '';
+  return `<div class="stream-popup">
+    <div class="sp-name">🌊 ${p.STREAM || 'Trout Stream'}</div>
+    <div class="sp-row" style="color:#9ca3af;font-size:.76rem;font-style:italic;margin-bottom:4px;">No fishing logs</div>
+    <div class="sp-regs">${badge}${season}${early}</div>
+  </div>`;
+}
+
 function makeTripPopup(t) {
   const rc = ratingColor(t.rating);
   const condParts = [t.weather].filter(Boolean);
@@ -1275,12 +1292,7 @@ async function loadDNRLayer() {
   L.geoJSON(dnrGeoJSON, {
     style: () => ({ color: 'transparent', weight: 20, opacity: 0 }),
     onEachFeature: (f, l) => {
-      const p = f.properties;
-      l.bindPopup(
-        `<strong>${p.STREAM || 'Trout Stream'}</strong><br>` +
-        `Category: ${p.REGCAT || '—'}<br>` +
-        `Bag limit: ${p.BAG_LMT || '—'}`
-      );
+      l.bindPopup(makeDNRPopup(f.properties), { maxWidth: 340, closeButton: true });
     }
   }).addTo(dnrLayer);
 }
