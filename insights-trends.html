@@ -201,7 +201,7 @@ async function main() {
           type: 'scatter',
           label: 'Trip',
           data: rows.map((x, i) => ({ x: i, y: x.v })),
-          backgroundColor: rows.map(x => ratingColor(x.v) + 'bb'),
+          backgroundColor: rows.map(x => ratingColor(x.v)),
           pointRadius: 3,
           pointHoverRadius: 5,
         },
