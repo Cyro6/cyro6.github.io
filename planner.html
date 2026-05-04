@@ -865,7 +865,7 @@ async function processBatch(batch) {
 function processSourceData() {
     if (!sourceData || !campsiteData) return;
 
-    const ratingMap = { 'F': 0, 'E': 1, 'D': 2, 'C': 3, 'B': 4, 'A': 5, 'S': 6 };
+    const ratingMap = { 'F': 0, 'E': 1, 'D': 2, 'C': 3, 'B': 4, 'A': 5, 'S': 6, 'S+': 7 };
     const excludedStreams = ['Unknown', 'Central Sands', 'Minnesota', 'Southern WI'];
 
     validRows = sourceData.rows
