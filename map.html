@@ -731,7 +731,7 @@ function renderCampsites(rows) {
 map.createPane('ratedStreamsPane');
 map.getPane('ratedStreamsPane').style.zIndex = 650;
 map.createPane('tripMarkerPane');
-map.getPane('tripMarkerPane').style.zIndex = 700;
+map.getPane('tripMarkerPane').style.zIndex = 680;
 let postIndex   = {};  // stream name -> [{postDate, postDays, url, title}]
 
 fetch('/assets/data/stream_posts.json')
