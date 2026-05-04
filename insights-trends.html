@@ -186,6 +186,59 @@ async function main() {
   `;
 
   // 1. Timeline chart — scatter + rolling avg line
+  // Build month boundary positions in trip-index space
+  const monthBoundaries = [];
+  let lastMonthKey = null;
+  rows.forEach(({ d }, i) => {
+    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    if (key !== lastMonthKey) {
+      const isJan = d.getMonth() === 0;
+      const label = MONTH_NAMES[d.getMonth()] + (monthBoundaries.length === 0 || isJan ? ` '${String(d.getFullYear()).slice(2)}` : '');
+      monthBoundaries.push({ x: i, label });
+      lastMonthKey = key;
+    }
+  });
+
+  const monthBandsPlugin = {
+    id: 'monthBands',
+    beforeDatasetsDraw(chart) {
+      const { ctx, chartArea, scales: { x: xScale } } = chart;
+      if (!chartArea) return;
+      ctx.save();
+      monthBoundaries.forEach(({ x, label }, idx) => {
+        const rawX  = xScale.getPixelForValue(x);
+        const rawX2 = idx + 1 < monthBoundaries.length
+          ? xScale.getPixelForValue(monthBoundaries[idx + 1].x)
+          : chartArea.right;
+        const x1 = Math.max(rawX,  chartArea.left);
+        const x2 = Math.min(rawX2, chartArea.right);
+        if (x2 <= x1) return;
+        // Alternating band shading
+        if (idx % 2 === 0) {
+          ctx.fillStyle = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)';
+          ctx.fillRect(x1, chartArea.top, x2 - x1, chartArea.bottom - chartArea.top);
+        }
+        // Divider line (skip the very first boundary)
+        if (idx > 0 && rawX > chartArea.left && rawX < chartArea.right) {
+          ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)';
+          ctx.lineWidth = 0.75;
+          ctx.beginPath();
+          ctx.moveTo(rawX, chartArea.top);
+          ctx.lineTo(rawX, chartArea.bottom);
+          ctx.stroke();
+        }
+        // Month label (only if band is wide enough)
+        if (x2 - x1 > 22) {
+          ctx.fillStyle = textColor;
+          ctx.font = '10px Inter, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(label, (x1 + x2) / 2, chartArea.top + 11);
+        }
+      });
+      ctx.restore();
+    }
+  };
+
   const WINDOW = 20;
   const rolling = rows.map((_, i) => {
     const start = Math.max(0, i - WINDOW + 1);
@@ -195,6 +248,7 @@ async function main() {
 
   const ctx1 = document.getElementById('timelineChart').getContext('2d');
   new Chart(ctx1, {
+    plugins: [monthBandsPlugin],
     data: {
       datasets: [
         {
