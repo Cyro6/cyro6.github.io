@@ -3,6 +3,8 @@ layout: default
 title: Stream Details
 ---
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <style>
 .sd-page {
@@ -107,7 +109,7 @@ body.dark-theme .sd-page {
 .sd-page .month-stats,
 .sd-page .top-outings,
 .sd-page .stream-info,
-.sd-page .widnr-map-section,
+.sd-page .stream-map-section,
 .sd-page .weather-section,
 .sd-page .spots-section,
 .sd-page .charts-section {
@@ -124,7 +126,6 @@ body.dark-theme .sd-page {
     margin: 5px 0;
     color: var(--text-primary);
 }
-.sd-page .widnr-map-section .toggle-button,
 .sd-page .past-weather-toggle,
 .sd-page .stream-info-toggle,
 .sd-page .month-stats-toggle,
@@ -145,7 +146,6 @@ body.dark-theme .sd-page {
     margin-bottom: 20px;
     display: inline-block;
 }
-.sd-page .widnr-map-section .toggle-button:hover,
 .sd-page .past-weather-toggle:hover,
 .sd-page .stream-info-toggle:hover,
 .sd-page .month-stats-toggle:hover,
@@ -157,32 +157,6 @@ body.dark-theme .sd-page {
     background: var(--button-hover-bg);
     transform: translateY(-3px);
     box-shadow: 0 4px 15px var(--shadow-hover-color);
-}
-.sd-page .widnr-map-section .iframe-container {
-    position: relative;
-    padding-bottom: 56.25%;
-    height: 0;
-    overflow: hidden;
-    display: none;
-}
-.sd-page .widnr-map-section .iframe-container.active {
-    display: block;
-}
-.sd-page .widnr-map-section .iframe-container iframe {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border: 0;
-}
-.sd-page .widnr-map-section .iframe-fallback {
-    margin-top: 10px;
-    color: var(--text-secondary);
-    display: none;
-}
-.sd-page .widnr-map-section .iframe-fallback.active {
-    display: block;
 }
 .sd-page .spots-table,
 .sd-page .top-outings-table,
@@ -411,6 +385,15 @@ body.dark-theme .sd-page {
 .sd-page .past-weather-container.active {
     display: block;
 }
+#sd-stream-map {
+    height: 280px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+.sd-page .spots-section .spots-content,
+.sd-page .top-outings .top-outings-content { display: none; }
+.sd-page .spots-section .spots-content.active,
+.sd-page .top-outings .top-outings-content.active { display: block; }
 .sd-page .charts-section canvas {
     max-height: 260px;
 }
@@ -451,7 +434,7 @@ body.dark-theme .sd-page {
     .sd-page .stream-info { flex: 1.4; min-width: 0; }
     .sd-page .stats       { flex: 1;   min-width: 0; }
     .sd-page .weather-section,
-    .sd-page .widnr-map-section { width: 100%; }
+    .sd-page .stream-map-section { width: 100%; }
     .sd-page .spots-table,
     .sd-page .month-outing-table,
     .sd-page .top-outings-table { width: 100%; }
@@ -465,7 +448,7 @@ body.dark-theme .sd-page {
     .sd-page .stream-info,
     .sd-page .stats,
     .sd-page .weather-section,
-    .sd-page .widnr-map-section,
+    .sd-page .stream-map-section,
     .sd-page .spots-section,
     .sd-page .month-stats,
     .sd-page .top-outings {
@@ -496,7 +479,6 @@ body.dark-theme .sd-page {
         padding: 15px;
         margin: 15px 0;
     }
-    .sd-page .widnr-map-section .iframe-container { padding-bottom: 75%; }
     .sd-page .filter-section {
         flex-direction: column;
         flex-wrap: wrap;
@@ -591,16 +573,12 @@ body.dark-theme .sd-page {
     .sd-page .stats .stats-content,
     .sd-page .weather-section .weather-content,
     .sd-page .month-stats .month-stats-content,
-    .sd-page .top-outings .top-outings-content,
-    .sd-page .charts-section .charts-content,
-    .sd-page .spots-section .spots-content { display: none !important; }
+    .sd-page .charts-section .charts-content { display: none !important; }
     .sd-page .stream-info .stream-info-content.active,
     .sd-page .stats .stats-content.active,
     .sd-page .weather-section .weather-content.active,
     .sd-page .month-stats .month-stats-content.active,
-    .sd-page .top-outings .top-outings-content.active,
-    .sd-page .charts-section .charts-content.active,
-    .sd-page .spots-section .spots-content.active { display: block !important; }
+    .sd-page .charts-section .charts-content.active { display: block !important; }
     .sd-page .stream-info-toggle,
     .sd-page .stats-toggle,
     .sd-page .weather-toggle,
@@ -619,16 +597,12 @@ body.dark-theme .sd-page {
     .sd-page .stats .stats-content,
     .sd-page .weather-section .weather-content,
     .sd-page .month-stats .month-stats-content,
-    .sd-page .top-outings .top-outings-content,
-    .sd-page .charts-section .charts-content,
-    .sd-page .spots-section .spots-content { display: block !important; }
+    .sd-page .charts-section .charts-content { display: block !important; }
     .sd-page .stream-info-toggle,
     .sd-page .stats-toggle,
     .sd-page .weather-toggle,
     .sd-page .month-stats-toggle,
-    .sd-page .top-outings-toggle,
-    .sd-page .charts-toggle,
-    .sd-page .spots-toggle { display: none !important; }
+    .sd-page .charts-toggle { display: none !important; }
     .sd-page .spots-table { font-size: 0.95rem; }
     .sd-page .filter-section select { width: 140px; }
     .sd-page .filter-section input  { width: 90px; }
@@ -658,7 +632,7 @@ body.dark-theme .sd-page {
                         <p id="stream-gear-restrictions-container"><strong>Gear Restrictions:</strong> <span id="stream-gear-restrictions"></span></p>
                         <p><strong>Season Information:</strong> <span id="stream-season-info"></span></p>
                         <p><strong>Early Season:</strong> <span id="stream-early-season"></span></p>
-                        <p id="stream-widnr-link-container"><strong>WIDNR Map:</strong> <span id="stream-widnr-link"></span> | <span id="stream-widnr-external-link"></span></p>
+                        <p id="stream-widnr-link-container"><strong>WIDNR:</strong> <span id="stream-widnr-external-link"></span></p>
                     </div>
                 </div>
                 <div class="stats">
@@ -717,18 +691,30 @@ body.dark-theme .sd-page {
                     </table>
                 </div>
             </div>
-            <div class="widnr-map-section" id="widnr-map-section">
-                <h2>WIDNR Map</h2>
-                <button class="toggle-button" onclick="toggleMap()">Expand Map</button>
-                <div id="stream-widnr-iframe" class="iframe-container"></div>
-                <div id="stream-widnr-fallback" class="iframe-fallback"></div>
+            <div class="stream-map-section">
+                <h2>Stream Map</h2>
+                <div id="sd-stream-map"></div>
             </div>
         </div>
 
         <div class="right-column">
+            <div class="charts-section">
+                <h2>Charts</h2>
+                <button class="charts-toggle" data-toggle="charts-content" onclick="toggleSection('charts-content')">Collapse</button>
+                <div class="charts-content" id="charts-content">
+                    <div class="chart-wrap">
+                        <h3>Rating Over Time</h3>
+                        <canvas id="rating-over-time-chart"></canvas>
+                    </div>
+                    <div class="chart-wrap">
+                        <h3>Monthly Average Rating</h3>
+                        <canvas id="monthly-avg-chart"></canvas>
+                    </div>
+                </div>
+            </div>
             <div class="spots-section">
                 <h2>Fishing Spots (Downstream to Upstream)</h2>
-                <button class="spots-toggle" data-toggle="spots-content" onclick="toggleSection('spots-content')">Collapse</button>
+                <button class="spots-toggle" data-toggle="spots-content" onclick="toggleSection('spots-content')">Expand</button>
                 <div class="spots-content" id="spots-content">
                     <div class="filter-section">
                         <div class="filter-row">
@@ -841,20 +827,6 @@ body.dark-theme .sd-page {
                     </table>
                 </div>
             </div>
-            <div class="charts-section">
-                <h2>Charts</h2>
-                <button class="charts-toggle" data-toggle="charts-content" onclick="toggleSection('charts-content')">Collapse</button>
-                <div class="charts-content" id="charts-content">
-                    <div class="chart-wrap">
-                        <h3>Rating Over Time</h3>
-                        <canvas id="rating-over-time-chart"></canvas>
-                    </div>
-                    <div class="chart-wrap">
-                        <h3>Monthly Average Rating</h3>
-                        <canvas id="monthly-avg-chart"></canvas>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>
@@ -865,13 +837,14 @@ body.dark-theme .sd-page {
     let sourceData = null;
     let streamInfoData = null;
     let dnrRegData = null;
+    let dnrNameMap = {};
     let spotsData = [];
     let filteredSpotsData = [];
     let sortSpotsColumn = 1;
     let sortSpotsDirection = 1;
-    let widnrLink = '';
     let weatherLatitude = null;
     let weatherLongitude = null;
+    let sdMap = null;
 
     const sectionOrder = { 'UPPER': 1, 'MIDDLE': 2, 'LOWER': 3, 'UNKNOWN': 4 };
     const sectionMap = {
@@ -1005,22 +978,6 @@ body.dark-theme .sd-page {
         }
     }
 
-    function toggleMap() {
-        const iframeContainer = document.getElementById('stream-widnr-iframe');
-        const fallback = document.getElementById('stream-widnr-fallback');
-        const toggleButton = document.querySelector('.toggle-button');
-        const isExpanded = iframeContainer.classList.contains('active');
-        if (isExpanded) {
-            iframeContainer.classList.remove('active');
-            fallback.classList.remove('active');
-            toggleButton.textContent = 'Expand Map';
-        } else {
-            iframeContainer.classList.add('active');
-            fallback.classList.add('active');
-            toggleButton.textContent = 'Collapse Map';
-        }
-    }
-
     async function init() {
         if (!streamName) {
             document.getElementById('error').textContent = 'Error: No stream specified.';
@@ -1052,6 +1009,7 @@ body.dark-theme .sd-page {
             sourceData = json.source;
             streamInfoData = json.stream_info;
             dnrRegData = json.dnr_regulations || {};
+            dnrNameMap = json.dnr_name_map || {};
         } catch (error) {
             document.getElementById('error').textContent = `Error loading data: ${error.message}`;
             document.getElementById('error').style.display = 'block';
@@ -1194,18 +1152,13 @@ body.dark-theme .sd-page {
                 }
                 document.getElementById('stream-season-info').textContent = streamInfoRow[4] || 'N/A';
                 document.getElementById('stream-early-season').textContent = streamInfoRow[5] || 'N/A';
-                widnrLink = streamInfoRow[6]?.trim();
+                const widnrLink = streamInfoRow[6]?.trim();
                 const widnrLinkContainer = document.getElementById('stream-widnr-link-container');
                 if (widnrLink) {
-                    document.getElementById('stream-widnr-link').innerHTML = `<a href="#widnr-map-section" onclick="toggleMap()">View WIDNR Map</a>`;
-                    document.getElementById('stream-widnr-external-link').innerHTML = `<a href="${widnrLink}" target="_blank">View WIDNR Map External Link</a>`;
+                    document.getElementById('stream-widnr-external-link').innerHTML = `<a href="${widnrLink}" target="_blank">View on WIDNR</a>`;
                     widnrLinkContainer.style.display = 'block';
-                    document.getElementById('stream-widnr-iframe').innerHTML = `<iframe src="${widnrLink}" loading="lazy" allowfullscreen></iframe>`;
-                    document.getElementById('stream-widnr-fallback').innerHTML = `If the map doesn't load, <a href="${widnrLink}" target="_blank">view WIDNR details here</a>.`;
                 } else {
                     widnrLinkContainer.style.display = 'none';
-                    document.getElementById('stream-widnr-iframe').innerHTML = '';
-                    document.getElementById('stream-widnr-fallback').textContent = 'N/A';
                 }
             } else {
                 document.getElementById('stream-regulation').textContent = 'N/A';
@@ -1214,6 +1167,7 @@ body.dark-theme .sd-page {
                 document.getElementById('stream-season-info').textContent = 'N/A';
                 document.getElementById('stream-early-season').textContent = 'N/A';
                 document.getElementById('stream-widnr-link-container').style.display = 'none';
+                document.getElementById('stream-widnr-external-link').textContent = '';
             }
         } else {
             document.getElementById('stream-regulation').textContent = 'Error loading data';
@@ -1395,9 +1349,62 @@ body.dark-theme .sd-page {
         }
 
         renderCharts(streamData, ratingReverseMap);
+        renderStreamMap(streamData);
 
         document.getElementById('stream-details').style.display = 'block';
         document.getElementById('loading').style.display = 'none';
+    }
+
+    // ── Stream Map ───────────────────────────────────────────────────────────────
+    async function renderStreamMap(streamData) {
+        const el = document.getElementById('sd-stream-map');
+        if (!el) return;
+        if (sdMap) { sdMap.remove(); sdMap = null; }
+
+        const isDark = document.body.classList.contains('dark-theme');
+        sdMap = L.map('sd-stream-map', { zoomControl: true, attributionControl: false });
+        L.tileLayer(
+            isDark
+                ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+                : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+            { subdomains: 'abcd', maxZoom: 19 }
+        ).addTo(sdMap);
+
+        sdMap.setView([43.5, -90.5], 10);
+        const bounds = L.latLngBounds();
+        let hasGeom = false;
+
+        try {
+            const dnrName = (dnrNameMap[streamName] || streamName).toLowerCase().trim();
+            const resp = await fetch('/assets/data/dnr_streams.geojson');
+            const gj = await resp.json();
+            const matched = gj.features.filter(f =>
+                (f.properties.STREAM || '').toLowerCase().trim() === dnrName
+            );
+            if (matched.length > 0) {
+                L.geoJSON({ type: 'FeatureCollection', features: matched }, {
+                    style: { color: '#05bf85', weight: 4, opacity: 0.9 }
+                }).addTo(sdMap).eachLayer(l => {
+                    if (l.getBounds) { bounds.extend(l.getBounds()); hasGeom = true; }
+                });
+            }
+        } catch (e) { /* geojson unavailable */ }
+
+        const seen = new Set();
+        streamData.forEach(d => {
+            if (isNaN(d.lat) || isNaN(d.lon) || Math.abs(d.lat) < 0.001) return;
+            const key = `${d.lat.toFixed(4)},${d.lon.toFixed(4)}`;
+            if (seen.has(key)) return;
+            seen.add(key);
+            L.circleMarker([d.lat, d.lon], {
+                radius: 6, color: '#fff', weight: 1.5,
+                fillColor: '#05bf85', fillOpacity: 0.85
+            }).addTo(sdMap);
+            bounds.extend([d.lat, d.lon]);
+            hasGeom = true;
+        });
+
+        if (hasGeom && bounds.isValid()) sdMap.fitBounds(bounds, { padding: [20, 20] });
     }
 
     // ── Charts ───────────────────────────────────────────────────────────────────
