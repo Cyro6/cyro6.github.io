@@ -9,6 +9,39 @@
     <link rel="stylesheet" href="{{ "/assets/styles.css" | relative_url }}">
     {% include site-fonts.html %}
     {% include site-favicons.html %}
+    <style>
+      .pwa-tabbar {
+        display: none;
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        height: 56px;
+        background: #1a241f;
+        border-top: 1px solid #2d4438;
+        z-index: 2000;
+        justify-content: space-around;
+        align-items: stretch;
+      }
+      .pwa-tab {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        color: #6b7280;
+        text-decoration: none;
+        font-size: .68rem;
+        font-weight: 600;
+        flex: 1;
+        letter-spacing: .02em;
+      }
+      .pwa-tab svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+      .pwa-tab.active { color: #05bf85; }
+      @media (display-mode: standalone) {
+        .header { display: none !important; }
+        .pwa-tabbar { display: flex; }
+        .main { padding-bottom: 56px; }
+      }
+    </style>
   </head>
   <body class="layout-{{ page.layout }} {{ page.title | slugify }}">
     {% include site-icons.svg %}
@@ -25,5 +58,24 @@
     </main>
     {% include site-footer.html %}
     {% if site.service_worker != false %}{% include site-sw.html %}{% endif %}
+    <nav class="pwa-tabbar" aria-label="App navigation">
+      <a href="/map" class="pwa-tab{% if page.url contains 'map' %} active{% endif %}" aria-label="Map">
+        <svg viewBox="0 0 24 24">
+          <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+          <line x1="8" y1="2" x2="8" y2="18"/>
+          <line x1="16" y1="6" x2="16" y2="22"/>
+        </svg>
+        <span>Map</span>
+      </a>
+      <a href="/planner" class="pwa-tab{% if page.url contains 'planner' %} active{% endif %}" aria-label="Planner">
+        <svg viewBox="0 0 24 24">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+        <span>Planner</span>
+      </a>
+    </nav>
   </body>
 </html>

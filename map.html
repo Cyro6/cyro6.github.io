@@ -16,6 +16,9 @@ title: Stream Map
   height: calc(100vh - 68px);
   z-index: 1;
 }
+@media (display-mode: standalone) {
+  #stream-map { height: calc(100vh - 56px); }
+}
 
 /* ── Reset global theme styles leaking into the controls panel ──────────── */
 .map-controls button,
@@ -1494,4 +1497,9 @@ async function init() {
 }
 
 init();
+
+// Auto-locate on PWA launch
+if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone) {
+  goToMyLocation();
+}
 </script>
