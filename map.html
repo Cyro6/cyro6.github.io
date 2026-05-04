@@ -527,6 +527,7 @@ body.dark-theme .legend-item { color: #e5e7eb; }
       <label class="ctrl-check" title="DNR parking lots near trout streams"><input type="checkbox" id="chk-parking" onchange="toggleParkingLayer()"> Parking</label>
       <label class="ctrl-check" title="Trout stream habitat improvement projects"><input type="checkbox" id="chk-habitat" onchange="toggleHabitatLayer()"> Habitat Projects</label>
       <label class="ctrl-check" title="Road bridges crossing classified trout streams"><input type="checkbox" id="chk-bridge" onchange="toggleBridgeLayer()"> Bridge Crossings</label>
+      <label class="ctrl-check" title="Campsite markers near trout streams"><input type="checkbox" id="chk-campsites" checked onchange="toggleCampsiteLayer()"> Campsites</label>
       <div id="dnr-legend-inline" style="display:none;margin-top:4px;">
         <div style="display:flex;flex-direction:column;gap:3px;">
           <div class="legend-item"><span class="legend-dot" style="background:#22c55e;border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>5 trout, any length</div>
@@ -1435,6 +1436,11 @@ function toggleBridgeLayer() {
   bridgeEnabled = document.getElementById('chk-bridge').checked;
   if (bridgeEnabled) { bridgeLayer.addTo(map); loadBridgeLayer(); }
   else { map.removeLayer(bridgeLayer); }
+}
+
+function toggleCampsiteLayer() {
+  if (document.getElementById('chk-campsites').checked) campsiteLayer.addTo(map);
+  else map.removeLayer(campsiteLayer);
 }
 
 async function loadBridgeLayer() {

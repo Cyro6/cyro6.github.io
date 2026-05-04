@@ -4,85 +4,140 @@ layout: null
 sitemap: false
 ---
 
-const version = '{{ site.time | date: '%Y%m%d%H%M%S' }}';
-const cacheName = `static::${version}`;
+const VERSION = '{{ site.time | date: '%Y%m%d%H%M%S' }}';
+const STATIC_CACHE  = `dtf-static::${VERSION}`;
+const CDN_CACHE     = 'dtf-cdn::v1';
+const DATA_CACHE    = 'dtf-data::v1';
 
-const buildContentBlob = () => {
-  return [
-    {%- for post in site.posts limit: 10 -%}
-      "{{ post.url | relative_url }}",
-    {%- endfor -%}
-    {%- for page in site.pages -%}
-      {%- unless page.url contains 'sw.js' or page.url contains '404.html' -%}
-        "{{ page.url | relative_url }}",
-      {%- endunless -%}
-    {%- endfor -%}
-      "{{ site.logo | relative_url }}", "{{ site.baseurl }}/assets/default-offline-image.png", "{{ site.baseurl }}/assets/scripts/fetch.js"
-  ]
-}
+// CDN assets — versioned URLs, cache-first forever
+const CDN_PRECACHE = [
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+  'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
+];
 
-const updateStaticCache = () => {
-  return caches.open(cacheName).then(cache => {
-    return cache.addAll(buildContentBlob());
-  });
-};
+// Same-origin data files — pre-cached at install, refreshed at runtime
+const DATA_PRECACHE = [
+  '/assets/data/streams.json',
+  '/assets/data/stream_posts.json',
+];
 
-const clearOldCache = () => {
-  return caches.keys().then(keys => {
-    // Remove caches whose name is no longer valid.
-    return Promise.all(
-      keys
-        .filter(key => {
-          return key !== cacheName;
-        })
-        .map(key => {
-          console.log(`Service Worker: removing cache ${key}`);
-          return caches.delete(key);
-        })
-    );
-  });
-};
+// Same-origin app pages — Jekyll-generated list
+const STATIC_PRECACHE = [
+  {%- for post in site.posts limit: 10 -%}
+    "{{ post.url | relative_url }}",
+  {%- endfor -%}
+  {%- for page in site.pages -%}
+    {%- unless page.url contains 'sw.js' or page.url contains '404.html' -%}
+      "{{ page.url | relative_url }}",
+    {%- endunless -%}
+  {%- endfor -%}
+  "{{ site.logo | relative_url }}",
+  "/assets/scripts/fetch.js"
+];
 
-self.addEventListener("install", event => {
+// ── Install ──────────────────────────────────────────────────────────────────
+
+self.addEventListener('install', event => {
   event.waitUntil(
-    updateStaticCache().then(() => {
-      console.log(`Service Worker: cache updated to version: ${cacheName}`);
+    Promise.all([
+      caches.open(CDN_CACHE).then(c => c.addAll(CDN_PRECACHE)),
+      caches.open(DATA_CACHE).then(c => c.addAll(DATA_PRECACHE)),
+      caches.open(STATIC_CACHE).then(c => c.addAll(STATIC_PRECACHE)),
+    ]).then(() => {
+      console.log(`[SW] installed ${STATIC_CACHE}`);
+      return self.skipWaiting();
     })
   );
 });
 
-self.addEventListener("activate", event => {
-  event.waitUntil(clearOldCache());
+// ── Activate ─────────────────────────────────────────────────────────────────
+
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(
+        keys
+          .filter(k => k.startsWith('dtf-static::') && k !== STATIC_CACHE)
+          .map(k => {
+            console.log(`[SW] removing old cache: ${k}`);
+            return caches.delete(k);
+          })
+      )
+    ).then(() => self.clients.claim())
+  );
 });
 
-self.addEventListener("fetch", event => {
-  let request = event.request;
-  let url = new URL(request.url);
+// ── Fetch ─────────────────────────────────────────────────────────────────────
 
-  // Only deal with requests from the same domain.
-  if (url.origin !== location.origin) {
+self.addEventListener('fetch', event => {
+  const { request } = event;
+  if (request.method !== 'GET') return;
+
+  const url = new URL(request.url);
+
+  // Open-Meteo weather API — network only, offline JSON fallback
+  if (url.hostname === 'api.open-meteo.com') {
+    event.respondWith(
+      fetch(request).catch(() =>
+        new Response(JSON.stringify({ offline: true, error: 'Network unavailable' }), {
+          status: 503,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      )
+    );
     return;
   }
 
-  // Always fetch non-GET requests from the network.
-  if (request.method !== "GET") {
-    event.respondWith(fetch(request));
+  // CDN assets (unpkg, jsdelivr) — cache-first
+  if (url.hostname === 'unpkg.com' || url.hostname === 'cdn.jsdelivr.net') {
+    event.respondWith(
+      caches.open(CDN_CACHE).then(async cache => {
+        const cached = await cache.match(request);
+        if (cached) return cached;
+        const fresh = await fetch(request);
+        if (fresh.ok) cache.put(request, fresh.clone());
+        return fresh;
+      })
+    );
     return;
   }
 
-  // Default url returned if page isn't cached
-  let offlineAsset = "/offline/";
+  // Same-origin data files — stale-while-revalidate
+  if (url.origin === location.origin && url.pathname.startsWith('/assets/data/')) {
+    event.respondWith(
+      caches.open(DATA_CACHE).then(async cache => {
+        const cached = await cache.match(request);
 
-  if (request.url.match(/\.(jpe?g|png|gif|svg)$/)) {
-    // If url requested is an image and isn't cached, return default offline image
-    offlineAsset = "{{ site.baseurl }}/assets/default-offline-image.png";
+        const refresh = () => fetch(request).then(fresh => {
+          if (fresh.ok) cache.put(request, fresh.clone());
+          return fresh;
+        });
+
+        if (cached) {
+          event.waitUntil(refresh().catch(() => {}));
+          return cached;
+        }
+        return refresh().catch(() => new Response('Offline', { status: 503 }));
+      })
+    );
+    return;
   }
 
-  // For all urls request image from network, then fallback to cache, then fallback to offline page
+  // Other cross-origin requests — pass through
+  if (url.origin !== location.origin) return;
+
+  // Same-origin pages & assets — network-first, static cache fallback
   event.respondWith(
-    fetch(request).catch(async () => {
-      return (await caches.match(request)) || caches.match(offlineAsset);
-    })
+    fetch(request)
+      .then(response => {
+        const clone = response.clone();
+        caches.open(STATIC_CACHE).then(c => c.put(request, clone));
+        return response;
+      })
+      .catch(async () => {
+        const cached = await caches.match(request);
+        return cached || caches.match('/offline/');
+      })
   );
-  return;
 });
