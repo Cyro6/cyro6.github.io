@@ -1349,10 +1349,11 @@ body.dark-theme .sd-page {
         }
 
         renderCharts(streamData, ratingReverseMap);
-        renderStreamMap(streamData);
 
         document.getElementById('stream-details').style.display = 'block';
         document.getElementById('loading').style.display = 'none';
+
+        renderStreamMap(streamData);
     }
 
     // ── Stream Map ───────────────────────────────────────────────────────────────
@@ -1404,7 +1405,10 @@ body.dark-theme .sd-page {
             hasGeom = true;
         });
 
-        if (hasGeom && bounds.isValid()) sdMap.fitBounds(bounds, { padding: [20, 20] });
+        if (hasGeom && bounds.isValid()) {
+            sdMap.invalidateSize();
+            sdMap.fitBounds(bounds, { padding: [20, 20] });
+        }
     }
 
     // ── Charts ───────────────────────────────────────────────────────────────────
