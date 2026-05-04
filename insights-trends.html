@@ -116,6 +116,13 @@ body.dark-theme .rt-page {
         <div class="chart-wrap"><canvas id="monthChart"></canvas></div>
       </div>
     </div>
+
+    <div class="rt-card">
+      <h2>Avg Rating by Section &amp; Month</h2>
+      <p class="card-note">Upper, Middle, and Lower section performance across all years. Gaps mean no trips logged for that section/month.</p>
+      <div class="chart-wrap"><canvas id="sectionMonthChart"></canvas></div>
+    </div>
+
   </div>
 
   <p class="rt-footer">
@@ -338,6 +345,68 @@ async function main() {
           ticks: { stepSize: 20, color: textColor },
           grid: { color: gridColor },
           title: { display: true, text: 'Trips', color: textColor }
+        }
+      }
+    }
+  });
+
+  // 4. Section × month line chart
+  const secGroups = {
+    UPPER:  Array.from({length: 12}, () => []),
+    MIDDLE: Array.from({length: 12}, () => []),
+    LOWER:  Array.from({length: 12}, () => []),
+  };
+  allRows.forEach(r => {
+    const d = parseDate(r[0]);
+    const v = RATING_MAP[r[17]];
+    const sec = (r[15] || '').trim().toUpperCase();
+    if (!d || v === undefined || v === 0 || !secGroups[sec]) return;
+    secGroups[sec][d.getMonth()].push(v);
+  });
+  const secAvg = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
+  const secLabels = ['UPPER', 'MIDDLE', 'LOWER'];
+  const secColors = ['#3b82f6', '#05bf85', '#f59e0b'];
+  const secAvgs = secLabels.map(s => secGroups[s].map(secAvg));
+  const secCounts = secLabels.map(s => secGroups[s].map(a => a.length));
+
+  new Chart(document.getElementById('sectionMonthChart'), {
+    type: 'line',
+    data: {
+      labels: MONTH_NAMES,
+      datasets: secLabels.map((s, i) => ({
+        label: s[0] + s.slice(1).toLowerCase(),
+        data: secAvgs[i],
+        borderColor: secColors[i],
+        backgroundColor: secColors[i] + '18',
+        pointBackgroundColor: secColors[i],
+        tension: 0.3,
+        spanGaps: false,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+      }))
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, labels: { color: textColor, boxWidth: 16, font: { size: 12 } } },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const v = ctx.parsed.y;
+              if (v === null) return null;
+              const count = secCounts[ctx.datasetIndex][ctx.dataIndex];
+              return `${ctx.dataset.label}: ${v.toFixed(2)} (${ratingLabel(v)}) · ${count} trips`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { color: textColor }, grid: { color: gridColor } },
+        y: {
+          min: 0, max: 7,
+          ticks: { stepSize: 1, callback: v => RATING_KEYS[v] || '', color: textColor },
+          grid: { color: gridColor }
         }
       }
     }
