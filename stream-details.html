@@ -1090,8 +1090,8 @@ body.dark-theme .sd-page {
     }
 
     function displayStreamDetails() {
-        const ratingMap = { 'E': 0, 'D': 1, 'C': 2, 'B': 3, 'A': 4, 'S': 5, 'S+': 6 };
-        const ratingReverseMap = { 0: 'E', 1: 'D', 2: 'C', 3: 'B', 4: 'A', 5: 'S', 6: 'S+' };
+        const ratingMap = { 'E': 1, 'D': 2, 'C': 3, 'B': 4, 'A': 5, 'S': 6, 'S+': 7 };
+        const ratingReverseMap = { 1: 'E', 2: 'D', 3: 'C', 4: 'B', 5: 'A', 6: 'S', 7: 'S+' };
         const excludedStreams = ['Unknown', 'Central Sands', 'Minnesota', 'Southern WI'];
 
         const streamData = sourceData?.rows
@@ -1101,7 +1101,7 @@ body.dark-theme .sd-page {
                 const date = _dm ? new Date(+_dm[3], +_dm[1]-1, +_dm[2]) : new Date(NaN);
                 const stream = row[2]?.trim() || '';
                 const rating = row[17]?.toUpperCase();
-                const validRating = /^[SABCDE]|S+$/.test(rating);
+                const validRating = /^(S\+|[SABCDE])$/.test(rating);
                 const validStream = !excludedStreams.some(excluded => stream.includes(excluded));
                 return stream === streamName && validRating && validStream && !isNaN(date.getTime());
             })
@@ -1234,7 +1234,8 @@ body.dark-theme .sd-page {
         }
 
         document.getElementById('total-visits').textContent = totalVisits;
-        document.getElementById('avg-rating').textContent = Math.round(avgRating * 100) / 100;
+        const avgNum = Math.round(avgRating * 100) / 100;
+        document.getElementById('avg-rating').textContent = `${avgNum} (${ratingReverseMap[Math.round(avgRating)] || '?'})`;
         document.getElementById('most-fished-section').textContent = mostFishedSection;
         document.getElementById('current-month-section').textContent = currentMonthSection;
 
@@ -1436,11 +1437,11 @@ body.dark-theme .sd-page {
     function renderCharts(streamData, ratingReverseMap) {
         if (!streamData || streamData.length === 0) return;
 
-        const RATING_COLORS = ['#dc2626','#f97316','#eab308','#22c55e','#05bf85','#3b82f6','#8b5cf6'];
+        const RATING_COLORS = ['#9ca3af','#dc2626','#f97316','#eab308','#22c55e','#05bf85','#3b82f6','#8b5cf6'];
         const gridColor = 'rgba(156,163,175,0.2)';
         const tickColor = '#9ca3af';
         const yAxis = {
-            min: -0.5, max: 6.5,
+            min: 0.5, max: 7.5,
             ticks: { stepSize: 1, callback: v => ratingReverseMap[v] || '', color: tickColor },
             grid: { color: gridColor }
         };

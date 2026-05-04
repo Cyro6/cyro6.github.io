@@ -283,6 +283,28 @@ body.dark-theme .analytics-page {
     .analytics-page th .header-content { flex-direction: column; gap: 4px; }
     .analytics-page th .header-icon { font-size: 1.1rem; }
 }
+.analytics-page .stat-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+.analytics-page .stat-box {
+    background: rgba(5,191,133,.08);
+    border-radius: 8px;
+    padding: .8rem 1.2rem;
+    flex: 1;
+    min-width: 130px;
+}
+.analytics-page .stat-box .stat-val {
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: var(--link-color);
+}
+.analytics-page .stat-box .stat-lbl {
+    font-size: .78rem;
+    color: var(--text-secondary);
+    margin-top: .15rem;
+}
 @media screen and (max-width: 360px) {
     .analytics-page .month-table-container { max-width: 360px; overflow-x: auto; }
     .analytics-page table { width: auto; }
@@ -297,6 +319,10 @@ body.dark-theme .analytics-page {
 
 <div class="analytics-page">
     <h1>Stream Analytics</h1>
+
+    <div class="card" id="summary-card" style="display:none">
+        <div id="summary-stats" class="stat-row"></div>
+    </div>
 
     <div class="card">
         <h2>Stream Performance</h2>
@@ -357,9 +383,16 @@ body.dark-theme .analytics-page {
     <script>
 const DATA_URL = '/assets/data/streams.json?v={{ site.time | date: "%Y%m%d%H%M%S" }}';
 
+const RATING_REVERSE = { 1:'E', 2:'D', 3:'C', 4:'B', 5:'A', 6:'S', 7:'S+' };
+const RATING_STOPS = [
+    [220,38,38],[249,115,22],[234,179,8],
+    [132,204,22],[34,197,94],[16,185,129],[5,191,133],[3,105,161]
+];
+
 let sourceData = null;
 let processedData = null;
 let allData = null;
+let summaryStats = null;
 let filteredData = [];
 let sortColumn = 'Visits';
 let sortDirection = -1;
@@ -367,7 +400,7 @@ let sortDirection = -1;
 function processSourceData() {
     if (!sourceData) return;
 
-    const ratingMap = { 'F': 0, 'E': 1, 'D': 2, 'C': 3, 'B': 4, 'A': 5, 'S': 6 };
+    const ratingMap = { 'E': 1, 'D': 2, 'C': 3, 'B': 4, 'A': 5, 'S': 6, 'S+': 7 };
     const excludedStreams = ['Unknown', 'Central Sands', 'Minnesota', 'Southern WI'];
 
     const validData = sourceData.rows
@@ -375,7 +408,7 @@ function processSourceData() {
             if (row.length < 18) return false;
             const stream = row[2]?.trim() || '';
             const rating = row[17]?.toUpperCase();
-            const validRating = /^[SABCDE]$/.test(rating);
+            const validRating = /^(S\+|[SABCDE])$/.test(rating);
             const validStream = !excludedStreams.some(excluded => stream.includes(excluded));
             return validRating && validStream;
         })
@@ -391,6 +424,15 @@ function processSourceData() {
             const lon = parseFloat(row[13]);
             return [month, stream, rating, section, lat, lon];
         });
+
+    const uniqueStreamNames = new Set(validData.map(d => d[1]));
+    const allRatingNums = validData.map(d => ratingMap[d[2]] || 0);
+    summaryStats = {
+        totalTrips: validData.length,
+        uniqueStreams: uniqueStreamNames.size,
+        overallAvg: allRatingNums.reduce((a, b) => a + b, 0) / (allRatingNums.length || 1),
+        splusTrips: validData.filter(d => d[2] === 'S+').length
+    };
 
     const groupedDataByMonth = {};
     validData.forEach(([month, stream, rating, section, lat, lon]) => {
@@ -461,7 +503,6 @@ function processSourceData() {
 function populateMonthDropdown() {
     if (!processedData) return;
     const monthOrder = ['January','February','March','April','May','June','July','August','September','October','November','December','Unknown'];
-    const currentMonth = new Date().toLocaleString('default', { month: 'long' });
     const monthSelect = document.getElementById('month-select');
     if (!monthSelect) return;
     const months = [...new Set(processedData.map(row => row.month))].sort((a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
@@ -469,29 +510,15 @@ function populateMonthDropdown() {
         const option = document.createElement('option');
         option.value = month;
         option.textContent = month;
-        if (month === currentMonth) option.selected = true;
         monthSelect.appendChild(option);
     });
 }
 
 function getRatingColor(rating) {
-    if (rating <= 1) {
-        return '#dc2626';
-    } else if (rating <= 2.5) {
-        const ratio = (rating - 1) / 1.5;
-        const r = Math.round(220 + (234 - 220) * ratio);
-        const g = Math.round(38 + (179 - 38) * ratio);
-        const b = Math.round(38 + (8 - 38) * ratio);
-        return `rgb(${r}, ${g}, ${b})`;
-    } else if (rating <= 4.2) {
-        const ratio = (rating - 2.5) / 1.7;
-        const r = Math.round(234 + (34 - 234) * ratio);
-        const g = Math.round(179 + (197 - 179) * ratio);
-        const b = Math.round(8 + (94 - 8) * ratio);
-        return `rgb(${r}, ${g}, ${b})`;
-    } else {
-        return '#22c55e';
-    }
+    const n = Math.max(0, Math.min(7, rating));
+    const lo = Math.floor(n), hi = Math.min(lo + 1, 7), t = n - lo;
+    const [c1, c2] = [RATING_STOPS[lo], RATING_STOPS[hi]];
+    return `rgb(${Math.round(c1[0]+(c2[0]-c1[0])*t)},${Math.round(c1[1]+(c2[1]-c1[1])*t)},${Math.round(c1[2]+(c2[2]-c1[2])*t)})`;
 }
 
 function applyFilters() {
@@ -532,7 +559,7 @@ function applyFilters() {
         'Visits': 'visits',
         'Rating': 'rating',
         'Section': 'section',
-        'Midpoint': 'midpoint'
+        'Map': 'midpoint'
     };
 
     filteredData.sort((a, b) => {
@@ -563,20 +590,20 @@ function displayData(rows) {
     const noResultsDiv = document.getElementById('no-results');
     if (!tableHeader || !tableBody || !table || !noResultsDiv) return;
 
-    const headers = ['Stream', 'Visits', 'Rating', 'Section', 'Midpoint'];
+    const headers = ['Stream', 'Visits', 'Rating', 'Section', 'Map'];
     const iconMap = {
         'Stream': '🌊',
         'Visits': '👣',
         'Rating': '⭐',
         'Section': '📍',
-        'Midpoint': '🗺️'
+        'Map': '🗺️'
     };
 
     tableHeader.innerHTML = '';
     headers.forEach(header => {
         const th = document.createElement('th');
         th.setAttribute('title', header);
-        if (header === 'Midpoint') th.classList.add('midpoint');
+        if (header === 'Map') th.classList.add('midpoint');
         const contentDiv = document.createElement('div');
         contentDiv.className = 'header-content';
         const iconSpan = document.createElement('span');
@@ -626,11 +653,12 @@ function displayData(rows) {
         tdVisits.textContent = row.visits;
         tr.appendChild(tdVisits);
 
-        // Rating (color-coded background)
+        // Rating (color-coded background with letter grade)
         const tdRating = document.createElement('td');
-        tdRating.textContent = row.rating;
         const rating = parseFloat(row.rating);
-        if (!isNaN(rating) && rating >= 0 && rating <= 6) {
+        const letter = RATING_REVERSE[Math.round(rating)] || '?';
+        tdRating.textContent = `${row.rating} (${letter})`;
+        if (!isNaN(rating) && rating >= 1 && rating <= 7) {
             tdRating.style.backgroundColor = getRatingColor(rating);
             tdRating.style.color = 'white';
             tdRating.style.fontWeight = '700';
@@ -672,19 +700,27 @@ function clearFilters() {
     if (ratingFilter) ratingFilter.value = '';
     if (sectionFilter) sectionFilter.value = 'All';
 
-    // Re-select current month
     const monthSelect = document.getElementById('month-select');
-    if (monthSelect && processedData) {
-        const currentMonth = new Date().toLocaleString('default', { month: 'long' });
-        const options = Array.from(monthSelect.options);
-        const match = options.find(o => o.value === currentMonth);
-        if (match) monthSelect.value = currentMonth;
-        else monthSelect.value = 'ALL';
-    }
+    if (monthSelect) monthSelect.value = 'ALL';
 
     sortColumn = 'Visits';
     sortDirection = -1;
     applyFilters();
+}
+
+function renderSummaryStats() {
+    if (!summaryStats) return;
+    const card = document.getElementById('summary-card');
+    const el = document.getElementById('summary-stats');
+    if (!card || !el) return;
+    const avgLabel = RATING_REVERSE[Math.round(summaryStats.overallAvg)] || '?';
+    el.innerHTML = `
+        <div class="stat-box"><div class="stat-val">${summaryStats.totalTrips.toLocaleString()}</div><div class="stat-lbl">Trips Logged</div></div>
+        <div class="stat-box"><div class="stat-val">${summaryStats.uniqueStreams}</div><div class="stat-lbl">Streams Fished</div></div>
+        <div class="stat-box"><div class="stat-val">${summaryStats.overallAvg.toFixed(2)} (${avgLabel})</div><div class="stat-lbl">Overall Avg Rating</div></div>
+        <div class="stat-box"><div class="stat-val">${summaryStats.splusTrips}</div><div class="stat-lbl">S+ Trips</div></div>
+    `;
+    card.style.display = 'block';
 }
 
 async function fetchSourceData() {
@@ -699,6 +735,7 @@ async function fetchSourceData() {
         if (!data.source) throw new Error('Invalid data format in streams.json');
         sourceData = data.source;
         processSourceData();
+        renderSummaryStats();
         populateMonthDropdown();
         applyFilters();
         if (errorDiv) { errorDiv.textContent = ''; errorDiv.style.display = 'none'; }
