@@ -351,6 +351,16 @@ body.dark-theme .legend-item { color: #e5e7eb; }
   margin: 4px 0 6px;
   line-height: 1.4;
 }
+.sp-regs {
+  margin: 4px 0 2px;
+  padding: 6px 8px;
+  background: #f5f0e8;
+  border-radius: 5px;
+  font-size: .76rem;
+  line-height: 1.5;
+}
+.sp-regs .sp-row { margin-bottom: 2px; font-size: .76rem; }
+.sp-regs .sp-row strong { min-width: 52px; flex-shrink: 0; }
 
 /* ── View mode badge ─────────────────────────────────────────────────────── */
 .view-mode-badge {
@@ -661,6 +671,7 @@ function goToMyLocation() {
 
 let streamData       = [];
 let allTripData      = [];
+let regsLookup       = {};  // stream name -> DNR regulation object
 let ratedStreamLayer = L.layerGroup().addTo(map);
 let tripLayer        = L.layerGroup();
 let colorMode        = 'recent';
@@ -983,7 +994,18 @@ function makePopup(s) {
       &nbsp;${s.avgRating.toFixed(2)} &middot; ${s.visits} visits
     </div>
     ${s.bestMonth ? `<div class="sp-row"><strong>Best month:</strong> ${s.bestMonth}</div>` : ''}
-    ${s.recentDesc ? `<div class="sp-notes">${s.recentDesc.length > 120 ? s.recentDesc.slice(0, 120) + '…' : s.recentDesc}</div>` : ''}
+    ${(() => {
+      const r = regsLookup[s.name];
+      if (!r) return '';
+      const parts = [
+        r.REGCAT ? `<div class="sp-row"><strong>Regs:</strong> ${r.REGCAT}</div>` : '',
+        r.BAG_LMT && r.BAG_LMT !== 'N/A' ? `<div class="sp-row"><strong>Bag:</strong> ${r.BAG_LMT}</div>` : '',
+        r.SEASON_TXT ? `<div class="sp-row"><strong>Season:</strong> ${r.SEASON_TXT}</div>` : '',
+        r.GEAR_RESTRICTIONS && r.GEAR_RESTRICTIONS !== 'N/A' ? `<div class="sp-row"><strong>Gear:</strong> ${r.GEAR_RESTRICTIONS}</div>` : '',
+        r.SPECIALREG1 ? `<div class="sp-row"><strong>Special:</strong> ${r.SPECIALREG1}</div>` : '',
+      ].filter(Boolean).join('');
+      return parts ? `<div class="sp-regs">${parts}</div>` : '';
+    })()}
     <hr class="sp-divider">
     <a class="sp-link" href="/stream-details?stream=${encodeURIComponent(s.name)}">View full history &rarr;</a>
   </div>`;
@@ -1450,6 +1472,7 @@ async function init() {
 
     const json = await fetch(DATA_URL).then(r => r.json());
     dnrNameMap = json.dnr_name_map || {};
+    regsLookup = json.dnr_regulations || {};
     renderCampsites(json.campsites?.rows || []);
     const rows = json.source.rows;
     const raw  = {};
