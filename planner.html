@@ -354,6 +354,10 @@ body.dark-theme .plan-section + .plan-section {
 .tf-date { font-weight: 600; min-width: 76px; color: var(--text-primary); }
 .tf-period { color: var(--text-secondary); }
 .tf-period b { color: var(--text-primary); }
+.tf-pressure { font-size: .72rem; color: var(--text-secondary); white-space: nowrap; }
+.tf-pressure .up   { color: #05bf85; }
+.tf-pressure .down { color: #f97316; }
+.tf-pressure .flat { color: var(--text-secondary); }
 
 /* ── Campsite sections ────────────────────────────────────────────────────── */
 .campsite-section {
@@ -673,6 +677,17 @@ function getTripDays() {
     return sel ? (parseInt(sel.value) || 1) : 1;
 }
 
+function pressureSpan(hpa, trend) {
+    if (hpa == null) return '';
+    let arrow = '', cls = 'flat';
+    if (trend != null) {
+        if (trend > 1)       { arrow = '↑'; cls = 'up'; }
+        else if (trend < -1) { arrow = '↓'; cls = 'down'; }
+        else                 { arrow = '→'; cls = 'flat'; }
+    }
+    return ` <span class="tf-pressure">${hpa}<span class="${cls}">${arrow}</span>hPa</span>`;
+}
+
 function renderForecastTable(el, result) {
     if (!el) return;
     if (!result.days || result.days.length === 0) {
@@ -684,8 +699,8 @@ function renderForecastTable(el, result) {
         const nightVal = d.night !== null ? `${d.night}"` : 'N/A';
         return `<div class="tf-row">
             <span class="tf-date">${d.label}</span>
-            <span class="tf-period">☀ 6a–6p: <b>${dayVal}</b></span>
-            <span class="tf-period">🌙 6p–6a: <b>${nightVal}</b></span>
+            <span class="tf-period">☀ 6a–6p: <b>${dayVal}</b>${pressureSpan(d.dayPressure, d.dayTrend)}</span>
+            <span class="tf-period">🌙 6p–6a: <b>${nightVal}</b>${pressureSpan(d.nightPressure, d.nightTrend)}</span>
         </div>`;
     }).join('');
 }
@@ -701,7 +716,7 @@ async function fetchTripPrecip(lat, lon, daysOut, tripDays, retryCount = 0) {
 
     try {
         await rateLimit();
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation&timezone=America%2FChicago&past_days=${pastDays}&forecast_days=${forecastDays}&precipitation_unit=inch`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation,pressure_msl&timezone=America%2FChicago&past_days=${pastDays}&forecast_days=${forecastDays}&precipitation_unit=inch`;
         const res = await fetch(url);
         if (res.status === 429) {
             if (retryCount < MAX_RETRIES) {
@@ -711,8 +726,17 @@ async function fetchTripPrecip(lat, lon, daysOut, tripDays, retryCount = 0) {
             throw new Error('Rate limited');
         }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data   = await res.json();
-        const hourly = data.hourly?.precipitation || [];
+        const data     = await res.json();
+        const hourly   = data.hourly?.precipitation || [];
+        const pressure = data.hourly?.pressure_msl  || [];
+
+        function avgPressure(startIdx, endIdx) {
+            let sum = 0, n = 0;
+            for (let i = startIdx; i <= endIdx; i++) {
+                if (i >= 0 && i < pressure.length && pressure[i] != null) { sum += pressure[i]; n++; }
+            }
+            return n > 0 ? sum / n : null;
+        }
 
         // Trip start index in the hourly array
         const tripStartIdx = (pastDays + N) * 24;
@@ -730,6 +754,9 @@ async function fetchTripPrecip(lat, lon, daysOut, tripDays, retryCount = 0) {
         tripDate.setDate(tripDate.getDate() + N);
         const DAY_NAMES   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
         const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+        // Pre-trip pressure reference (12 hrs before trip start)
+        let prevPressure = avgPressure(tripStartIdx - 12, tripStartIdx - 1);
 
         // Per-day 12-hour windows
         const days = [];
@@ -750,12 +777,23 @@ async function fetchTripPrecip(lat, lon, daysOut, tripDays, retryCount = 0) {
                 if (idx < hourly.length) { nightTotal += hourly[idx] || 0; nightOk = true; }
             }
 
+            const dayPressureAvg   = avgPressure(base + 6,  base + 17);
+            const nightPressureAvg = avgPressure(base + 18, base + 29);
+            const dayTrend   = (prevPressure != null && dayPressureAvg   != null) ? dayPressureAvg   - prevPressure : null;
+            prevPressure = dayPressureAvg ?? prevPressure;
+            const nightTrend = (prevPressure != null && nightPressureAvg != null) ? nightPressureAvg - prevPressure : null;
+            prevPressure = nightPressureAvg ?? prevPressure;
+
             const date = new Date(tripDate);
             date.setDate(date.getDate() + d);
             days.push({
-                label: `${DAY_NAMES[date.getDay()]} ${MONTH_NAMES[date.getMonth()]} ${date.getDate()}`,
-                day:   dayOk   ? dayTotal.toFixed(2)   : null,
-                night: nightOk ? nightTotal.toFixed(2) : null,
+                label:         `${DAY_NAMES[date.getDay()]} ${MONTH_NAMES[date.getMonth()]} ${date.getDate()}`,
+                day:           dayOk   ? dayTotal.toFixed(2)   : null,
+                night:         nightOk ? nightTotal.toFixed(2) : null,
+                dayPressure:   dayPressureAvg   != null ? Math.round(dayPressureAvg)   : null,
+                nightPressure: nightPressureAvg != null ? Math.round(nightPressureAvg) : null,
+                dayTrend,
+                nightTrend,
             });
         }
 
