@@ -171,11 +171,11 @@ body.dark-theme #btn-grid.active { background: #05bf85; color: white; border-col
 body.dark-theme .preset-btn { background:#374151; color:#9ca3af; border-color:#4b5563; }
 body.dark-theme .preset-btn.active { background:#05bf85; color:white; border-color:#05bf85; }
 
-/* ── Checkbox rows ── */
-.ctrl-check {
+/* ── Toggle switch rows ── */
+.ctrl-switch {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 7px;
   height: var(--rh);
   font-size: .8rem;
   font-weight: 500;
@@ -184,15 +184,33 @@ body.dark-theme .preset-btn.active { background:#05bf85; color:white; border-col
   user-select: none;
   line-height: 1;
 }
-.ctrl-check input[type="checkbox"] {
-  accent-color: #05bf85;
-  width: 11px;
-  height: 11px;
-  margin: 0;
-  cursor: pointer;
+.ctrl-switch input[type="checkbox"] { display: none; }
+.switch-track {
+  position: relative;
+  width: 30px;
+  height: 16px;
+  background: #d1d5db;
+  border-radius: 8px;
+  transition: background .18s;
   flex-shrink: 0;
 }
-body.dark-theme .ctrl-check { color: #9ca3af; }
+.switch-track::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,.25);
+  transition: transform .18s;
+}
+.ctrl-switch input:checked + .switch-track { background: #05bf85; }
+.ctrl-switch input:checked + .switch-track::after { transform: translateX(14px); }
+body.dark-theme .ctrl-switch { color: #9ca3af; }
+body.dark-theme .switch-track { background: #4b5563; }
+body.dark-theme .ctrl-switch input:checked + .switch-track { background: #05bf85; }
 
 /* ── Number spinner ── */
 .ctrl-num-wrap {
@@ -492,8 +510,8 @@ body.dark-theme .legend-item { color: #e5e7eb; }
 
     <div class="ctrl-group">
       <span class="ctrl-label">Log Type</span>
-      <label class="ctrl-check" title="Include trips you logged yourself"><input type="checkbox" id="chk-mine" checked onchange="updateLogFilter()"> Mine</label>
-      <label class="ctrl-check" title="Include trips logged by others"><input type="checkbox" id="chk-other" checked onchange="updateLogFilter()"> Others</label>
+      <label class="ctrl-switch" title="Include trips you logged yourself"><input type="checkbox" id="chk-mine" checked onchange="updateLogFilter()"><span class="switch-track"></span><span>Mine</span></label>
+      <label class="ctrl-switch" title="Include trips logged by others"><input type="checkbox" id="chk-other" checked onchange="updateLogFilter()"><span class="switch-track"></span><span>Others</span></label>
     </div>
 
     <div class="ctrl-group">
@@ -522,13 +540,13 @@ body.dark-theme .legend-item { color: #e5e7eb; }
 
     <div class="ctrl-group">
       <span class="ctrl-label">Overlays</span>
-      <label class="ctrl-check" title="Show/hide your rated stream lines and trip markers"><input type="checkbox" id="chk-streams" checked onchange="toggleStreamsLayer()"> Stream Data</label>
-      <label class="ctrl-check" title="WI DNR classified trout stream regulations"><input type="checkbox" id="chk-dnr" onchange="toggleDNRLayer()"> DNR Regs</label>
-      <label class="ctrl-check" title="DNR-owned land and stream easements"><input type="checkbox" id="chk-land" onchange="toggleLandLayer()"> Managed Land</label>
-      <label class="ctrl-check" title="DNR parking lots near trout streams"><input type="checkbox" id="chk-parking" onchange="toggleParkingLayer()"> Parking</label>
-      <label class="ctrl-check" title="Trout stream habitat improvement projects"><input type="checkbox" id="chk-habitat" onchange="toggleHabitatLayer()"> Habitat Projects</label>
-      <label class="ctrl-check" title="Road bridges crossing classified trout streams"><input type="checkbox" id="chk-bridge" onchange="toggleBridgeLayer()"> Bridge Crossings</label>
-      <label class="ctrl-check" title="Campsite markers near trout streams"><input type="checkbox" id="chk-campsites" onchange="toggleCampsiteLayer()"> Campsites</label>
+      <label class="ctrl-switch" title="Show/hide your rated stream lines and trip markers"><input type="checkbox" id="chk-streams" checked onchange="toggleStreamsLayer()"><span class="switch-track"></span><span>Stream Data</span></label>
+      <label class="ctrl-switch" title="WI DNR classified trout stream regulations"><input type="checkbox" id="chk-dnr" onchange="toggleDNRLayer()"><span class="switch-track"></span><span>DNR Regs</span></label>
+      <label class="ctrl-switch" title="DNR-owned land and stream easements"><input type="checkbox" id="chk-land" onchange="toggleLandLayer()"><span class="switch-track"></span><span>Managed Land</span></label>
+      <label class="ctrl-switch" title="DNR parking lots near trout streams"><input type="checkbox" id="chk-parking" onchange="toggleParkingLayer()"><span class="switch-track"></span><span>Parking</span></label>
+      <label class="ctrl-switch" title="Trout stream habitat improvement projects"><input type="checkbox" id="chk-habitat" onchange="toggleHabitatLayer()"><span class="switch-track"></span><span>Habitat Projects</span></label>
+      <label class="ctrl-switch" title="Road bridges crossing classified trout streams"><input type="checkbox" id="chk-bridge" onchange="toggleBridgeLayer()"><span class="switch-track"></span><span>Bridge Crossings</span></label>
+      <label class="ctrl-switch" title="Campsite markers near trout streams"><input type="checkbox" id="chk-campsites" onchange="toggleCampsiteLayer()"><span class="switch-track"></span><span>Campsites</span></label>
       <div id="dnr-legend-inline" style="display:none;margin-top:4px;">
         <div style="display:flex;flex-direction:column;gap:3px;">
           <div class="legend-item"><span class="legend-dot" style="background:#22c55e;border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>5 trout, any length</div>
