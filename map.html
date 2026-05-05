@@ -522,6 +522,7 @@ body.dark-theme .legend-item { color: #e5e7eb; }
 
     <div class="ctrl-group">
       <span class="ctrl-label">Overlays</span>
+      <label class="ctrl-check" title="Show/hide your rated stream lines and trip markers"><input type="checkbox" id="chk-streams" checked onchange="toggleStreamsLayer()"> Stream Data</label>
       <label class="ctrl-check" title="WI DNR classified trout stream regulations"><input type="checkbox" id="chk-dnr" onchange="toggleDNRLayer()"> DNR Regs</label>
       <label class="ctrl-check" title="DNR-owned land and stream easements"><input type="checkbox" id="chk-land" onchange="toggleLandLayer()"> Managed Land</label>
       <label class="ctrl-check" title="DNR parking lots near trout streams"><input type="checkbox" id="chk-parking" onchange="toggleParkingLayer()"> Parking</label>
@@ -1225,7 +1226,7 @@ function handleZoomChange() {
   const badge = document.getElementById('view-badge');
 
   if (zoom >= ZOOM_THRESHOLD) {
-    if (!map.hasLayer(tripLayer)) tripLayer.addTo(map);
+    if (streamsVisible && !map.hasLayer(tripLayer)) tripLayer.addTo(map);
     badge.className   = 'view-mode-badge trips';
     badge.textContent = 'Trips';
     const yb  = parseInt(document.getElementById('map-years').value) || 0;
@@ -1441,6 +1442,19 @@ function toggleBridgeLayer() {
 function toggleCampsiteLayer() {
   if (document.getElementById('chk-campsites').checked) campsiteLayer.addTo(map);
   else map.removeLayer(campsiteLayer);
+}
+
+let streamsVisible = true;
+
+function toggleStreamsLayer() {
+  streamsVisible = document.getElementById('chk-streams').checked;
+  if (streamsVisible) {
+    ratedStreamLayer.addTo(map);
+    if (map.getZoom() >= ZOOM_THRESHOLD) tripLayer.addTo(map);
+  } else {
+    map.removeLayer(ratedStreamLayer);
+    map.removeLayer(tripLayer);
+  }
 }
 
 async function loadBridgeLayer() {
