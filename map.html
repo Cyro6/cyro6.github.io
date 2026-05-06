@@ -17,6 +17,10 @@ title: Stream Map
   z-index: 1;
 }
 html.pwa #stream-map { height: calc(100vh - 56px); }
+.ctrl-title-pwa { display: none; }
+html.pwa .ctrl-title-full { display: none !important; }
+html.pwa .ctrl-title-pwa { display: inline; }
+html.pwa .map-controls { min-width: 0; }
 
 /* ── Reset global theme styles leaking into the controls panel ──────────── */
 .map-controls button,
@@ -507,13 +511,16 @@ body.dark-theme .legend-item { color: #e5e7eb; }
   <div class="map-controls" id="map-controls">
     <div class="map-controls-title" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleControls()">
       <span style="display:flex;align-items:center;gap:6px;">
-        <svg viewBox="0 0 100 120" width="11" height="13" style="display:block;fill:#05bf85;flex-shrink:0;" aria-hidden="true">
-          <path d="M43,15 L72,29 L87,41 L98,49 L90,57 L91,69 L89,74 L87,106 L70,113 L39,112 L32,107 L29,86 L26,77 L19,72 L11,63 L6,30 L15,11 L36,6 Z"/>
-        </svg>
-        Stream Map
+        <span class="ctrl-title-full" style="display:flex;align-items:center;gap:6px;">
+          <svg viewBox="0 0 100 120" width="11" height="13" style="display:block;fill:#05bf85;flex-shrink:0;" aria-hidden="true">
+            <path d="M43,15 L72,29 L87,41 L98,49 L90,57 L91,69 L89,74 L87,106 L70,113 L39,112 L32,107 L29,86 L26,77 L19,72 L11,63 L6,30 L15,11 L36,6 Z"/>
+          </svg>
+          Stream Map
+        </span>
+        <span class="ctrl-title-pwa">Filter</span>
       </span>
       <span style="display:flex;align-items:center;gap:6px;">
-        <span class="view-mode-badge streams" id="view-badge">Streams</span>
+        <span class="view-mode-badge streams ctrl-title-full" id="view-badge">Streams</span>
         <span id="ctrl-chevron" style="font-size:.75rem;color:#9ca3af;">▲</span>
       </span>
     </div>
