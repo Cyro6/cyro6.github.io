@@ -212,6 +212,23 @@ body.dark-theme .ctrl-switch { color: #9ca3af; }
 body.dark-theme .switch-track { background: #4b5563; }
 body.dark-theme .ctrl-switch input:checked + .switch-track { background: #05bf85; }
 
+/* ── Offline cache button ── */
+.offline-ctrl-btn {
+  width: 30px;
+  height: 30px;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  color: #555;
+  text-decoration: none;
+}
+.offline-ctrl-btn svg { display: block; pointer-events: none; }
+.offline-ctrl-btn.cached { color: #05bf85; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.offline-ctrl-btn.caching svg { animation: spin .9s linear infinite; }
+body.dark-theme .offline-ctrl-btn { color: #9ca3af; }
+body.dark-theme .offline-ctrl-btn.cached { color: #05bf85; }
+
 /* ── Number spinner ── */
 .ctrl-num-wrap {
   display: flex;
@@ -631,11 +648,71 @@ const tileUrl = isDark
   ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
   : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
 
-const map = L.map('stream-map', { zoomControl: true });
+const map = L.map('stream-map', { zoomControl: false });
 let baseLayer = L.tileLayer(tileUrl, {
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
   maxZoom: 18
 }).addTo(map);
+
+// ── Offline cache control ─────────────────────────────────────────────────────
+
+const OVERLAY_URLS = [
+  '/assets/data/dnr_streams.geojson',
+  '/assets/data/dnr_managed_lands.geojson',
+  '/assets/data/dnr_easement_streams.geojson',
+  '/assets/data/dnr_parking.geojson',
+  '/assets/data/dnr_habitat_projects.geojson',
+  '/assets/data/dnr_bridge_crossings.geojson',
+];
+
+const ICON_DOWNLOAD = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0018 9h-1.26A8 8 0 103 16.29"/></svg>`;
+const ICON_SPIN     = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>`;
+const ICON_CHECK    = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+
+function setOfflineState(btn, state) {
+  btn.className = 'offline-ctrl-btn' + (state === 'done' ? ' cached' : state === 'caching' ? ' caching' : '');
+  btn.innerHTML = state === 'done' ? ICON_CHECK : state === 'caching' ? ICON_SPIN : ICON_DOWNLOAD;
+  btn.title = state === 'done' ? 'Overlays cached for offline use' : state === 'caching' ? 'Caching…' : 'Cache overlays for offline use';
+}
+
+async function checkOfflineCached(btn) {
+  try {
+    const cache = await caches.open('dtf-data::v1');
+    const hits = await Promise.all(OVERLAY_URLS.map(u => cache.match(u)));
+    if (hits.every(Boolean)) setOfflineState(btn, 'done');
+  } catch (_) {}
+}
+
+async function cacheOverlays(btn) {
+  if (btn.classList.contains('caching')) return;
+  setOfflineState(btn, 'caching');
+  try {
+    const cache = await caches.open('dtf-data::v1');
+    await Promise.allSettled(
+      OVERLAY_URLS.map(url =>
+        fetch(url).then(r => { if (r.ok) cache.put(url, r); })
+      )
+    );
+    setOfflineState(btn, 'done');
+  } catch (_) {
+    setOfflineState(btn, 'idle');
+  }
+}
+
+const OfflineControl = L.Control.extend({
+  options: { position: 'topleft' },
+  onAdd() {
+    const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+    const btn = L.DomUtil.create('a', 'offline-ctrl-btn', container);
+    btn.href = '#';
+    btn.setAttribute('role', 'button');
+    setOfflineState(btn, 'idle');
+    L.DomEvent.on(btn, 'click', e => { L.DomEvent.preventDefault(e); L.DomEvent.stopPropagation(e); cacheOverlays(btn); });
+    checkOfflineCached(btn);
+    return container;
+  }
+});
+new OfflineControl().addTo(map);
 
 function setBaseMap(mode) {
   document.getElementById('btn-map-street').classList.toggle('active', mode === 'street');
