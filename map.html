@@ -213,20 +213,31 @@ body.dark-theme .switch-track { background: #4b5563; }
 body.dark-theme .ctrl-switch input:checked + .switch-track { background: #05bf85; }
 
 /* ── Offline cache button ── */
+.offline-ctrl-wrap {
+  box-shadow: 0 1px 5px rgba(0,0,0,.35);
+  border-radius: 4px;
+  overflow: hidden;
+}
 .offline-ctrl-btn {
-  width: 30px;
-  height: 30px;
-  display: flex !important;
+  display: flex;
   align-items: center;
   justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: #fff;
   color: #555;
   text-decoration: none;
+  cursor: pointer;
+  border: none;
 }
+.offline-ctrl-btn:hover { background: #f4f4f4; }
 .offline-ctrl-btn svg { display: block; pointer-events: none; }
 .offline-ctrl-btn.cached { color: #05bf85; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .offline-ctrl-btn.caching svg { animation: spin .9s linear infinite; }
-body.dark-theme .offline-ctrl-btn { color: #9ca3af; }
+body.dark-theme .offline-ctrl-wrap { box-shadow: 0 1px 5px rgba(0,0,0,.6); }
+body.dark-theme .offline-ctrl-btn { background: #1a241f; color: #9ca3af; }
+body.dark-theme .offline-ctrl-btn:hover { background: #243029; }
 body.dark-theme .offline-ctrl-btn.cached { color: #05bf85; }
 
 /* ── Number spinner ── */
@@ -557,7 +568,8 @@ body.dark-theme .legend-item { color: #e5e7eb; }
 
     <div class="ctrl-group">
       <span class="ctrl-label">Overlays</span>
-      <label class="ctrl-switch" title="Show/hide your rated stream lines and trip markers"><input type="checkbox" id="chk-streams" checked onchange="toggleStreamsLayer()"><span class="switch-track"></span><span>Stream Data</span></label>
+      <label class="ctrl-switch" title="Show/hide colored stream rating lines"><input type="checkbox" id="chk-stream-lines" checked onchange="toggleStreamLines()"><span class="switch-track"></span><span>Stream Lines</span></label>
+      <label class="ctrl-switch" title="Show/hide individual trip log dots (high zoom)"><input type="checkbox" id="chk-trip-dots" checked onchange="toggleTripDots()"><span class="switch-track"></span><span>Log Dots</span></label>
       <label class="ctrl-switch" title="WI DNR classified trout stream regulations"><input type="checkbox" id="chk-dnr" onchange="toggleDNRLayer()"><span class="switch-track"></span><span>DNR Regs</span></label>
       <label class="ctrl-switch" title="DNR-owned land and stream easements"><input type="checkbox" id="chk-land" onchange="toggleLandLayer()"><span class="switch-track"></span><span>Managed Land</span></label>
       <label class="ctrl-switch" title="DNR parking lots near trout streams"><input type="checkbox" id="chk-parking" onchange="toggleParkingLayer()"><span class="switch-track"></span><span>Parking</span></label>
@@ -702,7 +714,7 @@ async function cacheOverlays(btn) {
 const OfflineControl = L.Control.extend({
   options: { position: 'topleft' },
   onAdd() {
-    const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+    const container = L.DomUtil.create('div', 'leaflet-control offline-ctrl-wrap');
     const btn = L.DomUtil.create('a', 'offline-ctrl-btn', container);
     btn.href = '#';
     btn.setAttribute('role', 'button');
@@ -1332,7 +1344,7 @@ function handleZoomChange() {
   const badge = document.getElementById('view-badge');
 
   if (zoom >= ZOOM_THRESHOLD) {
-    if (streamsVisible && !map.hasLayer(tripLayer)) tripLayer.addTo(map);
+    if (tripDotsVisible && !map.hasLayer(tripLayer)) tripLayer.addTo(map);
     badge.className   = 'view-mode-badge trips';
     badge.textContent = 'Trips';
     const yb  = parseInt(document.getElementById('map-years').value) || 0;
@@ -1550,17 +1562,19 @@ function toggleCampsiteLayer() {
   else map.removeLayer(campsiteLayer);
 }
 
-let streamsVisible = true;
+let streamLinesVisible = true;
+let tripDotsVisible    = true;
 
-function toggleStreamsLayer() {
-  streamsVisible = document.getElementById('chk-streams').checked;
-  if (streamsVisible) {
-    ratedStreamLayer.addTo(map);
-    if (map.getZoom() >= ZOOM_THRESHOLD) tripLayer.addTo(map);
-  } else {
-    map.removeLayer(ratedStreamLayer);
-    map.removeLayer(tripLayer);
-  }
+function toggleStreamLines() {
+  streamLinesVisible = document.getElementById('chk-stream-lines').checked;
+  if (streamLinesVisible) ratedStreamLayer.addTo(map);
+  else map.removeLayer(ratedStreamLayer);
+}
+
+function toggleTripDots() {
+  tripDotsVisible = document.getElementById('chk-trip-dots').checked;
+  if (tripDotsVisible && map.getZoom() >= ZOOM_THRESHOLD) tripLayer.addTo(map);
+  else map.removeLayer(tripLayer);
 }
 
 async function loadBridgeLayer() {
@@ -1662,8 +1676,9 @@ async function init() {
 
 init();
 
-// Auto-locate on PWA launch
+// Auto-locate on PWA launch; collapse controls by default
 if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone) {
   goToMyLocation();
+  toggleControls();
 }
 </script>
