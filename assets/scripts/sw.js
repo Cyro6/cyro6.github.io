@@ -38,12 +38,21 @@ const STATIC_PRECACHE = [
 
 // ── Install ──────────────────────────────────────────────────────────────────
 
+async function precacheAll(cacheName, urls) {
+  const cache = await caches.open(cacheName);
+  await Promise.allSettled(
+    urls.map(url =>
+      cache.add(url).catch(err => console.warn(`[SW] precache miss: ${url}`, err))
+    )
+  );
+}
+
 self.addEventListener('install', event => {
   event.waitUntil(
     Promise.all([
-      caches.open(CDN_CACHE).then(c => c.addAll(CDN_PRECACHE)),
-      caches.open(DATA_CACHE).then(c => c.addAll(DATA_PRECACHE)),
-      caches.open(STATIC_CACHE).then(c => c.addAll(STATIC_PRECACHE)),
+      precacheAll(CDN_CACHE, CDN_PRECACHE),
+      precacheAll(DATA_CACHE, DATA_PRECACHE),
+      precacheAll(STATIC_CACHE, STATIC_PRECACHE),
     ]).then(() => {
       console.log(`[SW] installed ${STATIC_CACHE}`);
       return self.skipWaiting();
