@@ -922,6 +922,7 @@ async function fetchStreamConditions(lookup, daysOut = 0, onProgress = null) {
     try {
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=precipitation_sum&past_days=${pastDays}&forecast_days=${forecastDays}&precipitation_unit=inch&timezone=America%2FChicago`;
       const res = await fetch(url);
+      if (!res.ok) throw new Error('fetch failed');
       const data = await res.json();
       const sums = data.daily?.precipitation_sum || [];
       let total;
@@ -962,6 +963,16 @@ async function toggleConditions() {
     const lookup = buildRatingLookup();
     conditionsCache[conditionsDaysOut] = await fetchStreamConditions(lookup, conditionsDaysOut, setConditionsButtonProgress);
     setConditionsButtonProgress(1);
+  }
+
+  // All null means network was unavailable
+  if (Object.values(conditionsCache[conditionsDaysOut]).every(v => v === null)) {
+    conditionsMode = false;
+    delete conditionsCache[conditionsDaysOut];
+    btn.textContent = 'No Network';
+    btn.classList.remove('active');
+    setTimeout(() => { btn.textContent = 'Live Conditions'; }, 2500);
+    return;
   }
 
   btn.textContent = 'Conditions On';
