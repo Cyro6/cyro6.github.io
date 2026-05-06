@@ -500,7 +500,7 @@ body.dark-theme .legend-item { color: #e5e7eb; }
 <div class="stream-map-page">
   <div id="stream-map"></div>
 
-  <button id="btn-my-location" onclick="goToMyLocation()" title="My location">
+  <button id="btn-my-location" onclick="goToMyLocation(true)" title="My location">
     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#05bf85" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="12" cy="12" r="3"/>
       <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
@@ -750,8 +750,10 @@ function setBaseMap(mode) {
 }
 
 let locationMarker = null;
+let userHasMoved   = false;
+map.on('dragstart', () => { userHasMoved = true; });
 
-function goToMyLocation() {
+function goToMyLocation(force = false) {
   if (!navigator.geolocation) return;
   const btn = document.getElementById('btn-my-location');
   btn.classList.add('locating');
@@ -759,7 +761,7 @@ function goToMyLocation() {
     pos => {
       btn.classList.remove('locating');
       const { latitude: lat, longitude: lng } = pos.coords;
-      map.setView([lat, lng], 13);
+      if (force || !userHasMoved) map.setView([lat, lng], 13);
       if (locationMarker) map.removeLayer(locationMarker);
       locationMarker = L.marker([lat, lng], {
         icon: L.divIcon({
