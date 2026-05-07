@@ -37,6 +37,7 @@ html.pwa #stream-map { height: calc(100vh - 56px); }
 body.dark-theme .map-nav-btn { background: #1a241f; color: #9ca3af; }
 body.dark-theme .map-nav-btn:hover { background: #243029; }
 html.pwa .map-nav-btn { display: flex; }
+.map-nav-btn.active-layer { color: #05bf85; }
 .ctrl-title-pwa { display: none; }
 html.pwa .ctrl-title-full { display: none !important; }
 html.pwa .ctrl-title-pwa { display: inline; }
@@ -528,14 +529,14 @@ body.dark-theme .legend-item { color: #e5e7eb; }
     </svg>
   </button>
 
-  <a href="/stream-details" class="map-nav-btn" style="top:84px;" title="Streams">
+  <button id="btn-map-streams" class="map-nav-btn active-layer" style="top:84px;" title="Toggle stream lines" onclick="toggleStreamLines(true)">
     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M2 8c2-3.5 4-3.5 6 0s4 3.5 6 0 4-3.5 6 0"/>
       <path d="M2 16c2-3.5 4-3.5 6 0s4 3.5 6 0 4-3.5 6 0"/>
     </svg>
-  </a>
+  </button>
 
-  <a href="/Analytics" class="map-nav-btn" style="top:123px;" title="Logs">
+  <button id="btn-map-logs" class="map-nav-btn active-layer" style="top:123px;" title="Toggle log dots" onclick="toggleTripDots(true)">
     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <line x1="8" y1="6" x2="21" y2="6"/>
       <line x1="8" y1="12" x2="21" y2="12"/>
@@ -544,7 +545,7 @@ body.dark-theme .legend-item { color: #e5e7eb; }
       <circle cx="3" cy="12" r=".5" fill="currentColor"/>
       <circle cx="3" cy="18" r=".5" fill="currentColor"/>
     </svg>
-  </a>
+  </button>
 
   <div class="map-controls" id="map-controls">
     <div class="map-controls-title" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleControls()">
@@ -1611,14 +1612,26 @@ function toggleCampsiteLayer() {
 let streamLinesVisible = true;
 let tripDotsVisible    = true;
 
-function toggleStreamLines() {
-  streamLinesVisible = document.getElementById('chk-stream-lines').checked;
+function toggleStreamLines(fromBtn = false) {
+  if (fromBtn) {
+    streamLinesVisible = !streamLinesVisible;
+    document.getElementById('chk-stream-lines').checked = streamLinesVisible;
+  } else {
+    streamLinesVisible = document.getElementById('chk-stream-lines').checked;
+  }
+  document.getElementById('btn-map-streams')?.classList.toggle('active-layer', streamLinesVisible);
   if (streamLinesVisible) ratedStreamLayer.addTo(map);
   else map.removeLayer(ratedStreamLayer);
 }
 
-function toggleTripDots() {
-  tripDotsVisible = document.getElementById('chk-trip-dots').checked;
+function toggleTripDots(fromBtn = false) {
+  if (fromBtn) {
+    tripDotsVisible = !tripDotsVisible;
+    document.getElementById('chk-trip-dots').checked = tripDotsVisible;
+  } else {
+    tripDotsVisible = document.getElementById('chk-trip-dots').checked;
+  }
+  document.getElementById('btn-map-logs')?.classList.toggle('active-layer', tripDotsVisible);
   if (tripDotsVisible && map.getZoom() >= ZOOM_THRESHOLD) tripLayer.addTo(map);
   else map.removeLayer(tripLayer);
 }
