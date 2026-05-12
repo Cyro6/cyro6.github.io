@@ -1,0 +1,68 @@
+---
+images:
+  - /assets/images/20260508_081423.jpg
+  - /assets/images/20260508_123839.jpg
+  - /assets/images/20260508_123859.jpg
+  - /assets/images/20260508_123902.jpg
+  - /assets/images/20260508_123911.jpg
+  - /assets/images/20260508_142210.jpg
+  - /assets/images/20260508_142212.jpg
+  - /assets/images/20260508_142240.jpg
+days:
+  - day: Day 1
+    date: May 07, 2026
+    weather: "Sunny, Party Cloudy, Chilly"
+    spots:
+      - name: Elk Creek "Big"
+        url: https://maps.app.goo.gl/bQuyxfCZT8SJLUK37
+        notes: We did this entire section, it was a long slog before we started hammering the fish. It was a bit chilly and they started really hammering it around 2 PM. Dad went swimming a few times but pushed through, managed a few keepers and let a nice 14" brown go.
+        lat: 44.4122337
+        lng: -91.4153076
+  - day: Day 2
+    date: May 08,2026
+    weather: "Cold, Partly Cloudy"
+    spots:
+      - name: Trempealeau River
+        url: https://maps.app.goo.gl/Tv4JFEKzZ8NwYQ7c8
+        notes: This section of the stream has pretty strong flow, I would not want to wade this with cloudy water. I caught a 17" and 16" brown. This section is a difficult wade, not great for kids. Constantly fighting the current adds to the exhaustion that is this stream. Big Brown cabable though. Caught maybe 15 over 6 hours. Not a great hourly rate.
+        lat: 44.3790719
+        lng: -91.0275663
+      - name: Elk Creek "Big"
+        url: https://maps.app.goo.gl/QFCjKpkGmpk9SqEG7
+        notes: After the challenges of Trempealeau River we decided to hit Elk Creek for the evening. Ben and I hit this spot last year during a similar time of year and absolutely slammed it. This time was good, especially once we got in the woods but it was not insane. Nothing big, probably 20 or so to hand.
+        lat: 44.3874096
+        lng: -91.424211
+  - day: Day 3
+    date: May 09, 2026
+    weather: Cold and Party Cloudy
+    spots:
+      - name: Elk Creek "Big"
+        url: https://maps.app.goo.gl/pW7Rtp6AcMqwZs6j7
+        notes: I like to hit this spot on the last day because it is relatively short. I got a nice 13" Rainbow. Beyond that it was mostly small Brooke Trout. Elk has a ton of Brookes in it.
+        lat: 44.4250988
+        lng: -91.4016402
+cost:
+  items:
+    - name: Gas
+      amount: 75
+    - name: Grocery
+      amount: 20
+    - name: Campsite
+      amount: 60
+
+
+summary: "I was going to go Solo on this trip but my Dad happened to be able to go with me on this one. It was an interesting experience fishing with my Dad, he literally taught me to fish and now he joined me on something I have been practicing for years now. I was hoping for it to be insane like it was last year around the exact same time. While we certainly found plenty of fish, it wasn't a 150+ to hand trip like last may's was. I did manage a 16inch and 17inch Brown though, very happy with that. This year, I have now caught 4 browns over 16 inches, which is 4 more than last year."
+
+campsite:
+  name: Crystal Lake Campground (Sturm)
+  url: https://maps.app.goo.gl/HYCaKtRUD1rqyBB86
+  lat: 44.5723488
+  lng: -91.3063928
+layout: post
+title: May Trip
+date: 2026-05-17
+youtube:
+  - title: Coming Soon
+    url: 
+---
+# May 2026
