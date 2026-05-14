@@ -1,0 +1,1827 @@
+---
+layout: default
+title: Stream Map Beta
+permalink: /map-beta
+---
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+.stream-map-page {
+  position: relative;
+  font-family: 'Inter', sans-serif;
+}
+#stream-map {
+  width: 100%;
+  height: calc(100vh - 68px);
+  z-index: 1;
+}
+html.pwa #stream-map { height: calc(100vh - 56px); }
+.map-nav-btn {
+  display: none;
+  position: absolute;
+  left: 10px;
+  z-index: 900;
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  border: none;
+  padding: 0;
+  -webkit-appearance: none;
+  appearance: none;
+  background: #fff;
+  box-shadow: 0 1px 5px rgba(0,0,0,.35);
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: #555;
+  cursor: pointer;
+  overflow: visible;
+}
+.map-nav-btn:hover { background: #f4f4f4; }
+.map-nav-btn svg { display: block; flex-shrink: 0; }
+.map-nav-btn.active-layer { color: #05bf85; }
+body.dark-theme .map-nav-btn { background: #1a241f; color: #9ca3af; }
+body.dark-theme .map-nav-btn:hover { background: #243029; }
+body.dark-theme .map-nav-btn.active-layer { color: #05bf85; }
+html.pwa .map-nav-btn { display: flex; }
+.ctrl-title-pwa { display: none; }
+html.pwa .ctrl-title-full { display: none !important; }
+html.pwa .ctrl-title-pwa { display: inline; }
+html.pwa .map-controls { min-width: 0; }
+
+/* ── Reset global theme styles leaking into the controls panel ──────────── */
+.map-controls button,
+.map-controls input,
+.map-controls select,
+.map-controls label {
+  margin-bottom: 0;
+  padding-top: 0;
+  line-height: 1;
+}
+.map-controls button {
+  padding: 0;
+}
+
+/* ── My Location button ─────────────────────────────────────────────────── */
+#btn-my-location {
+  position: absolute;
+  top: 45px;
+  left: 10px;
+  z-index: 900;
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  border: none;
+  background: #fff;
+  box-shadow: 0 1px 5px rgba(0,0,0,.35);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s;
+}
+#btn-my-location:hover { background: #f4f4f4; }
+#btn-my-location.locating { background: #f4f4f4; }
+body.dark-theme #btn-my-location { background: #1a241f; }
+body.dark-theme #btn-my-location:hover { background: #243029; }
+
+@keyframes location-pulse {
+  0%   { transform: scale(1);   opacity: 1; }
+  70%  { transform: scale(2.4); opacity: 0; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+.location-dot-pulse {
+  width: 12px; height: 12px; border-radius: 50%;
+  background: #05bf85; border: 2px solid white;
+  box-shadow: 0 0 0 2px #05bf85;
+  position: relative;
+}
+.location-dot-pulse::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: #05bf85;
+  opacity: .4;
+  animation: location-pulse 2s ease-out infinite;
+}
+
+/* ── Floating controls ───────────────────────────────────────────────────── */
+:root { --rh: 19px; }
+
+.map-controls {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 900;
+  background: rgba(255,255,255,0.96);
+  border-radius: 10px;
+  padding: 10px 12px 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  min-width: 170px;
+  backdrop-filter: blur(6px);
+  box-sizing: border-box;
+}
+body.dark-theme .map-controls {
+  background: rgba(26,36,31,0.96);
+  color: #e5e7eb;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.45);
+}
+.map-controls-title {
+  font-size: .88rem;
+  font-weight: 700;
+  color: #05bf85;
+  margin: 0 0 8px;
+  letter-spacing: .02em;
+}
+#ctrl-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+}
+.ctrl-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding-top: 5px;
+  margin-top: 4px;
+  border-top: 1px solid #e9eaec;
+}
+.ctrl-group:first-child {
+  padding-top: 0;
+  margin-top: 0;
+  border-top: none;
+}
+body.dark-theme .ctrl-group { border-top-color: #374151; }
+.ctrl-label {
+  font-size: .91rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .09em;
+  color: #05bf85;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+body.dark-theme .ctrl-label { color: #6b7280; }
+
+/* ── Toggle buttons (Color By) ── */
+.ctrl-toggle {
+  display: flex;
+  gap: 3px;
+  height: var(--rh);
+}
+.ctrl-toggle button {
+  flex: 1;
+  height: 100%;
+  padding: 0;
+  font-size: .69rem;
+  font-weight: 600;
+  border: 1.5px solid #d1d5db;
+  border-radius: 5px;
+  background: white;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all .15s;
+  font-family: 'Inter', sans-serif;
+  line-height: 1;
+}
+.ctrl-toggle button.active { background: #05bf85; color: white; border-color: #05bf85; }
+body.dark-theme .ctrl-toggle button { background: #374151; color: #9ca3af; border-color: #4b5563; }
+body.dark-theme .ctrl-toggle button.active { background: #05bf85; color: white; border-color: #05bf85; }
+#btn-grid.active { background: #05bf85; color: white; border-color: #05bf85; }
+body.dark-theme #btn-grid { background: #374151; color: #9ca3af; border-color: #4b5563; }
+body.dark-theme #btn-grid.active { background: #05bf85; color: white; border-color: #05bf85; }
+.preset-btn {
+  font-size:.68rem; padding:2px 6px; border:1px solid #d1d5db;
+  border-radius:4px; background:transparent; cursor:pointer; color:inherit; line-height:1.4;
+}
+.preset-btn.active { background:#05bf85; color:white; border-color:#05bf85; }
+body.dark-theme .preset-btn { background:#374151; color:#9ca3af; border-color:#4b5563; }
+body.dark-theme .preset-btn.active { background:#05bf85; color:white; border-color:#05bf85; }
+
+/* ── Toggle switch rows ── */
+.ctrl-switch {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: var(--rh);
+  font-size: .8rem;
+  font-weight: 500;
+  color: #414348;
+  cursor: pointer;
+  user-select: none;
+  line-height: 1;
+}
+.ctrl-switch input[type="checkbox"] { display: none; }
+.switch-track {
+  position: relative;
+  width: 30px;
+  height: 16px;
+  background: #d1d5db;
+  border-radius: 8px;
+  transition: background .18s;
+  flex-shrink: 0;
+}
+.switch-track::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,.25);
+  transition: transform .18s;
+}
+.ctrl-switch input:checked + .switch-track { background: #05bf85; }
+.ctrl-switch input:checked + .switch-track::after { transform: translateX(14px); }
+body.dark-theme .ctrl-switch { color: #9ca3af; }
+body.dark-theme .switch-track { background: #4b5563; }
+body.dark-theme .ctrl-switch input:checked + .switch-track { background: #05bf85; }
+
+/* ── Offline cache button ── */
+.offline-ctrl-wrap {
+  box-shadow: 0 1px 5px rgba(0,0,0,.35);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.offline-ctrl-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: #fff;
+  color: #555;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+}
+.offline-ctrl-btn:hover { background: #f4f4f4; }
+.offline-ctrl-btn svg { display: block; pointer-events: none; }
+.offline-ctrl-btn.cached { color: #05bf85; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.offline-ctrl-btn.caching svg { animation: spin .9s linear infinite; }
+body.dark-theme .offline-ctrl-wrap { box-shadow: 0 1px 5px rgba(0,0,0,.6); }
+body.dark-theme .offline-ctrl-btn { background: #1a241f; color: #9ca3af; }
+body.dark-theme .offline-ctrl-btn:hover { background: #243029; }
+body.dark-theme .offline-ctrl-btn.cached { color: #05bf85; }
+
+/* ── Number spinner ── */
+.ctrl-num-wrap {
+  display: flex;
+  height: calc(var(--rh) * 1.15);
+  width: 50px;
+  flex-shrink: 0;
+  border: 1.5px solid #d1d5db;
+  border-radius: 5px;
+  overflow: hidden;
+}
+.ctrl-num-wrap input[type="number"] {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  border: none;
+  outline: none;
+  padding: 0 0 0 5px;
+  font-size: .74rem;
+  font-family: 'Inter', sans-serif;
+  background: white;
+  color: #384743;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.ctrl-num-wrap input[type="number"]::-webkit-inner-spin-button,
+.ctrl-num-wrap input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.ctrl-num-btns {
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #d1d5db;
+  flex-shrink: 0;
+}
+.ctrl-num-btns button {
+  flex: 1;
+  width: 15px;
+  padding: 0;
+  border: none;
+  background: #f3f4f6;
+  color: #6b7280;
+  cursor: pointer;
+  font-size: .48rem;
+  line-height: 1;
+  transition: background .1s, color .1s;
+}
+.ctrl-num-btns button:first-child { border-bottom: 1px solid #d1d5db; }
+.ctrl-num-btns button:hover { background: #05bf85; color: white; }
+body.dark-theme .ctrl-num-wrap { border-color: #4b5563; }
+body.dark-theme .ctrl-num-wrap input[type="number"] { background: #2d3748; color: #e5e7eb; }
+body.dark-theme .ctrl-num-btns { border-left-color: #4b5563; }
+body.dark-theme .ctrl-num-btns button { background: #374151; color: #9ca3af; border-bottom-color: #4b5563; }
+body.dark-theme .ctrl-num-btns button:hover { background: #05bf85; color: white; }
+
+/* ── Number rows (label beside spinner) ── */
+.ctrl-num-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: calc(var(--rh) * 1.15);
+}
+.ctrl-num-label {
+  font-size: .8rem;
+  font-weight: 500;
+  color: #414348;
+  line-height: 1;
+}
+body.dark-theme .ctrl-num-label { color: #9ca3af; }
+
+.map-stat {
+  font-size: .69rem;
+  color: #9ca3af;
+  text-align: center;
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(0,0,0,.07);
+}
+body.dark-theme .map-stat { border-top-color: rgba(255,255,255,.07); }
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: .75rem;
+  color: #384743;
+  font-weight: 600;
+}
+body.dark-theme .legend-item { color: #e5e7eb; }
+.legend-dot {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1.5px solid rgba(255,255,255,.6);
+  box-shadow: 0 1px 3px rgba(0,0,0,.25);
+}
+
+/* ── Popups ──────────────────────────────────────────────────────────────── */
+.leaflet-popup-content-wrapper {
+  border-radius: 10px !important;
+  padding: 0 !important;
+  overflow: hidden;
+  box-shadow: 0 6px 24px rgba(0,0,0,.18) !important;
+}
+.leaflet-popup-content { margin: 0.25rem !important; }
+.leaflet-popup-tip { background: #fff !important; box-shadow: none !important; }
+.stream-popup {
+  padding: 18px 20px;
+  min-width: 270px;
+  font-family: 'Inter', sans-serif;
+  box-sizing: border-box;
+}
+.sp-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #05bf85;
+  margin-bottom: 10px;
+  line-height: 1.2;
+}
+.sp-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .82rem;
+  color: #6b7280;
+  margin-bottom: 5px;
+}
+.sp-row strong { color: #384743; font-weight: 600; }
+.rating-pill {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 4px;
+  color: white;
+  font-weight: 700;
+  font-size: .75rem;
+}
+.sp-divider {
+  border: none;
+  border-top: 1px solid #f0ebe0;
+  margin: 9px 0 8px;
+}
+.sp-link {
+  display: block;
+  color: #05bf85;
+  font-weight: 600;
+  font-size: .82rem;
+  text-decoration: none;
+}
+.sp-link:hover { color: #008000; }
+.sp-notes {
+  font-size: .78rem;
+  color: #6b7280;
+  font-style: italic;
+  margin: 4px 0 6px;
+  line-height: 1.4;
+}
+.sp-regs {
+  margin: 5px 0 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.sp-reg-text {
+  font-size: .74rem;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+/* ── View mode badge ─────────────────────────────────────────────────────── */
+.view-mode-badge {
+  display: inline-block;
+  font-size: .7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  letter-spacing: .04em;
+  transition: background .2s, color .2s;
+}
+.view-mode-badge.streams {
+  background: rgba(5,191,133,.12);
+  color: #05bf85;
+}
+.view-mode-badge.trips {
+  background: rgba(249,115,22,.12);
+  color: #f97316;
+}
+
+/* ── Campsite popup ──────────────────────────────────────────────────────── */
+.campsite-popup {
+  padding: 14px 18px;
+  min-width: 210px;
+  font-family: 'Inter', sans-serif;
+  box-sizing: border-box;
+}
+.cs-name {
+  font-size: .95rem;
+  font-weight: 700;
+  color: #2d6a4f;
+  margin-bottom: 10px;
+  line-height: 1.2;
+}
+.cs-link {
+  display: block;
+  font-size: .82rem;
+  color: #05bf85;
+  font-weight: 600;
+  text-decoration: none;
+  margin-bottom: 4px;
+}
+.cs-link:hover { color: #008000; }
+
+/* ── Trip circle popup ───────────────────────────────────────────────────── */
+.trip-popup {
+  padding: 18px 20px;
+  min-width: 260px;
+  font-family: 'Inter', sans-serif;
+  box-sizing: border-box;
+}
+.tp-name {
+  font-size: .95rem;
+  font-weight: 700;
+  color: #05bf85;
+  margin-bottom: 8px;
+}
+.tp-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .82rem;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+.tp-row strong { color: #384743; font-weight: 600; }
+.tp-link {
+  display: block;
+  margin-top: 8px;
+  padding-top: 7px;
+  border-top: 1px solid #f0ebe0;
+  color: #05bf85;
+  font-weight: 600;
+  font-size: .82rem;
+  text-decoration: none;
+}
+.tp-link:hover { color: #008000; }
+.tp-notes {
+  font-size: .78rem;
+  color: #6b7280;
+  font-style: italic;
+  margin-top: 5px;
+  line-height: 1.4;
+}
+</style>
+
+<div class="stream-map-page">
+  <div id="stream-map"></div>
+
+  <button id="btn-my-location" onclick="goToMyLocation(true)" title="My location">
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#05bf85" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+      <circle cx="12" cy="12" r="8" stroke-opacity=".3"/>
+    </svg>
+  </button>
+
+  <button id="btn-map-streams" class="map-nav-btn active-layer" style="top:84px;" title="Toggle stream lines" onclick="toggleStreamLines(true)">
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M2 8c2-3.5 4-3.5 6 0s4 3.5 6 0 4-3.5 6 0"/>
+      <path d="M2 16c2-3.5 4-3.5 6 0s4 3.5 6 0 4-3.5 6 0"/>
+    </svg>
+  </button>
+
+  <button id="btn-map-logs" class="map-nav-btn active-layer" style="top:123px;" title="Toggle log dots" onclick="toggleTripDots(true)">
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="8" y1="6" x2="21" y2="6"/>
+      <line x1="8" y1="12" x2="21" y2="12"/>
+      <line x1="8" y1="18" x2="21" y2="18"/>
+      <circle cx="3" cy="6" r=".5" fill="currentColor"/>
+      <circle cx="3" cy="12" r=".5" fill="currentColor"/>
+      <circle cx="3" cy="18" r=".5" fill="currentColor"/>
+    </svg>
+  </button>
+
+  <div class="map-controls" id="map-controls">
+    <div class="map-controls-title" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleControls()">
+      <span style="display:flex;align-items:center;gap:6px;">
+        <span class="ctrl-title-full" style="display:flex;align-items:center;gap:6px;">
+          <svg viewBox="0 0 100 120" width="11" height="13" style="display:block;fill:#05bf85;flex-shrink:0;" aria-hidden="true">
+            <path d="M43,15 L72,29 L87,41 L98,49 L90,57 L91,69 L89,74 L87,106 L70,113 L39,112 L32,107 L29,86 L26,77 L19,72 L11,63 L6,30 L15,11 L36,6 Z"/>
+          </svg>
+          Stream Map
+        </span>
+        <span class="ctrl-title-pwa">Filter</span>
+      </span>
+      <span style="display:flex;align-items:center;gap:6px;">
+        <span class="view-mode-badge streams ctrl-title-full" id="view-badge">Streams</span>
+        <span id="ctrl-chevron" style="font-size:.75rem;color:#9ca3af;">▲</span>
+      </span>
+    </div>
+    <div id="ctrl-body">
+
+    <div class="ctrl-group">
+      <span class="ctrl-label">Color By</span>
+      <div class="ctrl-toggle">
+        <button id="btn-recent" class="active" onclick="setColorMode('recent')" title="Color by most recent trip rating">Recent</button>
+        <button id="btn-avg" onclick="setColorMode('avg')" title="Color by average rating across window">Avg</button>
+      </div>
+      <div class="ctrl-toggle" style="margin-top:3px;">
+        <button id="btn-turbidity" onclick="setColorMode('turbidity')" title="Color all streams by drainage area — upstream streams are clearer, downstream streams are more turbid">Turbidity</button>
+      </div>
+      <div id="turb-legend" style="display:none;margin-top:5px;">
+        <div style="display:flex;flex-direction:column;gap:3px;">
+          <div class="legend-item"><span class="legend-dot" style="background:rgb(168,237,222);border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>Headwater (clear)</div>
+          <div class="legend-item"><span class="legend-dot" style="background:rgb(86,196,164);border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>Small stream</div>
+          <div class="legend-item"><span class="legend-dot" style="background:rgb(196,170,101);border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>Medium stream</div>
+          <div class="legend-item"><span class="legend-dot" style="background:rgb(176,90,40);border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>Large / turbid</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ctrl-group">
+      <span class="ctrl-label">Base Map</span>
+      <div class="ctrl-toggle">
+        <button id="btn-map-street" class="active" onclick="setBaseMap('street')">Street</button>
+        <button id="btn-map-satellite" onclick="setBaseMap('satellite')">Satellite</button>
+      </div>
+    </div>
+
+    <div class="ctrl-group">
+      <span class="ctrl-label">Log Type</span>
+      <label class="ctrl-switch" title="Include trips you logged yourself"><input type="checkbox" id="chk-mine" checked onchange="updateLogFilter()"><span class="switch-track"></span><span>Mine</span></label>
+      <label class="ctrl-switch" title="Include trips logged by others"><input type="checkbox" id="chk-other" checked onchange="updateLogFilter()"><span class="switch-track"></span><span>Others</span></label>
+    </div>
+
+    <div class="ctrl-group">
+      <span class="ctrl-label">Data</span>
+      <div class="ctrl-num-row">
+        <div class="ctrl-num-wrap" title="Only show streams visited at least this many times">
+          <input type="number" id="map-min-visits" min="1" max="50" value="1" onchange="renderMarkers()">
+          <div class="ctrl-num-btns">
+            <button onclick="stepNum('map-min-visits',1)">▲</button>
+            <button onclick="stepNum('map-min-visits',-1)">▼</button>
+          </div>
+        </div>
+        <span class="ctrl-num-label">Min Visits</span>
+      </div>
+      <div class="ctrl-num-row">
+        <div class="ctrl-num-wrap" title="Only count trips within this many years. 0 = all time.">
+          <input type="number" id="map-years" min="0" max="20" value="0" onchange="renderMarkers()">
+          <div class="ctrl-num-btns">
+            <button onclick="stepNum('map-years',1)">▲</button>
+            <button onclick="stepNum('map-years',-1)">▼</button>
+          </div>
+        </div>
+        <span class="ctrl-num-label">Window (yrs)</span>
+      </div>
+    </div>
+
+    <div class="ctrl-group">
+      <span class="ctrl-label">Overlays</span>
+      <label class="ctrl-switch" title="Show/hide colored stream rating lines"><input type="checkbox" id="chk-stream-lines" checked onchange="toggleStreamLines()"><span class="switch-track"></span><span>Stream Lines</span></label>
+      <label class="ctrl-switch" title="Show/hide individual trip log dots (high zoom)"><input type="checkbox" id="chk-trip-dots" checked onchange="toggleTripDots()"><span class="switch-track"></span><span>Log Dots</span></label>
+      <label class="ctrl-switch" title="WI DNR classified trout stream regulations"><input type="checkbox" id="chk-dnr" onchange="toggleDNRLayer()"><span class="switch-track"></span><span>DNR Regs</span></label>
+      <label class="ctrl-switch" title="DNR-owned land and stream easements"><input type="checkbox" id="chk-land" onchange="toggleLandLayer()"><span class="switch-track"></span><span>Managed Land</span></label>
+      <label class="ctrl-switch" title="DNR parking lots near trout streams"><input type="checkbox" id="chk-parking" onchange="toggleParkingLayer()"><span class="switch-track"></span><span>Parking</span></label>
+      <label class="ctrl-switch" title="Trout stream habitat improvement projects"><input type="checkbox" id="chk-habitat" onchange="toggleHabitatLayer()"><span class="switch-track"></span><span>Habitat Projects</span></label>
+      <label class="ctrl-switch" title="Road bridges crossing classified trout streams"><input type="checkbox" id="chk-bridge" onchange="toggleBridgeLayer()"><span class="switch-track"></span><span>Bridge Crossings</span></label>
+      <label class="ctrl-switch" title="Campsite markers near trout streams"><input type="checkbox" id="chk-campsites" onchange="toggleCampsiteLayer()"><span class="switch-track"></span><span>Campsites</span></label>
+      <div id="dnr-legend-inline" style="display:none;margin-top:4px;">
+        <div style="display:flex;flex-direction:column;gap:3px;">
+          <div class="legend-item"><span class="legend-dot" style="background:#22c55e;border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>5 trout, any length</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#f59e0b;border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>3 trout, 8"+ only</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#ef4444;border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>Varies by water</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#3b82f6;border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>Great Lake trib</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ctrl-group">
+      <span class="ctrl-label">Rating</span>
+      <div id="legend-items" style="display:flex;gap:5px;flex-wrap:wrap;"></div>
+    </div>
+
+    <div class="ctrl-group">
+      <span class="ctrl-label">Stream Conditions</span>
+      <div class="ctrl-toggle">
+        <button id="btn-conditions" onclick="toggleConditions()" title="Fetch 7-day accumulated rainfall per stream and color by runoff risk">Live Conditions</button>
+      </div>
+      <div id="conditions-presets" style="display:none;margin-top:5px;">
+        <div style="font-size:.68rem;color:#9ca3af;margin-bottom:3px;">Forecast window</div>
+        <div style="display:flex;gap:3px;flex-wrap:wrap;">
+          <button class="preset-btn active" onclick="setConditionsOffset(0)">Today</button>
+          <button class="preset-btn" onclick="setConditionsOffset(3)">+3d</button>
+          <button class="preset-btn" onclick="setConditionsOffset(7)">+7d</button>
+          <button class="preset-btn" onclick="setConditionsOffset(14)">+14d</button>
+        </div>
+      </div>
+      <div id="conditions-grid-row" style="display:none;margin-top:4px;">
+        <button id="btn-grid" onclick="toggleGrid()" style="font-size:.75rem;padding:2px 8px;border:1px solid #d1d5db;border-radius:4px;background:transparent;cursor:pointer;color:inherit;">Show Grid</button>
+      </div>
+      <div id="conditions-legend" style="display:none;margin-top:6px;">
+        <div class="legend-item"><span class="legend-dot" style="background:#05bf85;border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>Dry (&lt;0.5")</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#f59e0b;border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>Elevated (0.5–1.5")</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#f97316;border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>High Risk (1.5–2.5")</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#ef4444;border-radius:2px;width:18px;height:5px;flex-shrink:0;"></span>Likely Blown Out (&gt;2.5")</div>
+      </div>
+    </div>
+
+    <div class="map-stat" id="map-stat">Loading…</div>
+  </div>
+</div>
+
+<script>
+const DATA_URL      = '/assets/data/streams.json?v={{ site.time | date: "%Y%m%d%H%M%S" }}';
+const EXCLUDED      = ['Unknown','Central Sands','Minnesota','Southern WI'];
+const ZOOM_THRESHOLD = 7;
+const RATING_MAP  = {'F':0,'E':1,'D':2,'C':3,'B':4,'A':5,'S':6,'S+':7};
+const RATING_KEYS = ['F','E','D','C','B','A','S','S+'];
+
+// ── Rating helpers ────────────────────────────────────────────────────────────
+
+function ratingColor(n) {
+  if (n == null || isNaN(n)) return '#9ca3af';
+  const stops = [
+    [220,38,38],[249,115,22],[234,179,8],
+    [132,204,22],[34,197,94],[16,185,129],[5,191,133],[3,105,161]
+  ];
+  const lo = Math.floor(Math.max(0, Math.min(7, n)));
+  const hi = Math.min(lo + 1, 7);
+  const t  = Math.max(0, Math.min(7, n)) - lo;
+  const [c1,c2] = [stops[lo],stops[hi]];
+  return `rgb(${Math.round(c1[0]+(c2[0]-c1[0])*t)},${Math.round(c1[1]+(c2[1]-c1[1])*t)},${Math.round(c1[2]+(c2[2]-c1[2])*t)})`;
+}
+
+function turbidityColor(arbolateKm) {
+  const km = (arbolateKm > 0) ? arbolateKm : 0.01;
+  // log10 scale: 0.01 → t=0 (clear), ~2000 → t=1 (murky)
+  const t = Math.max(0, Math.min(1, (Math.log10(km) + 2) / 5.3));
+  const stops = [
+    [168,237,222], // light aqua  — headwater / very clear
+    [ 86,196,164], // teal        — small stream
+    [196,170,101], // tan/olive   — medium stream
+    [176, 90, 40], // brown       — large stream / murky
+    [107, 45, 16], // dark brown  — major river / very turbid
+  ];
+  const seg = t * (stops.length - 1);
+  const lo  = Math.floor(seg);
+  const hi  = Math.min(lo + 1, stops.length - 1);
+  const f   = seg - lo;
+  const [r1,g1,b1] = stops[lo], [r2,g2,b2] = stops[hi];
+  return `rgb(${Math.round(r1+(r2-r1)*f)},${Math.round(g1+(g2-g1)*f)},${Math.round(b1+(b2-b1)*f)})`;
+}
+
+function turbidityLabel(streamOrder) {
+  if (streamOrder == null) return '—';
+  if (streamOrder <= 2) return 'Very Clear';
+  if (streamOrder <= 3) return 'Clear';
+  if (streamOrder <= 4) return 'Moderate';
+  if (streamOrder <= 5) return 'Turbid';
+  return 'Highly Turbid';
+}
+
+function ratingToLetter(n) {
+  if (n == null || isNaN(n)) return '—';
+  const clamped = Math.max(0, Math.min(7, n));
+  return RATING_KEYS[Math.round(clamped)] || 'S+';
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+// ── Map init ──────────────────────────────────────────────────────────────────
+
+const isDark  = document.body.classList.contains('dark-theme');
+const tileUrl = isDark
+  ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+  : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+
+const map = L.map('stream-map', { zoomControl: false });
+let baseLayer = L.tileLayer(tileUrl, {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+  maxZoom: 18
+}).addTo(map);
+
+// ── Offline cache control ─────────────────────────────────────────────────────
+
+const OVERLAY_URLS = [
+  '/assets/data/dnr_streams.geojson',
+  '/assets/data/dnr_managed_lands.geojson',
+  '/assets/data/dnr_easement_streams.geojson',
+  '/assets/data/dnr_parking.geojson',
+  '/assets/data/dnr_habitat_projects.geojson',
+  '/assets/data/dnr_bridge_crossings.geojson',
+];
+
+const ICON_DOWNLOAD = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0018 9h-1.26A8 8 0 103 16.29"/></svg>`;
+const ICON_SPIN     = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>`;
+const ICON_CHECK    = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+
+function setOfflineState(btn, state) {
+  btn.className = 'offline-ctrl-btn' + (state === 'done' ? ' cached' : state === 'caching' ? ' caching' : '');
+  btn.innerHTML = state === 'done' ? ICON_CHECK : state === 'caching' ? ICON_SPIN : ICON_DOWNLOAD;
+  btn.title = state === 'done' ? 'Overlays cached for offline use' : state === 'caching' ? 'Caching…' : 'Cache overlays for offline use';
+}
+
+async function checkOfflineCached(btn) {
+  try {
+    const cache = await caches.open('dtf-data::v1');
+    const hits = await Promise.all(OVERLAY_URLS.map(u => cache.match(u)));
+    if (hits.every(Boolean)) setOfflineState(btn, 'done');
+  } catch (_) {}
+}
+
+async function cacheOverlays(btn) {
+  if (btn.classList.contains('caching')) return;
+  setOfflineState(btn, 'caching');
+  try {
+    const cache = await caches.open('dtf-data::v1');
+    await Promise.allSettled(
+      OVERLAY_URLS.map(url =>
+        fetch(url).then(r => { if (r.ok) cache.put(url, r); })
+      )
+    );
+    setOfflineState(btn, 'done');
+  } catch (_) {
+    setOfflineState(btn, 'idle');
+  }
+}
+
+const OfflineControl = L.Control.extend({
+  options: { position: 'topleft' },
+  onAdd() {
+    const container = L.DomUtil.create('div', 'leaflet-control offline-ctrl-wrap');
+    const btn = L.DomUtil.create('a', 'offline-ctrl-btn', container);
+    btn.href = '#';
+    btn.setAttribute('role', 'button');
+    setOfflineState(btn, 'idle');
+    L.DomEvent.on(btn, 'click', e => { L.DomEvent.preventDefault(e); L.DomEvent.stopPropagation(e); cacheOverlays(btn); });
+    checkOfflineCached(btn);
+    return container;
+  }
+});
+new OfflineControl().addTo(map);
+
+function setBaseMap(mode) {
+  document.getElementById('btn-map-street').classList.toggle('active', mode === 'street');
+  document.getElementById('btn-map-satellite').classList.toggle('active', mode === 'satellite');
+  map.removeLayer(baseLayer);
+  if (mode === 'satellite') {
+    baseLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: '&copy; <a href="https://www.esri.com/">Esri</a>',
+      maxZoom: 19
+    }).addTo(map);
+  } else {
+    baseLayer = L.tileLayer(tileUrl, {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+      maxZoom: 18
+    }).addTo(map);
+  }
+}
+
+let locationMarker = null;
+let userHasMoved   = false;
+map.on('dragstart', () => { userHasMoved = true; });
+
+function goToMyLocation(force = false) {
+  if (!navigator.geolocation) return;
+  const btn = document.getElementById('btn-my-location');
+  btn.classList.add('locating');
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      btn.classList.remove('locating');
+      const { latitude: lat, longitude: lng } = pos.coords;
+      if (force || !userHasMoved) map.setView([lat, lng], 13);
+      if (locationMarker) map.removeLayer(locationMarker);
+      locationMarker = L.marker([lat, lng], {
+        icon: L.divIcon({
+          className: '',
+          html: '<div class="location-dot-pulse"></div>',
+          iconSize: [12, 12],
+          iconAnchor: [6, 6]
+        }),
+        zIndexOffset: 1000
+      }).addTo(map);
+    },
+    () => { btn.classList.remove('locating'); }
+  );
+}
+
+['map-controls'].forEach(id => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  ['click','mousedown','wheel','touchstart','dblclick'].forEach(evt =>
+    el.addEventListener(evt, e => e.stopPropagation(), { passive: false })
+  );
+});
+
+// ── State ─────────────────────────────────────────────────────────────────────
+
+let streamData       = [];
+let allTripData      = [];
+let regsLookup       = {};  // stream name -> DNR regulation object
+let ratedStreamLayer = L.layerGroup().addTo(map);
+let tripLayer        = L.layerGroup();
+let colorMode        = 'recent';
+let logFilter        = 'both';
+let didFitBounds     = false;
+let dnrNameMap       = {};  // {user_stream_name -> matched dnr stream name (lowercase)}
+let campsiteLayer    = L.layerGroup();
+let conditionsCache  = {};    // {daysOut: {gridKey: totalInches}} — cached per offset
+let conditionsDaysOut = 0;   // currently selected forecast offset
+let conditionsMode   = false; // whether conditions coloring is currently active
+let gridMode         = false; // whether the precipitation grid overlay is shown
+let conditionsGridLayer = L.layerGroup().addTo(map);
+
+const TENT_ICON = L.divIcon({
+  html: `<div style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;
+              background:#2d6a4f;border-radius:50%;border:2.5px solid rgba(255,255,255,.9);
+              box-shadow:0 2px 8px rgba(0,0,0,.35);">
+           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="17" height="17" fill="white">
+             <path d="M12 3L1 21h22L12 3zm0 4.5l7.5 13.5H4.5L12 7.5z"/>
+             <rect x="9.5" y="15" width="5" height="6" rx="0.5"/>
+           </svg>
+         </div>`,
+  className: '',
+  iconSize: [32, 32],
+  iconAnchor: [16, 16],
+  popupAnchor: [0, -20],
+});
+
+function renderCampsites(rows) {
+  campsiteLayer.clearLayers();
+  rows.forEach(row => {
+    const name    = row[0]?.trim();
+    const gpsStr  = row[1]?.trim();
+    const website = row[2]?.trim();
+    const gmapsUrl = row[3]?.trim();
+    const notes   = row[6]?.trim();
+    if (!name || !gpsStr) return;
+
+    const [latStr, lngStr] = gpsStr.split(',');
+    const lat = parseFloat(latStr), lng = parseFloat(lngStr);
+    if (isNaN(lat) || isNaN(lng)) return;
+
+    const gmaps = gmapsUrl || `https://www.google.com/maps/place/${lat},${lng}`;
+    const popup = `<div class="campsite-popup">
+      <div class="cs-name">⛺ ${name}</div>
+      ${website ? `<a class="cs-link" href="${website}" target="_blank" rel="noopener">Website &rarr;</a>` : ''}
+      <a class="cs-link" href="${gmaps}" target="_blank" rel="noopener">Google Maps &rarr;</a>
+      ${notes ? `<div style="font-size:.78rem;color:#6b7280;font-style:italic;margin-top:6px;">${notes}</div>` : ''}
+    </div>`;
+    L.marker([lat, lng], { icon: TENT_ICON })
+      .bindPopup(popup, { maxWidth: 300, closeButton: true })
+      .addTo(campsiteLayer);
+  });
+}
+
+map.createPane('ratedStreamsPane');
+map.getPane('ratedStreamsPane').style.zIndex = 650;
+map.createPane('tripMarkerPane');
+map.getPane('tripMarkerPane').style.zIndex = 680;
+let postIndex   = {};  // stream name -> [{postDate, postDays, url, title}]
+
+fetch('/assets/data/stream_posts.json')
+  .then(r => r.json())
+  .then(entries => {
+    entries.forEach(e => {
+      (postIndex[e.stream] = postIndex[e.stream] || []).push(e);
+    });
+  })
+  .catch(() => {});
+
+function findPost(streamName, tripDate) {
+  if (!tripDate) return null;
+  const entries = postIndex[streamName] || [];
+  for (const e of entries) {
+    const start = new Date(e.postDate + 'T00:00:00');
+    const end   = new Date(start);
+    end.setDate(end.getDate() + (e.postDays || 1) - 1);
+    if (tripDate >= start && tripDate <= end) return e;
+  }
+  return null;
+}
+
+// ── Controls ──────────────────────────────────────────────────────────────────
+
+function setConditionsButtonProgress(pct) {
+  const btn = document.getElementById('btn-conditions');
+  const dark = document.body.classList.contains('dark-theme');
+  const empty = dark ? '#374151' : '#e9eaec';
+  const p = Math.round(pct * 100);
+  if (pct >= 1) {
+    btn.style.background = '';
+    btn.style.color = '';
+    btn.style.borderColor = '';
+  } else {
+    btn.style.background = `linear-gradient(to right, #05bf85 ${p}%, ${empty} ${p}%)`;
+    btn.style.color = p > 45 ? 'white' : '';
+    btn.style.borderColor = '#05bf85';
+  }
+}
+
+function setColorMode(mode) {
+  colorMode = mode;
+  document.getElementById('btn-recent').classList.toggle('active', mode === 'recent');
+  document.getElementById('btn-avg').classList.toggle('active', mode === 'avg');
+  document.getElementById('btn-turbidity').classList.toggle('active', mode === 'turbidity');
+  document.getElementById('turb-legend').style.display = mode === 'turbidity' ? 'block' : 'none';
+  renderMarkers();
+}
+
+function conditionsGridKey(lat, lon) {
+  return `${(Math.round(lat * 4) / 4).toFixed(2)},${(Math.round(lon * 4) / 4).toFixed(2)}`;
+}
+
+function precipCondColor(inches) {
+  if (inches == null) return '#9ca3af';
+  if (inches < 0.5)   return '#05bf85';
+  if (inches < 1.5)   return '#f59e0b';
+  if (inches < 2.5)   return '#f97316';
+  return '#ef4444';
+}
+
+function precipCondLabel(inches) {
+  if (inches == null) return 'No data';
+  if (inches < 0.5)   return 'Dry';
+  if (inches < 1.5)   return 'Elevated';
+  if (inches < 2.5)   return 'High Risk';
+  return 'Likely Blown Out';
+}
+
+async function fetchStreamConditions(lookup, daysOut = 0, onProgress = null) {
+  const delay = ms => new Promise(r => setTimeout(r, ms));
+  const gridCells = {};
+  Object.values(lookup).forEach(s => {
+    const key = conditionsGridKey(s.lat, s.lon);
+    if (!gridCells[key]) {
+      gridCells[key] = {
+        lat: Math.round(s.lat * 4) / 4,
+        lon: Math.round(s.lon * 4) / 4
+      };
+    }
+  });
+
+  const pastDays     = daysOut === 0 ? 7 : Math.max(0, 7 - daysOut);
+  const forecastDays = daysOut === 0 ? 0 : daysOut + 1;
+
+  const results = {};
+  const keys = Object.keys(gridCells);
+  for (let i = 0; i < keys.length; i++) {
+    const key = keys[i];
+    const { lat, lon } = gridCells[key];
+    if (onProgress) onProgress((i + 1) / keys.length);
+    try {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=precipitation_sum&past_days=${pastDays}&forecast_days=${forecastDays}&precipitation_unit=inch&timezone=America%2FChicago`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('fetch failed');
+      const data = await res.json();
+      const sums = data.daily?.precipitation_sum || [];
+      let total;
+      if (daysOut === 0) {
+        total = sums.reduce((a, b) => a + (b || 0), 0);
+      } else {
+        const endIdx = pastDays + daysOut;
+        const startIdx = Math.max(0, endIdx - 6);
+        total = sums.slice(startIdx, endIdx + 1).reduce((a, b) => a + (b || 0), 0);
+      }
+      results[key] = total;
+    } catch {
+      results[key] = null;
+    }
+    if (i < keys.length - 1) await delay(200);
+  }
+  if (onProgress) onProgress(1);
+  return results;
+}
+
+async function toggleConditions() {
+  const btn = document.getElementById('btn-conditions');
+  conditionsMode = !conditionsMode;
+
+  if (!conditionsMode) {
+    btn.classList.remove('active');
+    btn.textContent = 'Live Conditions';
+    document.getElementById('conditions-legend').style.display = 'none';
+    document.getElementById('conditions-presets').style.display = 'none';
+    document.getElementById('conditions-grid-row').style.display = 'none';
+    clearGrid();
+    renderMarkers();
+    return;
+  }
+
+  // Fetch for current offset if not yet cached
+  if (!conditionsCache[conditionsDaysOut]) {
+    const lookup = buildRatingLookup();
+    conditionsCache[conditionsDaysOut] = await fetchStreamConditions(lookup, conditionsDaysOut, setConditionsButtonProgress);
+    setConditionsButtonProgress(1);
+  }
+
+  // All null means network was unavailable
+  if (Object.values(conditionsCache[conditionsDaysOut]).every(v => v === null)) {
+    conditionsMode = false;
+    delete conditionsCache[conditionsDaysOut];
+    btn.textContent = 'No Network';
+    btn.classList.remove('active');
+    setTimeout(() => { btn.textContent = 'Live Conditions'; }, 2500);
+    return;
+  }
+
+  btn.textContent = 'Conditions On';
+  btn.classList.add('active');
+  document.getElementById('conditions-legend').style.display = 'block';
+  document.getElementById('conditions-presets').style.display = 'block';
+  document.getElementById('conditions-grid-row').style.display = 'block';
+  renderMarkers();
+}
+
+async function setConditionsOffset(n) {
+  conditionsDaysOut = n;
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  clearGrid();
+  if (!conditionsCache[n]) {
+    const lookup = buildRatingLookup();
+    conditionsCache[n] = await fetchStreamConditions(lookup, n, setConditionsButtonProgress);
+    setConditionsButtonProgress(1);
+  }
+  renderMarkers();
+}
+
+function clearGrid() {
+  conditionsGridLayer.clearLayers();
+  gridMode = false;
+  const btn = document.getElementById('btn-grid');
+  if (btn) { btn.classList.remove('active'); btn.textContent = 'Show Grid'; }
+}
+
+function toggleGrid() {
+  const btn = document.getElementById('btn-grid');
+  gridMode = !gridMode;
+  if (!gridMode) {
+    conditionsGridLayer.clearLayers();
+    btn.classList.remove('active');
+    btn.textContent = 'Show Grid';
+    return;
+  }
+  btn.classList.add('active');
+  btn.textContent = 'Hide Grid';
+  Object.entries(conditionsCache[conditionsDaysOut] || {}).forEach(([key, total]) => {
+    const [lat, lon] = key.split(',').map(Number);
+    const bounds = [[lat - 0.125, lon - 0.125], [lat + 0.125, lon + 0.125]];
+    const color = precipCondColor(total);
+    const rect = L.rectangle(bounds, {
+      color,
+      weight: 1,
+      opacity: 0.5,
+      fillColor: color,
+      fillOpacity: 0.18,
+      interactive: true
+    });
+    const windowLabel = conditionsDaysOut === 0 ? 'past 7 days' : `7 days to +${conditionsDaysOut}d`;
+    const label = total != null ? `${total.toFixed(2)}" (${windowLabel}) — ${precipCondLabel(total)}` : 'No data';
+    rect.bindPopup(`<b>Precip Cell</b><br><span style="color:${color};font-weight:600;">${label}</span>`, { maxWidth: 200 });
+    conditionsGridLayer.addLayer(rect);
+  });
+}
+
+function stepNum(id, delta) {
+  const el = document.getElementById(id);
+  const val = parseInt(el.value, 10) || parseInt(el.min, 10) || 1;
+  const min = parseInt(el.min, 10);
+  const max = parseInt(el.max, 10);
+  el.value = Math.max(min, Math.min(max, val + delta));
+  el.dispatchEvent(new Event('change'));
+}
+
+function updateLogFilter() {
+  const mine  = document.getElementById('chk-mine').checked;
+  const other = document.getElementById('chk-other').checked;
+  logFilter = mine && other ? 'both' : mine ? 'mine' : other ? 'other' : 'none';
+  renderMarkers();
+}
+
+function matchesLogFilter(whoLog) {
+  if (logFilter === 'none')  return false;
+  if (logFilter === 'mine')  return whoLog === 'C';
+  if (logFilter === 'other') return whoLog !== 'C';
+  return true;
+}
+
+function toggleControls() {
+  const body    = document.getElementById('ctrl-body');
+  const chevron = document.getElementById('ctrl-chevron');
+  const collapsed = body.style.display === 'none';
+  body.style.display    = collapsed ? '' : 'none';
+  chevron.textContent   = collapsed ? '▲' : '▼';
+}
+
+// ── Marker / popup factories ──────────────────────────────────────────────────
+
+function makeIcon(displayRating, visits) {
+  const color = ratingColor(displayRating);
+  const label = ratingToLetter(displayRating);
+  const r   = Math.max(13, Math.min(22, 9 + Math.sqrt(visits) * 2.4));
+  const sz  = Math.round(r * 2);
+  const fs  = r < 17 ? 9 : 10;
+  const pad = 12; // transparent touch buffer on each side
+  const hit = sz + pad * 2;
+  return L.divIcon({
+    html: `<div style="width:${hit}px;height:${hit}px;display:flex;align-items:center;justify-content:center;">` +
+          `<div style="width:${sz}px;height:${sz}px;background:${color};border-radius:50%;` +
+          `display:flex;align-items:center;justify-content:center;` +
+          `color:#fff;font-weight:700;font-size:${fs}px;font-family:'Inter',sans-serif;` +
+          `border:2.5px solid rgba(255,255,255,.85);box-shadow:0 2px 7px rgba(0,0,0,.35);">${label}</div></div>`,
+    className: '',
+    iconSize:   [hit, hit],
+    iconAnchor: [hit / 2, hit / 2],
+    popupAnchor:[0, -(hit / 2) - 2]
+  });
+}
+
+function makePopup(s) {
+  const rc = ratingColor(s.recentRating);
+  const ac = ratingColor(s.avgRating);
+  return `<div class="stream-popup">
+    <div class="sp-name">🌊 ${s.name}</div>
+    <div class="sp-row"><strong>Last fished:</strong> ${fmtDate(s.recentDate)}</div>
+    <div class="sp-row">
+      <strong>Last rating:</strong>
+      <span class="rating-pill" style="background:${rc}">${ratingToLetter(s.recentRating)}</span>
+    </div>
+    <div class="sp-row">
+      <strong>Avg:</strong>
+      <span class="rating-pill" style="background:${ac}">${ratingToLetter(s.avgRating)}</span>
+      &nbsp;${s.avgRating.toFixed(2)} &middot; ${s.visits} visits
+    </div>
+    ${s.bestMonth ? `<div class="sp-row"><strong>Best month:</strong> ${s.bestMonth}</div>` : ''}
+    ${(() => {
+      const r = regsLookup[s.name];
+      if (!r) return '';
+      const rc = (r.REGCAT || '').trim();
+      const badgeStyle = rc.includes('5 Trout') ? 'background:#22c55e;color:#fff'
+                       : rc.includes('3 Trout') ? 'background:#f59e0b;color:#000'
+                       : rc.includes('Vary')    ? 'background:#ef4444;color:#fff'
+                       : 'background:#9ca3af;color:#fff';
+      const bag = (r.BAG_LMT || '').trim();
+      const badge = bag ? `<span style="display:inline-block;padding:2px 10px;border-radius:4px;${badgeStyle};font-weight:700;font-size:.78rem;">${bag}</span>` : '';
+      const season = r.SEASON_TXT ? `<div class="sp-reg-text"><strong>Season:</strong> ${r.SEASON_TXT}</div>` : '';
+      const early  = r.EARLY_SEASON_TXT ? `<div class="sp-reg-text"><strong>Early Season:</strong> ${r.EARLY_SEASON_TXT}</div>` : '';
+      return `<div class="sp-regs">${badge}${season}${early}</div>`;
+    })()}
+    <hr class="sp-divider">
+    <a class="sp-link" href="/stream-details?stream=${encodeURIComponent(s.name)}">View full history &rarr;</a>
+  </div>`;
+}
+
+function makeDNRPopup(p) {
+  const rc  = (p.REGCAT  || '').trim();
+  const bag = (p.BAG_LMT || '').trim();
+  const badgeStyle = rc.includes('5 Trout') ? 'background:#22c55e;color:#fff'
+                   : rc.includes('3 Trout') ? 'background:#f59e0b;color:#000'
+                   : rc.includes('Vary')    ? 'background:#ef4444;color:#fff'
+                   : 'background:#9ca3af;color:#fff';
+  const badge  = bag ? `<span style="display:inline-block;padding:2px 10px;border-radius:4px;${badgeStyle};font-weight:700;font-size:.78rem;">${bag}</span>` : '';
+  const season = p.SEASON_TXT       ? `<div class="sp-reg-text"><strong>Season:</strong> ${p.SEASON_TXT}</div>`             : '';
+  const early  = p.EARLY_SEASON_TXT ? `<div class="sp-reg-text"><strong>Early Season:</strong> ${p.EARLY_SEASON_TXT}</div>` : '';
+  return `<div class="stream-popup">
+    <div class="sp-name">🌊 ${p.STREAM || 'Trout Stream'}</div>
+    <div class="sp-row" style="color:#9ca3af;font-size:.76rem;font-style:italic;margin-bottom:4px;">No fishing logs</div>
+    <div class="sp-regs">${badge}${season}${early}</div>
+  </div>`;
+}
+
+function makeTurbidityPopup(f) {
+  const p     = f.properties;
+  const name  = p.STREAM || 'Stream';
+  const order = p.stream_order;
+  const arb   = p.arbolate_sum_km;
+  const color = turbidityColor(arb);
+  const lbl   = turbidityLabel(order);
+  const arbFmt = arb != null ? (arb < 10 ? arb.toFixed(1) : Math.round(arb)).toLocaleString() + ' km' : '—';
+  return `<div class="stream-popup">
+    <div class="sp-name">🌊 ${name}</div>
+    <div class="sp-row"><strong>Stream Order:</strong> ${order ?? '—'}</div>
+    <div class="sp-row"><strong>Drainage:</strong> ${arbFmt} upstream</div>
+    <div class="sp-row"><strong>Turbidity:</strong> <span style="font-weight:700;color:${color}">${lbl}</span></div>
+  </div>`;
+}
+
+function makeTripPopup(t) {
+  const rc = ratingColor(t.rating);
+  const condParts = [t.weather].filter(Boolean);
+  const post = findPost(t.name, t.date);
+  return `<div class="trip-popup">
+    <div class="tp-name">🌊 ${t.name}</div>
+    <div class="tp-row"><strong>Date:</strong> ${fmtDate(t.date)}</div>
+    <div class="tp-row">
+      <strong>Rating:</strong>
+      <span class="rating-pill" style="background:${rc}">${ratingToLetter(t.rating)}</span>
+    </div>
+    ${t.section ? `<div class="tp-row"><strong>Section:</strong> ${t.section}</div>` : ''}
+    ${condParts.length ? `<div class="tp-row"><strong>Conditions:</strong> ${condParts.join(' · ')}</div>` : ''}
+    ${t.desc ? `<div class="tp-notes">${t.desc.length > 140 ? t.desc.slice(0, 140) + '…' : t.desc}</div>` : ''}
+    <a class="tp-link" href="/stream-details?stream=${encodeURIComponent(t.name)}">View stream history &rarr;</a>
+    ${post ? `<a class="tp-link" href="${post.url}" style="border-top:none;padding-top:2px;">Read trip post &rarr;</a>` : ''}
+  </div>`;
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+
+function buildRatingLookup() {
+  const minVisits = parseInt(document.getElementById('map-min-visits').value, 10);
+  const yearsBack = parseInt(document.getElementById('map-years').value) || 0;
+  const cutoff    = yearsBack > 0 ? new Date(Date.now() - yearsBack * 365.25 * 86400000) : null;
+  const lookup    = {};
+
+  streamData.forEach(s => {
+    const trips = (cutoff ? s.allTrips.filter(t => t.date && t.date >= cutoff) : s.allTrips)
+      .filter(t => matchesLogFilter(t.whoLog));
+    if (trips.length < minVisits) return;
+
+    trips.sort((a,b) => (b.date||0) - (a.date||0));
+    const recentTrip = trips[0];
+    const avgRating  = trips.reduce((sum,t) => sum + t.rating, 0) / trips.length;
+
+    const byMonth = {};
+    trips.forEach(t => {
+      if (!t.date) return;
+      const mo = t.date.toLocaleString('default', { month: 'long' });
+      (byMonth[mo] = byMonth[mo] || []).push(t.rating);
+    });
+    const bestMonth = Object.entries(byMonth)
+      .filter(([,v]) => v.length >= 2)
+      .map(([mo,v]) => ({ mo, avg: v.reduce((a,b)=>a+b,0)/v.length }))
+      .sort((a,b) => b.avg - a.avg)[0]?.mo || null;
+
+    const gpsPoints = allTripData
+      .filter(t => t.name === s.name)
+      .map(t => [t.lon, t.lat]);
+
+    lookup[s.name.toLowerCase().trim()] = {
+      name: s.name, visits: trips.length,
+      recentRating: recentTrip.rating, recentDate: recentTrip.date,
+      avgRating, bestMonth, recentDesc: recentTrip.desc,
+      lat: s.lat, lon: s.lon, gpsPoints
+    };
+  });
+  return lookup;
+}
+
+function renderStreamLines(lookup) {
+  ratedStreamLayer.clearLayers();
+  if (!dnrGeoJSON) return;
+
+  // ── Turbidity mode: color all DNR streams by drainage area ──────────────────
+  if (colorMode === 'turbidity') {
+    L.geoJSON(dnrGeoJSON, {
+      pane: 'ratedStreamsPane',
+      style: f => ({
+        color:   turbidityColor(f.properties.arbolate_sum_km),
+        weight:  3,
+        opacity: 0.78,
+      }),
+      interactive: false,
+    }).addTo(ratedStreamLayer);
+    L.geoJSON(dnrGeoJSON, {
+      pane: 'ratedStreamsPane',
+      style: () => ({ color: 'transparent', weight: 14, opacity: 0 }),
+      onEachFeature: (f, l) => l.bindPopup(makeTurbidityPopup(f), { maxWidth: 300, closeButton: true }),
+    }).addTo(ratedStreamLayer);
+    return;
+  }
+
+  const THRESHOLD_DSQ = 0.08 * 0.08; // ~9km — wide enough for long streams, filters distant same-name copies
+
+  // Build DNR stream name -> [candidate user streams] (multiple user streams can share a DNR name)
+  const dnrToUsers = {};
+  Object.values(lookup).forEach(info => {
+    const dnrName = (dnrNameMap[info.name] || '').toLowerCase().trim();
+    if (!dnrName) return;
+    (dnrToUsers[dnrName] = dnrToUsers[dnrName] || []).push(info);
+  });
+
+  // Precompute which DNR feature maps to which user stream info
+  const featureMatches = new Map();
+  dnrGeoJSON.features.forEach(f => {
+    const dnrName    = (f.properties.STREAM || '').toLowerCase().trim();
+    const candidates = dnrToUsers[dnrName];
+    if (!candidates) return;
+
+    const geom  = f.geometry;
+    const lines = geom.type === 'LineString' ? [geom.coordinates] : geom.coordinates;
+    let bestMatch = null, bestDsq = THRESHOLD_DSQ;
+
+    for (const line of lines) {
+      for (const [vlon, vlat] of line) {
+        for (const c of candidates) {
+          for (const [plon, plat] of c.gpsPoints) {
+            const dsq = (vlon - plon) ** 2 + (vlat - plat) ** 2;
+            if (dsq < bestDsq) { bestDsq = dsq; bestMatch = c; }
+          }
+        }
+      }
+    }
+    if (bestMatch) featureMatches.set(f, bestMatch);
+  });
+
+  // Visible colored lines
+  L.geoJSON(dnrGeoJSON, {
+    pane: 'ratedStreamsPane',
+    filter: f => featureMatches.has(f),
+    style: f => {
+      const info = featureMatches.get(f);
+      if (conditionsMode && conditionsCache[conditionsDaysOut]) {
+        const key   = conditionsGridKey(info.lat, info.lon);
+        const total = (conditionsCache[conditionsDaysOut])[key] ?? null;
+        return { color: precipCondColor(total), weight: 5, opacity: 0.85 };
+      }
+      const rating = colorMode === 'recent' ? info.recentRating : info.avgRating;
+      return { color: ratingColor(rating), weight: 5, opacity: 0.85 };
+    },
+    interactive: false,
+  }).addTo(ratedStreamLayer);
+
+  // Wide transparent hit-detection stroke for easy clicking
+  L.geoJSON(dnrGeoJSON, {
+    pane: 'ratedStreamsPane',
+    filter: f => featureMatches.has(f),
+    style: () => ({ color: 'transparent', weight: 18, opacity: 0 }),
+    onEachFeature: (f, l) => {
+      const info = featureMatches.get(f);
+      if (!info) return;
+      if (conditionsMode && conditionsCache[conditionsDaysOut]) {
+        const key   = conditionsGridKey(info.lat, info.lon);
+        const total = (conditionsCache[conditionsDaysOut])[key] ?? null;
+        const windowLabel = conditionsDaysOut === 0 ? 'past 7 days' : `7 days to +${conditionsDaysOut}d`;
+        const label = total != null ? `${total.toFixed(2)}" (${windowLabel}) — ${precipCondLabel(total)}` : 'No conditions data';
+        l.bindPopup(`<b>${info.name}</b><br><span style="color:${precipCondColor(total)};font-weight:600;">${label}</span>`, { maxWidth: 260 });
+      } else {
+        l.bindPopup(makePopup(info), { maxWidth: 340, closeButton: true });
+      }
+    },
+  }).addTo(ratedStreamLayer);
+}
+
+function renderMarkers() {
+  const lookup = buildRatingLookup();
+  renderStreamLines(lookup);
+
+  const bounds = Object.values(lookup).map(s => [s.lat, s.lon]);
+  if (!didFitBounds && bounds.length > 0) {
+    map.fitBounds(L.latLngBounds(bounds).pad(0.12));
+    didFitBounds = true;
+  }
+
+  const count = Object.keys(lookup).length;
+  if (map.getZoom() < ZOOM_THRESHOLD) {
+    document.getElementById('map-stat').textContent =
+      `${count} stream${count !== 1 ? 's' : ''} · zoom in for trips`;
+  }
+
+  renderTripMarkers();
+}
+
+function renderTripMarkers() {
+  tripLayer.clearLayers();
+
+  const yearsBack = parseInt(document.getElementById('map-years').value) || 0;
+  const cutoff    = yearsBack > 0 ? new Date(Date.now() - yearsBack * 365.25 * 86400000) : null;
+
+  let count = 0;
+  allTripData.forEach(t => {
+    if (cutoff && t.date && t.date < cutoff) return;
+    if (!matchesLogFilter(t.whoLog)) return;
+
+    const cm = L.circleMarker([t.lat, t.lon], {
+      pane:        'tripMarkerPane',
+      radius:      7,
+      fillColor:   ratingColor(t.rating),
+      fillOpacity: 0.88,
+      color:       'rgba(255,255,255,.75)',
+      weight:      1.5
+    });
+    cm.bindPopup(makeTripPopup(t), { maxWidth: 320, closeButton: true });
+    tripLayer.addLayer(cm);
+    count++;
+  });
+
+  if (map.getZoom() >= ZOOM_THRESHOLD) {
+    document.getElementById('map-stat').textContent =
+      `${count} trip${count !== 1 ? 's' : ''} shown`;
+  }
+}
+
+// ── Zoom layer switch ─────────────────────────────────────────────────────────
+
+function handleZoomChange() {
+  const zoom  = map.getZoom();
+  const badge = document.getElementById('view-badge');
+
+  if (zoom >= ZOOM_THRESHOLD) {
+    if (tripDotsVisible && !map.hasLayer(tripLayer)) tripLayer.addTo(map);
+    badge.className   = 'view-mode-badge trips';
+    badge.textContent = 'Trips';
+    const yb  = parseInt(document.getElementById('map-years').value) || 0;
+    const co  = yb > 0 ? new Date(Date.now() - yb * 365.25 * 86400000) : null;
+    const cnt = allTripData.filter(t => (!co || !t.date || t.date >= co) && matchesLogFilter(t.whoLog)).length;
+    document.getElementById('map-stat').textContent = `${cnt} trip${cnt !== 1 ? 's' : ''} shown`;
+  } else {
+    if (map.hasLayer(tripLayer)) map.removeLayer(tripLayer);
+    badge.className   = 'view-mode-badge streams';
+    badge.textContent = 'Streams';
+    let cnt = 0;
+    ratedStreamLayer.eachLayer(() => cnt++);
+    const streams = Math.round(cnt / 2); // two layers per stream (visible + hit)
+    document.getElementById('map-stat').textContent =
+      `${streams} stream${streams !== 1 ? 's' : ''} · zoom in for trips`;
+  }
+}
+
+map.on('zoomend', handleZoomChange);
+map.on('zoomend', () => { if (easementLayer) easementLayer.setStyle({ weight: easementWeight() }); });
+
+// ── DNR Regulation Overlay ────────────────────────────────────────────────────
+
+const REGCAT_LINE_COLORS = {
+  '5 Trout in Total of Any Length':                   '#22c55e',
+  '3 Trout in Total Over 8 inches':                   '#f59e0b',
+  'Length, Bag and Possession Limits Vary by Water':  '#ef4444',
+  'Great Lake Tributary':                             '#3b82f6',
+};
+
+let dnrEnabled = false;
+let dnrLayer   = L.layerGroup();
+let dnrGeoJSON = null; // cached after first load
+
+function toggleDNRLayer() {
+  dnrEnabled = document.getElementById('chk-dnr').checked;
+  document.getElementById('dnr-legend-inline').style.display = dnrEnabled ? 'block' : 'none';
+  if (dnrEnabled) { dnrLayer.addTo(map); loadDNRLayer(); }
+  else { map.removeLayer(dnrLayer); }
+}
+
+async function loadDNRLayer() {
+  if (!dnrEnabled) return;
+  if (!dnrGeoJSON) {
+    try {
+      const r = await fetch('/assets/data/dnr_streams.geojson');
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      dnrGeoJSON = await r.json();
+    } catch (e) {
+      console.error('DNR layer load failed:', e);
+      return;
+    }
+  }
+  dnrLayer.clearLayers();
+  // Visible colored lines
+  L.geoJSON(dnrGeoJSON, {
+    style: f => ({
+      color:   REGCAT_LINE_COLORS[f.properties.REGCAT] || '#9ca3af',
+      weight:  2.5,
+      opacity: 0.75,
+    }),
+    interactive: false,
+  }).addTo(dnrLayer);
+  // Invisible wide stroke for hit detection
+  L.geoJSON(dnrGeoJSON, {
+    style: () => ({ color: 'transparent', weight: 20, opacity: 0 }),
+    onEachFeature: (f, l) => {
+      l.bindPopup(makeDNRPopup(f.properties), { maxWidth: 340, closeButton: true });
+    }
+  }).addTo(dnrLayer);
+}
+
+// ── Managed Land Overlay ──────────────────────────────────────────────────────
+
+let landEnabled     = false;
+let landLayer       = L.layerGroup();
+let landGeoJSON     = null;
+let easementGeoJSON = null;
+let easementLayer   = null;
+
+function easementWeight() {
+  return Math.max(2, Math.round(3 + (map.getZoom() - 8) * 2.5));
+}
+
+function toggleLandLayer() {
+  landEnabled = document.getElementById('chk-land').checked;
+  if (landEnabled) { landLayer.addTo(map); loadLandLayer(); }
+  else { map.removeLayer(landLayer); }
+}
+
+async function loadLandLayer() {
+  if (!landEnabled) return;
+  if (!landGeoJSON) {
+    try {
+      const r = await fetch('/assets/data/dnr_managed_lands.geojson');
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      landGeoJSON = await r.json();
+    } catch (e) { console.error('Managed land layer failed:', e); return; }
+  }
+  landLayer.clearLayers();
+  // Fee-simple owned parcels — filled polygons
+  L.geoJSON(landGeoJSON, {
+    filter: f => String(f.properties.TRANS_TYPE) !== '2',
+    style: () => ({ color: '#15803d', weight: 1, opacity: 0.7, fillColor: '#16a34a', fillOpacity: 0.15 }),
+    onEachFeature: (f, l) => {
+      const p = f.properties;
+      l.bindPopup(
+        `<strong>${p.PROP_NAME || 'DNR Property'}</strong><br>` +
+        `${p.ACRES ? Math.round(p.ACRES) + ' acres' : ''}` +
+        `${p.PUBLIC_ACCESS ? '<br>' + p.PUBLIC_ACCESS : ''}`
+      );
+    }
+  }).addTo(landLayer);
+  // Easements — highlight the actual stream segments that fall inside them
+  if (!easementGeoJSON) {
+    try {
+      const r = await fetch('/assets/data/dnr_easement_streams.geojson');
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      easementGeoJSON = await r.json();
+    } catch (e) { console.error('Easement streams load failed:', e); }
+  }
+  if (easementGeoJSON) {
+    easementLayer = L.geoJSON(easementGeoJSON, {
+      style: () => ({ color: '#4ade80', weight: easementWeight(), opacity: 0.35 }),
+      interactive: false,
+    }).addTo(landLayer);
+  }
+}
+
+// ── Parking Overlay ───────────────────────────────────────────────────────────
+
+let parkingEnabled = false;
+let parkingLayer   = L.layerGroup();
+let parkingGeoJSON = null;
+
+function toggleParkingLayer() {
+  parkingEnabled = document.getElementById('chk-parking').checked;
+  if (parkingEnabled) { parkingLayer.addTo(map); loadParkingLayer(); }
+  else { map.removeLayer(parkingLayer); }
+}
+
+async function loadParkingLayer() {
+  if (!parkingEnabled) return;
+  if (!parkingGeoJSON) {
+    try {
+      const r = await fetch('/assets/data/dnr_parking.geojson');
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      parkingGeoJSON = await r.json();
+    } catch (e) { console.error('Parking layer failed:', e); return; }
+  }
+  parkingLayer.clearLayers();
+  L.geoJSON(parkingGeoJSON, {
+    pointToLayer: (f, latlng) => L.circleMarker(latlng, {
+      radius: 7, fillColor: '#2563eb', fillOpacity: 0.85,
+      color: 'rgba(255,255,255,.8)', weight: 1.5,
+    }),
+    onEachFeature: (f, l) => {
+      const p = f.properties;
+      l.bindPopup(
+        `<strong>P ${p.PARKING_LOT_NAME || 'DNR Parking'}</strong>` +
+        `${p.LOCATION_DESC ? '<br>' + p.LOCATION_DESC : ''}`
+      );
+    }
+  }).addTo(parkingLayer);
+}
+
+// ── Habitat Projects Overlay ──────────────────────────────────────────────────
+
+let habitatEnabled = false;
+let habitatLayer   = L.layerGroup();
+let habitatGeoJSON = null;
+
+function toggleHabitatLayer() {
+  habitatEnabled = document.getElementById('chk-habitat').checked;
+  if (habitatEnabled) { habitatLayer.addTo(map); loadHabitatLayer(); }
+  else { map.removeLayer(habitatLayer); }
+}
+
+async function loadHabitatLayer() {
+  if (!habitatEnabled) return;
+  if (!habitatGeoJSON) {
+    try {
+      const r = await fetch('/assets/data/dnr_habitat_projects.geojson');
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      habitatGeoJSON = await r.json();
+    } catch (e) { console.error('Habitat layer failed:', e); return; }
+  }
+  habitatLayer.clearLayers();
+  L.geoJSON(habitatGeoJSON, {
+    style: () => ({ color: '#f97316', weight: 3, opacity: 0.85 }),
+    onEachFeature: (f, l) => {
+      const p = f.properties;
+      l.bindPopup(
+        `<strong>${p.SITENAMECOMBINED || p.WATERBODYNAMECOMBINED || 'Habitat Project'}</strong>` +
+        `${p.FISCALYEAR ? '<br>FY ' + p.FISCALYEAR : ''}` +
+        `${p.PROJECTPURPOSE ? '<br>' + p.PROJECTPURPOSE : ''}` +
+        `${p.TECHNIQUESSTRUCTURES ? '<br><em>' + p.TECHNIQUESSTRUCTURES + '</em>' : ''}`
+      );
+    }
+  }).addTo(habitatLayer);
+}
+
+let bridgeEnabled = false;
+let bridgeLayer   = L.layerGroup();
+let bridgeGeoJSON = null;
+
+function toggleBridgeLayer() {
+  bridgeEnabled = document.getElementById('chk-bridge').checked;
+  if (bridgeEnabled) { bridgeLayer.addTo(map); loadBridgeLayer(); }
+  else { map.removeLayer(bridgeLayer); }
+}
+
+function toggleCampsiteLayer() {
+  if (document.getElementById('chk-campsites').checked) campsiteLayer.addTo(map);
+  else map.removeLayer(campsiteLayer);
+}
+
+let streamLinesVisible = true;
+let tripDotsVisible    = true;
+
+function toggleStreamLines(fromBtn = false) {
+  if (fromBtn) {
+    streamLinesVisible = !streamLinesVisible;
+    document.getElementById('chk-stream-lines').checked = streamLinesVisible;
+  } else {
+    streamLinesVisible = document.getElementById('chk-stream-lines').checked;
+  }
+  document.getElementById('btn-map-streams')?.classList.toggle('active-layer', streamLinesVisible);
+  if (streamLinesVisible) ratedStreamLayer.addTo(map);
+  else map.removeLayer(ratedStreamLayer);
+}
+
+function toggleTripDots(fromBtn = false) {
+  if (fromBtn) {
+    tripDotsVisible = !tripDotsVisible;
+    document.getElementById('chk-trip-dots').checked = tripDotsVisible;
+  } else {
+    tripDotsVisible = document.getElementById('chk-trip-dots').checked;
+  }
+  document.getElementById('btn-map-logs')?.classList.toggle('active-layer', tripDotsVisible);
+  if (tripDotsVisible && map.getZoom() >= ZOOM_THRESHOLD) tripLayer.addTo(map);
+  else map.removeLayer(tripLayer);
+}
+
+async function loadBridgeLayer() {
+  if (!bridgeEnabled) return;
+  if (!bridgeGeoJSON) {
+    try {
+      const r = await fetch('/assets/data/dnr_bridge_crossings.geojson');
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      bridgeGeoJSON = await r.json();
+    } catch (e) { console.error('Bridge layer failed:', e); return; }
+  }
+  bridgeLayer.clearLayers();
+  L.geoJSON(bridgeGeoJSON, {
+    pointToLayer: (f, latlng) => L.circleMarker(latlng, {
+      radius: 4,
+      fillColor: '#78716c',
+      fillOpacity: 0.9,
+      color: 'rgba(255,255,255,0.8)',
+      weight: 1.5
+    }),
+    onEachFeature: (f, l) => {
+      const name = f.properties.name || f.properties.highway || 'Bridge';
+      l.bindTooltip(name, { direction: 'top' });
+    }
+  }).addTo(bridgeLayer);
+}
+
+// ── Legend ────────────────────────────────────────────────────────────────────
+
+function buildLegend() {
+  const grades = ['E','D','C','B','A','S','S+'];
+  document.getElementById('legend-items').innerHTML = grades.map(g => {
+    const idx = RATING_KEYS.indexOf(g);
+    return `<div class="legend-item">
+      <span class="legend-dot" style="background:${ratingColor(idx)}"></span>
+      <span>${g}</span>
+    </div>`;
+  }).join('');
+}
+
+// ── Bootstrap ─────────────────────────────────────────────────────────────────
+
+async function init() {
+  try {
+    // Preload stream geometry so it's ready for renderStreamLines
+    if (!dnrGeoJSON) {
+      const r = await fetch('/assets/data/dnr_streams.geojson');
+      if (r.ok) dnrGeoJSON = await r.json();
+    }
+
+    const json = await fetch(DATA_URL).then(r => r.json());
+    dnrNameMap = json.dnr_name_map || {};
+    regsLookup = json.dnr_regulations || {};
+    renderCampsites(json.campsites?.rows || []);
+    const rows = json.source.rows;
+    const raw  = {};
+
+    rows.forEach(row => {
+      const stream  = row[2]?.trim();
+      const rating  = RATING_MAP[row[17]?.toUpperCase()];
+      if (!stream || rating === undefined) return;
+      if (EXCLUDED.some(e => stream.includes(e))) return;
+
+      const lat = parseFloat(row[12]);
+      const lon = parseFloat(row[13]);
+      if (isNaN(lat) || isNaN(lon) || (Math.abs(lat) < 0.001 && Math.abs(lon) < 0.001)) return;
+
+      if (rating === 0 || row[17]?.toUpperCase() === 'O') return; // F = scouted only, O = unrelated log
+
+      const m        = (row[0] || '').match(/^(\d+)\/(\d+)\/(\d+)/);
+      const date     = m ? new Date(+m[3], +m[1]-1, +m[2]) : null;
+      const section  = row[15]?.trim() || '';
+      const whoLog   = row[37]?.trim().toUpperCase() || '';
+      const weather = row[23]?.trim() || '';
+      const desc    = row[18]?.trim() || '';
+
+      if (!raw[stream]) raw[stream] = { lats:[], lons:[], trips:[] };
+      raw[stream].lats.push(lat);
+      raw[stream].lons.push(lon);
+      raw[stream].trips.push({ date, rating, whoLog, desc });
+
+      allTripData.push({ name: stream, lat, lon, date, rating, section, whoLog, weather, desc });
+    });
+
+    streamData = Object.entries(raw).map(([name, d]) => ({
+      name,
+      lat: d.lats.reduce((a,b)=>a+b,0) / d.lats.length,
+      lon: d.lons.reduce((a,b)=>a+b,0) / d.lons.length,
+      allTrips: d.trips
+    }));
+
+    buildLegend();
+    renderMarkers();
+  } catch(err) {
+    document.getElementById('map-stat').textContent = 'Error loading data';
+    console.error(err);
+  }
+}
+
+init();
+
+// Auto-locate on PWA launch; collapse controls by default
+if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone) {
+  goToMyLocation();
+  toggleControls();
+}
+</script>
