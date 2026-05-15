@@ -7,7 +7,7 @@ sitemap: false
 const VERSION = '{{ site.time | date: '%Y%m%d%H%M%S' }}';
 const STATIC_CACHE  = `dtf-static::${VERSION}`;
 const CDN_CACHE     = 'dtf-cdn::v1';
-const DATA_CACHE    = 'dtf-data::v1';
+const DATA_CACHE    = 'dtf-data::v2';
 
 // CDN assets — versioned URLs, cache-first forever
 const CDN_PRECACHE = [
@@ -67,7 +67,8 @@ self.addEventListener('activate', event => {
     caches.keys().then(keys =>
       Promise.all(
         keys
-          .filter(k => k.startsWith('dtf-static::') && k !== STATIC_CACHE)
+          .filter(k => (k.startsWith('dtf-static::') && k !== STATIC_CACHE) ||
+                       (k.startsWith('dtf-data::')   && k !== DATA_CACHE))
           .map(k => {
             console.log(`[SW] removing old cache: ${k}`);
             return caches.delete(k);

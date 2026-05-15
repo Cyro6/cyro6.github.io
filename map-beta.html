@@ -781,7 +781,7 @@ function setOfflineState(btn, state) {
 
 async function checkOfflineCached(btn) {
   try {
-    const cache = await caches.open('dtf-data::v1');
+    const cache = await caches.open('dtf-data::v2');
     const hits = await Promise.all(OVERLAY_URLS.map(u => cache.match(u)));
     if (hits.every(Boolean)) setOfflineState(btn, 'done');
   } catch (_) {}
@@ -791,7 +791,7 @@ async function cacheOverlays(btn) {
   if (btn.classList.contains('caching')) return;
   setOfflineState(btn, 'caching');
   try {
-    const cache = await caches.open('dtf-data::v1');
+    const cache = await caches.open('dtf-data::v2');
     await Promise.allSettled(
       OVERLAY_URLS.map(url =>
         fetch(url).then(r => { if (r.ok) cache.put(url, r); })
@@ -1330,6 +1330,7 @@ function renderStreamLines(lookup) {
 
   // ── Turbidity mode: color all DNR streams by drainage area ──────────────────
   if (colorMode === 'turbidity') {
+    if (!map.hasLayer(ratedStreamLayer)) ratedStreamLayer.addTo(map);
     L.geoJSON(dnrGeoJSON, {
       pane: 'ratedStreamsPane',
       style: f => ({
