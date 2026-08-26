@@ -31,7 +31,7 @@ layout: post
 title: May Family Up North Trip 2026
 date: 2026-05-23
 youtube:
-  - title: Coming Soon
-    url:
+  - title: May 2026 Northern WI Trout Fishing - Family Trip 2026
+    url: https://www.youtube.com/watch?v=PSNblBBjgJs
 ---
 # May 2026
