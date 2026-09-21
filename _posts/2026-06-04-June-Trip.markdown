@@ -1,0 +1,97 @@
+---
+images:
+  - /assets/images/20260604_133718~2.jpg
+  - /assets/images/20260604_133809.jpg
+  - /assets/images/20260604_133922.jpg
+  - /assets/images/20260604_133926.jpg
+  - /assets/images/20260604_135059.jpg
+  - /assets/images/20260604_135115.jpg
+  - /assets/images/20260604_170755.jpg
+  - /assets/images/20260605_192941.jpg
+  - /assets/images/20260605_203359.jpg
+  - /assets/images/20260605_204047.jpg
+  - /assets/images/20260606_083756.jpg
+  - /assets/images/20260606_181817.jpg
+  - /assets/images/20260606_190920.jpg
+  - /assets/images/20260606_195836.jpg
+  - /assets/images/20260607_144013.jpg
+  - /assets/images/20260607_171501.jpg
+summary: "Beau and I went on this trip and I knew there was rain recently in the forecast. Barometric pressure was falling during this trip, it was cooler than normal due to the rain and overcast skies. Seems to be almost a mirror from last years trip in some ways. We had some storms come through that caused a lot of driving to happen."
+
+campsite:
+  name: 4 Season Park
+  url: https://maps.app.goo.gl/vgJT8wdxrjvzXKuH8
+  lat: 44.3573245
+  lng: -91.4175961
+
+cost:
+  items:
+    - name: Gas
+      amount: 0
+    - name: Grocery
+      amount: 60
+    - name: Campsite
+      amount: 0
+
+days:
+  - day: Day 1
+    date: June 4, 2026
+    weather: Scattered showers and thunderstorms, mostly just overcast
+    spots:
+      - name: Pigeon Creek
+        url: https://maps.app.goo.gl/2ZhDdMjjjkmiK6xo9
+        notes: This is a new stream to me but the system is familiar. Normally I fish Elk or Trempealeau. Great day of fishing with maybe one Brooke under 12 inches.
+        lat: 44.3952855
+        lng: -91.2533815
+      - name: Harvey Creek
+        url: https://maps.app.goo.gl/VoPZiP3Z7eTudX8X9
+        notes: Had an absolute wild outing here a year ago so we figured we would give it a try in the evening. It was not as crazy but we managed a few nice ones. Beau caught is PB Brooke at 13.5". Of course my camera was on timewarp (sad).
+        lat: 44.557963
+        lng: -91.688323
+  - day: Day 2
+    date: June 5, 2026
+    weather: Scattered showers and sunny, mostly sunny.
+    spots:
+      - name: Bear Creek
+        url: https://maps.app.goo.gl/P7y9hLPD93epJpUn6
+        notes: I always want this stream to produce but it just always stuggles to give me much to brag about. We ended up moving on from this spot after only 1 or 2 browns. I do wonder how much pressure it gets. We drove pretty much everywhere trying to find clear water and this was one of the only spots that was "Clear".
+        lat: 44.6292618
+        lng: -91.9094802
+      - name: Harvey Creek
+        url: https://maps.app.goo.gl/1Rfo4aH37xowqhnZ9
+        notes: We decided to hit up Harvey again today as it had not been hit that hard with rain. Still only produced a few trout but decent ones as always with this stream.
+        lat: 44.5640619
+        lng: -91.6925326
+  - day: Day 3
+    date: June 6, 2026
+    weather: Sunny but rain came overnight.
+    spots:
+      - name: Pidgeon Creek
+        url: https://maps.app.goo.gl/sq3bzo4vBcqKJjgv5
+        notes: Really tough day with almost no fishing. Everything was blown out from the rain. We ended up fishing a spot like 15 minutes from camp and it turned out to be a great evening. I do think the stream cleared a bit during the day but it was still pretty muddy. Beau got a really nice Brooke and I matched my BP with a 14.25" Brooke. Memories were made.
+        lat: 44.3916074
+        lng: -91.2406563
+  - day: Day 4
+    date: June 7, 2026
+    weather: Sunny and beautiful
+    spots:
+      - name: Pidgeon Creek
+        url: https://maps.app.goo.gl/3dNkJEtdD4TdVYJ47
+        notes: Beau was getting pretty tired by this day and only managed one fish. I had a good outing and managed a 16" Brown and several nice Brookies.
+        lat: 44.3897851
+        lng: -91.2677144
+memes:
+  - "We'll fix that in post"
+
+
+thumbnail: /assets/images/20250607_165113.jpg
+
+layout: post
+title: June Trip
+date: 2026-06-04
+youtube:
+  - title: June 2026 YouTube Playlist
+    url: https://www.youtube.com/playlist?list=PLERjlpP9M4r0
+---
+# June 2026
+

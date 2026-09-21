@@ -62,7 +62,7 @@ layout: post
 title: May Trip
 date: 2026-05-07
 youtube:
-  - title: Coming Soon
-    url: 
+  - title: May 2026 YouTube Playlist
+    url: https://youtube.com/playlist?list=PLcbBncgGuhvt6VFpbSAlqzYPQMNjhYq5U
 ---
 # May 2026
