@@ -81,7 +81,6 @@ days:
         lat: 44.3897851
         lng: -91.2677144
 memes:
-  - "We'll fix that in post"
 
 
 thumbnail: /assets/images/20260604_133718~2.jpg
