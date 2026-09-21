@@ -75,13 +75,22 @@
         </svg>
         <span>Planner</span>
       </a>
-      <a href="/insights" class="pwa-tab{% if page.url contains 'insights' %} active{% endif %}" aria-label="Insights">
+      <a href="/weather" class="pwa-tab{% if page.url contains 'weather' %} active{% endif %}" aria-label="Weather">
         <svg viewBox="0 0 24 24">
-          <line x1="18" y1="20" x2="18" y2="10"/>
-          <line x1="12" y1="20" x2="12" y2="4"/>
-          <line x1="6" y1="20" x2="6" y2="14"/>
+          <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 0 1 0 9z"/>
         </svg>
-        <span>Insights</span>
+        <span>Weather</span>
+      </a>
+      <a href="/checklist" class="pwa-tab{% if page.url contains 'checklist' %} active{% endif %}" aria-label="Checklist">
+        <svg viewBox="0 0 24 24">
+          <line x1="8" y1="6" x2="21" y2="6"/>
+          <line x1="8" y1="12" x2="21" y2="12"/>
+          <line x1="8" y1="18" x2="21" y2="18"/>
+          <polyline points="3 6 4 7 6 5"/>
+          <polyline points="3 12 4 13 6 11"/>
+          <polyline points="3 18 4 19 6 17"/>
+        </svg>
+        <span>Checklist</span>
       </a>
     </nav>
   </body>
