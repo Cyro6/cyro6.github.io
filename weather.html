@@ -95,18 +95,22 @@ body.dark-theme .weather-page {
 .day-card .dc-name { font-weight: 700; font-size: .85rem; }
 .day-card .dc-date { font-size: .72rem; color: var(--text-secondary); margin-bottom: 8px; }
 .day-card .dc-row  { font-size: .78rem; margin: 3px 0; }
-.dc-badge {
-    display: inline-block;
+.dc-split {
+    display: inline-flex;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 7px;
     font-size: .68rem;
     font-weight: 700;
-    border-radius: 4px;
-    padding: 2px 6px;
-    margin-top: 6px;
-    color: #fff;
+    line-height: 1;
 }
-.dc-badge.good    { background: #05bf85; }
-.dc-badge.stable  { background: #a8adac; }
-.dc-badge.falling { background: #f97316; }
+.dc-split span { padding: 3px 7px; }
+.dc-wet-dry  { background: #a8adac; color: #fff; }
+.dc-wet-1    { background: #93c5fd; color: #1e3a5f; }
+.dc-wet-2    { background: #3b82f6; color: #fff; }
+.dc-wet-3    { background: #1d4ed8; color: #fff; }
+.dc-press-good { background: #05bf85; color: #fff; }
+.dc-press-ok   { background: #7a8a85; color: #fff; }
 .chart-wrap { position: relative; height: 220px; }
 #wx-status { font-size: .82rem; color: var(--text-secondary); margin: 8px 0; }
 </style>
@@ -233,11 +237,18 @@ async function loadWeather() {
 }
 
 // ── Day cards ─────────────────────────────────────────────────────────────────
-function fishingQuality(dayTrend, avgPressure, precip) {
-  if (precip > 0.5)  return { cls: 'falling', label: 'Wet — Tough' };
-  if (dayTrend < -1) return { cls: 'good',    label: 'Falling — Good' };
-  if (dayTrend > 1)  return { cls: 'stable',  label: 'Rising — Slow' };
-  return { cls: 'stable', label: 'Stable — OK' };
+function wetClass(todayIn, prevIn) {
+  const total = (todayIn || 0) + (prevIn || 0);
+  if (total === 0)    return { cls: 'dc-wet-dry', label: 'Dry' };
+  if (total < 0.25)  return { cls: 'dc-wet-1',   label: 'Wet' };
+  if (total < 0.75)  return { cls: 'dc-wet-2',   label: 'Wet' };
+  return              { cls: 'dc-wet-3',          label: 'Wet' };
+}
+
+function pressureQuality(dayTrend) {
+  if (dayTrend < -1) return { cls: 'dc-press-good', label: 'Good' };
+  if (dayTrend > 1)  return { cls: 'dc-press-ok',   label: 'Slow' };
+  return              { cls: 'dc-press-ok',          label: 'OK' };
 }
 
 function renderDayCards(data) {
@@ -248,12 +259,12 @@ function renderDayCards(data) {
   el.innerHTML   = '';
 
   for (let d = 0; d < 7; d++) {
-    const date   = new Date(daily.time[d] + 'T12:00:00');
-    const hiF    = daily.temperature_2m_max?.[d];
-    const loF    = daily.temperature_2m_min?.[d];
-    const precip = daily.precipitation_sum?.[d];
+    const date      = new Date(daily.time[d] + 'T12:00:00');
+    const hiF       = daily.temperature_2m_max?.[d];
+    const loF       = daily.temperature_2m_min?.[d];
+    const precip    = daily.precipitation_sum?.[d] ?? 0;
+    const prevPrecip = daily.precipitation_sum?.[d - 1] ?? 0;
 
-    // Avg daytime pressure (6am–6pm) and trend vs prior 6 hrs
     const base = d * 24;
     function avgP(s, e) {
       let sum = 0, n = 0;
@@ -270,16 +281,22 @@ function renderDayCards(data) {
       return n ? sum / n : null;
     })();
     const trend = (dayAvg != null && prevAvg != null) ? dayAvg - prevAvg : 0;
-    const q = fishingQuality(trend, dayAvg, precip ?? 0);
+
+    const wet   = wetClass(precip, prevPrecip);
+    const press = pressureQuality(trend);
+    const borderCls = press.label === 'Good' ? 'good' : 'stable';
 
     el.innerHTML += `
-      <div class="day-card ${q.cls}">
+      <div class="day-card ${borderCls}">
         <div class="dc-name">${DAY_NAMES[date.getDay()]}</div>
         <div class="dc-date">${MONTH_NAMES[date.getMonth()]} ${date.getDate()}</div>
         ${hiF != null ? `<div class="dc-row">🌡 ${Math.round(hiF)}° / ${Math.round(loF)}°F</div>` : ''}
-        ${precip != null ? `<div class="dc-row">🌧 ${precip.toFixed(2)}"</div>` : ''}
+        ${precip > 0 ? `<div class="dc-row">🌧 ${precip.toFixed(2)}"</div>` : ''}
         ${dayAvg != null ? `<div class="dc-row">📊 ${Math.round(dayAvg)} hPa</div>` : ''}
-        <span class="dc-badge ${q.cls}">${q.label}</span>
+        <div class="dc-split">
+          <span class="${wet.cls}">${wet.label}</span>
+          <span class="${press.cls}">${press.label}</span>
+        </div>
       </div>`;
   }
 }
