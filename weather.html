@@ -91,6 +91,7 @@ body.dark-theme .weather-page {
 .day-card.falling { border-top-color: #f97316; }
 .day-card.good    { border-top-color: #05bf85; }
 .day-card.stable  { border-top-color: #a8adac; }
+/* "good" maps to falling pressure (feeding) — green. "stable" covers rising+stable — gray. "falling" css class reused for wet/tough — orange. */
 .day-card .dc-name { font-weight: 700; font-size: .85rem; }
 .day-card .dc-date { font-size: .72rem; color: var(--text-secondary); margin-bottom: 8px; }
 .day-card .dc-row  { font-size: .78rem; margin: 3px 0; }
@@ -233,9 +234,9 @@ async function loadWeather() {
 
 // ── Day cards ─────────────────────────────────────────────────────────────────
 function fishingQuality(dayTrend, avgPressure, precip) {
-  if (precip > 0.5) return { cls: 'falling', label: 'Wet — Tough' };
-  if (dayTrend > 1)  return { cls: 'good',    label: 'Rising — Good' };
-  if (dayTrend < -1) return { cls: 'falling', label: 'Falling — Tough' };
+  if (precip > 0.5)  return { cls: 'falling', label: 'Wet — Tough' };
+  if (dayTrend < -1) return { cls: 'good',    label: 'Falling — Good' };
+  if (dayTrend > 1)  return { cls: 'stable',  label: 'Rising — Slow' };
   return { cls: 'stable', label: 'Stable — OK' };
 }
 
