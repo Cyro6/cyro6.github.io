@@ -84,7 +84,7 @@ memes:
   - "We'll fix that in post"
 
 
-thumbnail: /assets/images/20250607_165113.jpg
+thumbnail: /assets/images/20260604_133718~2.jpg
 
 layout: post
 title: June Trip
