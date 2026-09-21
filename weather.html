@@ -1,0 +1,393 @@
+---
+layout: default
+title: Weather
+---
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+.weather-page {
+    --bg-primary: #f5f0e8;
+    --bg-secondary: #ede8de;
+    --card-bg: #ffffff;
+    --text-primary: #384743;
+    --text-secondary: #a8adac;
+    --header-bg: #242e2b;
+    --button-bg: #05bf85;
+    --button-hover-bg: #008000;
+    --link-color: #05bf85;
+    --shadow-color: rgba(0,0,0,0.09);
+    font-family: 'Inter', sans-serif;
+    background: transparent;
+    padding: 20px 0;
+    color: var(--text-primary);
+}
+body.dark-theme .weather-page {
+    --bg-primary: #1a2420;
+    --bg-secondary: #242e2b;
+    --card-bg: #2d3a35;
+    --text-primary: #d4cfc6;
+    --text-secondary: #7a8a85;
+    --header-bg: #141e1b;
+    --shadow-color: rgba(0,0,0,0.3);
+}
+.wx-controls {
+    background: var(--card-bg);
+    border-radius: 10px;
+    padding: 18px 20px;
+    box-shadow: 0 2px 8px var(--shadow-color);
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-end;
+}
+.wx-controls label { font-size: .82rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px; }
+.wx-controls select, .wx-controls input {
+    font-family: 'Inter', sans-serif;
+    font-size: .88rem;
+    padding: 7px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--bg-secondary);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-width: 200px;
+}
+.wx-controls input { min-width: 120px; }
+.wx-btn {
+    background: var(--button-bg);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 18px;
+    font-family: 'Inter', sans-serif;
+    font-size: .88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s;
+}
+.wx-btn:hover { background: var(--button-hover-bg); }
+.wx-btn:disabled { background: var(--text-secondary); cursor: default; }
+.wx-manual { display: flex; gap: 8px; align-items: flex-end; }
+.wx-section {
+    background: var(--card-bg);
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 8px var(--shadow-color);
+    margin-bottom: 20px;
+}
+.wx-section h3 { margin: 0 0 14px; font-size: .95rem; color: var(--text-primary); }
+.day-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+    margin-bottom: 20px;
+}
+.day-card {
+    background: var(--card-bg);
+    border-radius: 8px;
+    padding: 12px 14px;
+    box-shadow: 0 2px 6px var(--shadow-color);
+    border-top: 3px solid var(--button-bg);
+}
+.day-card.falling { border-top-color: #f97316; }
+.day-card.good    { border-top-color: #05bf85; }
+.day-card.stable  { border-top-color: #a8adac; }
+.day-card .dc-name { font-weight: 700; font-size: .85rem; }
+.day-card .dc-date { font-size: .72rem; color: var(--text-secondary); margin-bottom: 8px; }
+.day-card .dc-row  { font-size: .78rem; margin: 3px 0; }
+.dc-badge {
+    display: inline-block;
+    font-size: .68rem;
+    font-weight: 700;
+    border-radius: 4px;
+    padding: 2px 6px;
+    margin-top: 6px;
+    color: #fff;
+}
+.dc-badge.good    { background: #05bf85; }
+.dc-badge.stable  { background: #a8adac; }
+.dc-badge.falling { background: #f97316; }
+.chart-wrap { position: relative; height: 220px; }
+#wx-status { font-size: .82rem; color: var(--text-secondary); margin: 8px 0; }
+</style>
+
+<div class="weather-page">
+
+  <div class="wx-controls">
+    <div>
+      <label for="wx-campsite">Campsite</label>
+      <select id="wx-campsite" onchange="onCampsiteChange()">
+        <option value="">— pick a campsite —</option>
+      </select>
+    </div>
+    <div class="wx-manual">
+      <div>
+        <label for="wx-lat">Lat</label>
+        <input type="number" id="wx-lat" placeholder="44.556" step="0.0001">
+      </div>
+      <div>
+        <label for="wx-lon">Lng</label>
+        <input type="number" id="wx-lon" placeholder="-91.668" step="0.0001">
+      </div>
+    </div>
+    <div>
+      <label>&nbsp;</label>
+      <button class="wx-btn" onclick="loadWeather()">Load Weather</button>
+    </div>
+  </div>
+
+  <div id="wx-status"></div>
+
+  <div id="wx-content" style="display:none">
+    <div class="day-cards" id="day-cards"></div>
+
+    <div class="wx-section">
+      <h3>Barometric Pressure — 7-Day Hourly (hPa)</h3>
+      <div class="chart-wrap">
+        <canvas id="pressure-chart"></canvas>
+      </div>
+    </div>
+
+    <div class="wx-section">
+      <h3>Precipitation — 7-Day Hourly (in)</h3>
+      <div class="chart-wrap">
+        <canvas id="precip-chart"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const DATA_URL = '/assets/data/streams.json?v={{ site.time | date: "%Y%m%d%H%M%S" }}';
+const DAY_NAMES   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+let pressureChartInst = null;
+let precipChartInst   = null;
+
+// ── Populate campsite dropdown ────────────────────────────────────────────────
+async function initCampsites() {
+  try {
+    const res  = await fetch(DATA_URL);
+    const data = await res.json();
+    const sel  = document.getElementById('wx-campsite');
+    (data.campsites?.rows || []).forEach(row => {
+      const name = row[0]?.trim();
+      const gps  = row[1]?.trim();
+      if (name && gps) {
+        const opt = document.createElement('option');
+        opt.value = gps;
+        opt.textContent = name;
+        sel.appendChild(opt);
+      }
+    });
+  } catch (e) {
+    setStatus('Could not load campsite list.');
+  }
+}
+
+function onCampsiteChange() {
+  const val = document.getElementById('wx-campsite').value;
+  if (!val) return;
+  const [lat, lon] = val.split(',').map(s => s.trim());
+  document.getElementById('wx-lat').value = lat;
+  document.getElementById('wx-lon').value = lon;
+}
+
+function setStatus(msg) {
+  document.getElementById('wx-status').textContent = msg;
+}
+
+// ── Fetch + render ────────────────────────────────────────────────────────────
+async function loadWeather() {
+  const lat = parseFloat(document.getElementById('wx-lat').value);
+  const lon = parseFloat(document.getElementById('wx-lon').value);
+  if (isNaN(lat) || isNaN(lon)) { setStatus('Enter coordinates or pick a campsite.'); return; }
+
+  setStatus('Loading…');
+  document.getElementById('wx-content').style.display = 'none';
+
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast` +
+      `?latitude=${lat}&longitude=${lon}` +
+      `&hourly=pressure_msl,temperature_2m,precipitation` +
+      `&daily=temperature_2m_max,temperature_2m_min,precipitation_sum` +
+      `&timezone=America%2FChicago&forecast_days=7` +
+      `&temperature_unit=fahrenheit&precipitation_unit=inch`;
+
+    const res  = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    renderDayCards(data);
+    renderPressureChart(data);
+    renderPrecipChart(data);
+
+    document.getElementById('wx-content').style.display = 'block';
+    setStatus('');
+  } catch (e) {
+    setStatus(`Error: ${e.message}`);
+  }
+}
+
+// ── Day cards ─────────────────────────────────────────────────────────────────
+function fishingQuality(dayTrend, avgPressure, precip) {
+  if (precip > 0.5) return { cls: 'falling', label: 'Wet — Tough' };
+  if (dayTrend > 1)  return { cls: 'good',    label: 'Rising — Good' };
+  if (dayTrend < -1) return { cls: 'falling', label: 'Falling — Tough' };
+  return { cls: 'stable', label: 'Stable — OK' };
+}
+
+function renderDayCards(data) {
+  const pressure = data.hourly?.pressure_msl    || [];
+  const times    = data.hourly?.time            || [];
+  const daily    = data.daily;
+  const el       = document.getElementById('day-cards');
+  el.innerHTML   = '';
+
+  for (let d = 0; d < 7; d++) {
+    const date   = new Date(daily.time[d] + 'T12:00:00');
+    const hiF    = daily.temperature_2m_max?.[d];
+    const loF    = daily.temperature_2m_min?.[d];
+    const precip = daily.precipitation_sum?.[d];
+
+    // Avg daytime pressure (6am–6pm) and trend vs prior 6 hrs
+    const base = d * 24;
+    function avgP(s, e) {
+      let sum = 0, n = 0;
+      for (let i = s; i <= e; i++) {
+        if (pressure[base + i] != null) { sum += pressure[base + i]; n++; }
+      }
+      return n ? sum / n : null;
+    }
+    const dayAvg  = avgP(6, 17);
+    const prevAvg = d === 0 ? avgP(0, 5) : (function() {
+      let sum = 0, n = 0;
+      const pb = (d - 1) * 24;
+      for (let i = 18; i <= 23; i++) { if (pressure[pb + i] != null) { sum += pressure[pb + i]; n++; } }
+      return n ? sum / n : null;
+    })();
+    const trend = (dayAvg != null && prevAvg != null) ? dayAvg - prevAvg : 0;
+    const q = fishingQuality(trend, dayAvg, precip ?? 0);
+
+    el.innerHTML += `
+      <div class="day-card ${q.cls}">
+        <div class="dc-name">${DAY_NAMES[date.getDay()]}</div>
+        <div class="dc-date">${MONTH_NAMES[date.getMonth()]} ${date.getDate()}</div>
+        ${hiF != null ? `<div class="dc-row">🌡 ${Math.round(hiF)}° / ${Math.round(loF)}°F</div>` : ''}
+        ${precip != null ? `<div class="dc-row">🌧 ${precip.toFixed(2)}"</div>` : ''}
+        ${dayAvg != null ? `<div class="dc-row">📊 ${Math.round(dayAvg)} hPa</div>` : ''}
+        <span class="dc-badge ${q.cls}">${q.label}</span>
+      </div>`;
+  }
+}
+
+// ── Pressure chart ────────────────────────────────────────────────────────────
+function renderPressureChart(data) {
+  const times    = data.hourly?.time         || [];
+  const pressure = data.hourly?.pressure_msl || [];
+
+  const labels = times.map((t, i) => {
+    const d = new Date(t);
+    return d.getHours() === 0 ? `${DAY_NAMES[d.getDay()]} ${d.getDate()}` : '';
+  });
+
+  const isDark = document.body.classList.contains('dark-theme');
+  const gridColor = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
+  const textColor = isDark ? '#7a8a85' : '#a8adac';
+
+  if (pressureChartInst) pressureChartInst.destroy();
+  pressureChartInst = new Chart(document.getElementById('pressure-chart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data: pressure,
+        borderColor: '#05bf85',
+        borderWidth: 2,
+        pointRadius: 0,
+        tension: 0.3,
+        fill: {
+          target: 'origin',
+          above: 'rgba(5,191,133,0.08)',
+        },
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: {
+        callbacks: {
+          title: i => { const d = new Date(times[i[0].dataIndex]); return `${DAY_NAMES[d.getDay()]} ${MONTH_NAMES[d.getMonth()]} ${d.getDate()} ${d.getHours()}:00`; },
+          label: i => `${i.raw?.toFixed(1)} hPa`,
+        }
+      }},
+      scales: {
+        x: {
+          ticks: { color: textColor, maxRotation: 0, autoSkip: false,
+            callback: (v, i) => labels[i] || null },
+          grid: { color: gridColor },
+        },
+        y: {
+          ticks: { color: textColor },
+          grid: { color: gridColor },
+        },
+      },
+    },
+  });
+}
+
+// ── Precip chart ──────────────────────────────────────────────────────────────
+function renderPrecipChart(data) {
+  const times  = data.hourly?.time          || [];
+  const precip = data.hourly?.precipitation || [];
+
+  const labels = times.map((t, i) => {
+    const d = new Date(t);
+    return d.getHours() === 0 ? `${DAY_NAMES[d.getDay()]} ${d.getDate()}` : '';
+  });
+
+  const isDark = document.body.classList.contains('dark-theme');
+  const gridColor = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
+  const textColor = isDark ? '#7a8a85' : '#a8adac';
+
+  if (precipChartInst) precipChartInst.destroy();
+  precipChartInst = new Chart(document.getElementById('precip-chart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: precip,
+        backgroundColor: 'rgba(59,130,246,0.6)',
+        borderColor: 'rgba(59,130,246,0.9)',
+        borderWidth: 1,
+        borderRadius: 2,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: {
+        callbacks: {
+          title: i => { const d = new Date(times[i[0].dataIndex]); return `${DAY_NAMES[d.getDay()]} ${MONTH_NAMES[d.getMonth()]} ${d.getDate()} ${d.getHours()}:00`; },
+          label: i => `${i.raw?.toFixed(3)}"`,
+        }
+      }},
+      scales: {
+        x: {
+          ticks: { color: textColor, maxRotation: 0, autoSkip: false,
+            callback: (v, i) => labels[i] || null },
+          grid: { color: gridColor },
+        },
+        y: {
+          ticks: { color: textColor },
+          grid: { color: gridColor },
+        },
+      },
+    },
+  });
+}
+
+document.addEventListener('DOMContentLoaded', initCampsites);
+</script>

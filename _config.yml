@@ -30,5 +30,7 @@ navigation_header:
     url: /insights
   - title: Planner
     url: /planner
+  - title: Weather
+    url: /weather
   - title: About
     url: /about
