@@ -1,0 +1,272 @@
+---
+layout: default
+title: Gear Checklist
+---
+<style>
+.checklist-page {
+  font-family: 'Inter', sans-serif;
+  padding: 20px 0;
+  color: #384743;
+}
+.cl-actions {
+  margin-bottom: 16px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.cl-btn {
+  background: #05bf85;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 16px;
+  font-size: .85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.cl-btn:hover { background: #008000; }
+.cl-btn.secondary { background: #384743; }
+.cl-btn.secondary:hover { background: #242e2b; }
+.cl-note { font-size: .78rem; color: #a8adac; }
+
+.cl-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0;
+  border: 2px solid #ccc;
+  border-radius: 6px;
+  overflow: hidden;
+  font-size: .82rem;
+}
+.cl-col { border-right: 1px solid #ddd; }
+.cl-col:last-child { border-right: none; }
+.cl-header {
+  font-weight: 700;
+  font-size: .8rem;
+  text-align: center;
+  padding: 7px 6px;
+  border-bottom: 2px solid #ccc;
+}
+.cl-subheader {
+  font-weight: 600;
+  font-size: .75rem;
+  text-align: center;
+  padding: 4px 6px;
+  background: #f5f5f5;
+  border-bottom: 1px solid #ddd;
+  color: #666;
+}
+.cl-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-bottom: 1px solid #eee;
+  min-height: 28px;
+}
+.cl-item:last-child { border-bottom: none; }
+.cl-item.optional { background: #fef9c3; }
+.cl-item input[type=checkbox] { flex-shrink: 0; cursor: pointer; accent-color: #05bf85; }
+.cl-item label { cursor: pointer; line-height: 1.3; }
+.cl-item.checked label { text-decoration: line-through; color: #a8adac; }
+
+/* Large Bin and Small Bin split into sub-cols */
+.cl-col-split {
+  display: grid;
+  grid-column: span 2;
+  grid-template-columns: 1fr 1fr;
+  border-right: 1px solid #ddd;
+}
+.cl-col-split .cl-header {
+  grid-column: span 2;
+}
+.cl-subcol { border-right: 1px solid #ddd; }
+.cl-subcol:last-child { border-right: none; }
+
+/* Headers */
+.h-main   { background: #c6efce; color: #276221; }
+.h-bag    { background: #e2efda; color: #375623; }
+.h-large  { background: #f2f2f2; color: #333; }
+.h-small  { background: #dce6f1; color: #17375e; }
+.h-vest   { background: #fce4d6; color: #843c0c; }
+.h-car    { background: #bdd7ee; color: #1f4e79; }
+
+@media print {
+  nav, header, footer, .cl-actions, #site-nav, .site-header, .site-footer { display: none !important; }
+  body { background: #fff !important; }
+  .checklist-page { padding: 0; }
+  .cl-grid { font-size: .75rem; border-radius: 0; }
+  .cl-item { min-height: 22px; padding: 2px 6px; }
+  .cl-item input[type=checkbox] { width: 10px; height: 10px; }
+}
+
+body.dark-theme .cl-grid { border-color: #444; }
+body.dark-theme .cl-col  { border-color: #444; }
+body.dark-theme .cl-col-split { border-color: #444; }
+body.dark-theme .cl-subcol { border-color: #444; }
+body.dark-theme .cl-item  { border-color: #333; color: #d4cfc6; background: #2d3a35; }
+body.dark-theme .cl-item.optional { background: #4a4218; }
+body.dark-theme .cl-subheader { background: #242e2b; color: #7a8a85; border-color: #444; }
+body.dark-theme .cl-item.checked label { color: #5a6a65; }
+</style>
+
+<div class="checklist-page">
+
+  <div class="cl-actions">
+    <button class="cl-btn" onclick="window.print()">Print</button>
+    <button class="cl-btn secondary" onclick="uncheckAll()">Reset</button>
+    <span class="cl-note">Yellow = optional &nbsp;|&nbsp; Check items as you pack</span>
+  </div>
+
+  <div class="cl-grid">
+
+    <!-- Main Bin -->
+    <div class="cl-col">
+      <div class="cl-header h-main">Main Bin (M)</div>
+      <div class="cl-subheader">&nbsp;</div>
+      {% assign main = "Rope,Extra Tent Stakes,Tent,Pillow,Bed Blanket,Wader Repair Kit,Extra Waders,Rubber Mallet,Towels" | split: "," %}
+      {% for item in main %}
+      <div class="cl-item" id="i-{{ item | slugify }}">
+        <input type="checkbox" id="c-{{ item | slugify }}" onchange="toggleCheck(this)">
+        <label for="c-{{ item | slugify }}">{{ item }}</label>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Bag -->
+    <div class="cl-col">
+      <div class="cl-header h-bag">Bag (B)</div>
+      <div class="cl-subheader">&nbsp;</div>
+      <div class="cl-item" id="i-underwear"><input type="checkbox" id="c-underwear" onchange="toggleCheck(this)"><label for="c-underwear">Underwear (4)</label></div>
+      <div class="cl-item" id="i-socks"><input type="checkbox" id="c-socks" onchange="toggleCheck(this)"><label for="c-socks">Socks (4×4)</label></div>
+      <div class="cl-item" id="i-shirts"><input type="checkbox" id="c-shirts" onchange="toggleCheck(this)"><label for="c-shirts">Shirts (4)</label></div>
+      <div class="cl-item" id="i-pants"><input type="checkbox" id="c-pants" onchange="toggleCheck(this)"><label for="c-pants">Pants 2</label></div>
+      <div class="cl-item optional" id="i-swimsuit"><input type="checkbox" id="c-swimsuit" onchange="toggleCheck(this)"><label for="c-swimsuit">Swim Suit</label></div>
+      <div class="cl-item" id="i-shower"><input type="checkbox" id="c-shower" onchange="toggleCheck(this)"><label for="c-shower">Shower Bag</label></div>
+      <div class="cl-item optional" id="i-wetwipes"><input type="checkbox" id="c-wetwipes" onchange="toggleCheck(this)"><label for="c-wetwipes">Wet Wipes</label></div>
+      <div class="cl-item" id="i-medkit"><input type="checkbox" id="c-medkit" onchange="toggleCheck(this)"><label for="c-medkit">Med Kit</label></div>
+      <div class="cl-item" id="i-belt"><input type="checkbox" id="c-belt" onchange="toggleCheck(this)"><label for="c-belt">Belt</label></div>
+      <div class="cl-item" id="i-headlamp"><input type="checkbox" id="c-headlamp" onchange="toggleCheck(this)"><label for="c-headlamp">Headlamp</label></div>
+      <div class="cl-item" id="i-sleepingpad"><input type="checkbox" id="c-sleepingpad" onchange="toggleCheck(this)"><label for="c-sleepingpad">Sleeping Pad</label></div>
+      <div class="cl-item" id="i-pillow2"><input type="checkbox" id="c-pillow2" onchange="toggleCheck(this)"><label for="c-pillow2">Blow Up Pillow</label></div>
+      <div class="cl-item" id="i-airpump"><input type="checkbox" id="c-airpump" onchange="toggleCheck(this)"><label for="c-airpump">Air Pump</label></div>
+    </div>
+
+    <!-- Large Bin -->
+    <div class="cl-col-split">
+      <div class="cl-header h-large">Large Bin (L1 &amp; L2)</div>
+      <div class="cl-subcol">
+        <div class="cl-subheader">Lower</div>
+        <div class="cl-item" id="i-grill"><input type="checkbox" id="c-grill" onchange="toggleCheck(this)"><label for="c-grill">Grill</label></div>
+        <div class="cl-item" id="i-propane"><input type="checkbox" id="c-propane" onchange="toggleCheck(this)"><label for="c-propane">Propane</label></div>
+        <div class="cl-item" id="i-lighter"><input type="checkbox" id="c-lighter" onchange="toggleCheck(this)"><label for="c-lighter">Lighter</label></div>
+        <div class="cl-item" id="i-spatula"><input type="checkbox" id="c-spatula" onchange="toggleCheck(this)"><label for="c-spatula">Spatula</label></div>
+        <div class="cl-item" id="i-avocadooil"><input type="checkbox" id="c-avocadooil" onchange="toggleCheck(this)"><label for="c-avocadooil">Avocado Oil</label></div>
+        <div class="cl-item" id="i-salt"><input type="checkbox" id="c-salt" onchange="toggleCheck(this)"><label for="c-salt">Salt</label></div>
+        <div class="cl-item" id="i-pepper"><input type="checkbox" id="c-pepper" onchange="toggleCheck(this)"><label for="c-pepper">Pepper</label></div>
+        <div class="cl-item" id="i-plates-l"><input type="checkbox" id="c-plates-l" onchange="toggleCheck(this)"><label for="c-plates-l">Plates (2)</label></div>
+        <div class="cl-item" id="i-cheeseknife-l"><input type="checkbox" id="c-cheeseknife-l" onchange="toggleCheck(this)"><label for="c-cheeseknife-l">Cheese Knife</label></div>
+        <div class="cl-item" id="i-handtowel"><input type="checkbox" id="c-handtowel" onchange="toggleCheck(this)"><label for="c-handtowel">Small Hand Towel</label></div>
+      </div>
+      <div class="cl-subcol">
+        <div class="cl-subheader">Top</div>
+        <div class="cl-item" id="i-food"><input type="checkbox" id="c-food" onchange="toggleCheck(this)"><label for="c-food">Food</label></div>
+        <div class="cl-item" id="i-sandbags"><input type="checkbox" id="c-sandbags" onchange="toggleCheck(this)"><label for="c-sandbags">Sandwich Bags 8</label></div>
+        <div class="cl-item" id="i-freezerbags"><input type="checkbox" id="c-freezerbags" onchange="toggleCheck(this)"><label for="c-freezerbags">Freezer Bags (4)</label></div>
+        <div class="cl-item" id="i-plates-lt"><input type="checkbox" id="c-plates-lt" onchange="toggleCheck(this)"><label for="c-plates-lt">Plates</label></div>
+      </div>
+    </div>
+
+    <!-- Small Bin -->
+    <div class="cl-col-split">
+      <div class="cl-header h-small">Small Bin (S1 &amp; S2)</div>
+      <div class="cl-subcol">
+        <div class="cl-subheader">Lower</div>
+        <div class="cl-item" id="i-plates-s"><input type="checkbox" id="c-plates-s" onchange="toggleCheck(this)"><label for="c-plates-s">Plates</label></div>
+        <div class="cl-item" id="i-jetboil"><input type="checkbox" id="c-jetboil" onchange="toggleCheck(this)"><label for="c-jetboil">JetBoil</label></div>
+        <div class="cl-item" id="i-grocbags"><input type="checkbox" id="c-grocbags" onchange="toggleCheck(this)"><label for="c-grocbags">Grocery Bags 4</label></div>
+        <div class="cl-item" id="i-trashbags"><input type="checkbox" id="c-trashbags" onchange="toggleCheck(this)"><label for="c-trashbags">Trash Bags (2)</label></div>
+        <div class="cl-item" id="i-silverware"><input type="checkbox" id="c-silverware" onchange="toggleCheck(this)"><label for="c-silverware">2F, 2S, Silverware</label></div>
+        <div class="cl-item" id="i-tp"><input type="checkbox" id="c-tp" onchange="toggleCheck(this)"><label for="c-tp">Toilet Paper</label></div>
+        <div class="cl-item" id="i-cheeseknife-s"><input type="checkbox" id="c-cheeseknife-s" onchange="toggleCheck(this)"><label for="c-cheeseknife-s">Cheese Knife</label></div>
+        <div class="cl-item" id="i-filletknife"><input type="checkbox" id="c-filletknife" onchange="toggleCheck(this)"><label for="c-filletknife">Fillet Knife</label></div>
+        <div class="cl-item" id="i-handsoap"><input type="checkbox" id="c-handsoap" onchange="toggleCheck(this)"><label for="c-handsoap">Hand Soap</label></div>
+        <div class="cl-item" id="i-papertowels"><input type="checkbox" id="c-papertowels" onchange="toggleCheck(this)"><label for="c-papertowels">Paper Towels</label></div>
+        <div class="cl-item optional" id="i-sunscreen"><input type="checkbox" id="c-sunscreen" onchange="toggleCheck(this)"><label for="c-sunscreen">Sunscreen</label></div>
+      </div>
+      <div class="cl-subcol">
+        <div class="cl-subheader">Top</div>
+        <div class="cl-item" id="i-coffee"><input type="checkbox" id="c-coffee" onchange="toggleCheck(this)"><label for="c-coffee">Coffee</label></div>
+        <div class="cl-item" id="i-coffeefilters"><input type="checkbox" id="c-coffeefilters" onchange="toggleCheck(this)"><label for="c-coffeefilters">Coffee Filters (6) 2a</label></div>
+        <div class="cl-item" id="i-funnels"><input type="checkbox" id="c-funnels" onchange="toggleCheck(this)"><label for="c-funnels">Funnels (2)</label></div>
+        <div class="cl-item" id="i-kettle"><input type="checkbox" id="c-kettle" onchange="toggleCheck(this)"><label for="c-kettle">Kettle</label></div>
+        <div class="cl-item" id="i-coffeecup"><input type="checkbox" id="c-coffeecup" onchange="toggleCheck(this)"><label for="c-coffeecup">Coffee Cup</label></div>
+      </div>
+    </div>
+
+    <!-- Fishing Vest -->
+    <div class="cl-col">
+      <div class="cl-header h-vest">Fishing Vest</div>
+      <div class="cl-subheader">&nbsp;</div>
+      <div class="cl-item" id="i-plyers"><input type="checkbox" id="c-plyers" onchange="toggleCheck(this)"><label for="c-plyers">Pliers</label></div>
+      <div class="cl-item" id="i-hooksharp"><input type="checkbox" id="c-hooksharp" onchange="toggleCheck(this)"><label for="c-hooksharp">Hook Sharpener</label></div>
+      <div class="cl-item" id="i-scissors"><input type="checkbox" id="c-scissors" onchange="toggleCheck(this)"><label for="c-scissors">Scissors for braid</label></div>
+      <div class="cl-item" id="i-stringer"><input type="checkbox" id="c-stringer" onchange="toggleCheck(this)"><label for="c-stringer">Stringer</label></div>
+      <div class="cl-item" id="i-spinnerbox"><input type="checkbox" id="c-spinnerbox" onchange="toggleCheck(this)"><label for="c-spinnerbox">Spinner box</label></div>
+      <div class="cl-item" id="i-net"><input type="checkbox" id="c-net" onchange="toggleCheck(this)"><label for="c-net">Net</label></div>
+    </div>
+
+    <!-- Car -->
+    <div class="cl-col">
+      <div class="cl-header h-car">Car</div>
+      <div class="cl-subheader">&nbsp;</div>
+      <div class="cl-item" id="i-tempreader"><input type="checkbox" id="c-tempreader" onchange="toggleCheck(this)"><label for="c-tempreader">Water Temp Reader</label></div>
+      <div class="cl-item" id="i-pole"><input type="checkbox" id="c-pole" onchange="toggleCheck(this)"><label for="c-pole">Fishing Pole</label></div>
+      <div class="cl-item" id="i-reel"><input type="checkbox" id="c-reel" onchange="toggleCheck(this)"><label for="c-reel">Reel</label></div>
+      <div class="cl-item" id="i-extrapole"><input type="checkbox" id="c-extrapole" onchange="toggleCheck(this)"><label for="c-extrapole">Extra Pole</label></div>
+      <div class="cl-item" id="i-extrareel"><input type="checkbox" id="c-extrareel" onchange="toggleCheck(this)"><label for="c-extrareel">Extra Reel</label></div>
+      <div class="cl-item" id="i-extranet"><input type="checkbox" id="c-extranet" onchange="toggleCheck(this)"><label for="c-extranet">Extra Net</label></div>
+      <div class="cl-item" id="i-waders"><input type="checkbox" id="c-waders" onchange="toggleCheck(this)"><label for="c-waders">Waders</label></div>
+      <div class="cl-item" id="i-wadingboots"><input type="checkbox" id="c-wadingboots" onchange="toggleCheck(this)"><label for="c-wadingboots">Wading Boots</label></div>
+      <div class="cl-item" id="i-fishingkit"><input type="checkbox" id="c-fishingkit" onchange="toggleCheck(this)"><label for="c-fishingkit">Fishing Kit</label></div>
+      <div class="cl-item optional" id="i-deet"><input type="checkbox" id="c-deet" onchange="toggleCheck(this)"><label for="c-deet">100 DEET Spray</label></div>
+      <div class="cl-item optional" id="i-bugspray"><input type="checkbox" id="c-bugspray" onchange="toggleCheck(this)"><label for="c-bugspray">Bug Spray</label></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function toggleCheck(cb) {
+  const item = cb.closest('.cl-item');
+  item.classList.toggle('checked', cb.checked);
+  saveState();
+}
+function saveState() {
+  const state = {};
+  document.querySelectorAll('.cl-item input[type=checkbox]').forEach(cb => {
+    state[cb.id] = cb.checked;
+  });
+  localStorage.setItem('checklist-v1', JSON.stringify(state));
+}
+function loadState() {
+  try {
+    const state = JSON.parse(localStorage.getItem('checklist-v1') || '{}');
+    document.querySelectorAll('.cl-item input[type=checkbox]').forEach(cb => {
+      if (state[cb.id]) {
+        cb.checked = true;
+        cb.closest('.cl-item').classList.add('checked');
+      }
+    });
+  } catch {}
+}
+function uncheckAll() {
+  document.querySelectorAll('.cl-item input[type=checkbox]').forEach(cb => {
+    cb.checked = false;
+    cb.closest('.cl-item').classList.remove('checked');
+  });
+  localStorage.removeItem('checklist-v1');
+}
+document.addEventListener('DOMContentLoaded', loadState);
+</script>
