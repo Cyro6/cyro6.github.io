@@ -32,5 +32,7 @@ navigation_header:
     url: /planner
   - title: Weather
     url: /weather
+  - title: Checklist
+    url: /checklist
   - title: About
     url: /about

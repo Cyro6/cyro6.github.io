@@ -39,6 +39,18 @@ sitemap: false
       "short_name": "Planner",
       "url": "/planner",
       "icons": [{ "src": "/assets/images/DTF_Logo.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Weather",
+      "short_name": "Weather",
+      "url": "/weather",
+      "icons": [{ "src": "/assets/images/DTF_Logo.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Checklist",
+      "short_name": "Checklist",
+      "url": "/checklist",
+      "icons": [{ "src": "/assets/images/DTF_Logo.png", "sizes": "192x192" }]
     }
   ]
 }
