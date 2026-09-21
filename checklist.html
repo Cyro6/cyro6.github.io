@@ -6,274 +6,282 @@ title: Gear Checklist
 .checklist-page {
   font-family: 'Inter', sans-serif;
   padding: 20px 0;
+  color: #384743;
 }
+body.dark-theme .checklist-page { color: #d4cfc6; }
+
 .cl-actions {
-  margin-bottom: 14px;
+  margin-bottom: 16px;
   display: flex;
   gap: 10px;
   align-items: center;
   flex-wrap: wrap;
 }
 .cl-btn {
-  background: #05bf85;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 7px 16px;
-  font-size: .85rem;
-  font-weight: 600;
-  cursor: pointer;
+  background: #05bf85; color: #fff; border: none;
+  border-radius: 6px; padding: 7px 16px;
+  font-size: .85rem; font-weight: 600; cursor: pointer;
 }
 .cl-btn:hover { background: #008000; }
-.cl-btn.secondary { background: #384743; }
-.cl-btn.secondary:hover { background: #242e2b; }
+.cl-btn.sec { background: #384743; }
+.cl-btn.sec:hover { background: #242e2b; }
 .cl-note { font-size: .78rem; color: #a8adac; }
 
-.cl-table {
-  width: 100%;
-  border-collapse: collapse;
-  border: 2px solid #bbb;
-  font-size: .82rem;
-  table-layout: fixed;
+.cl-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
 }
-.cl-table th {
-  padding: 7px 8px;
-  font-weight: 700;
-  font-size: .8rem;
-  text-align: center;
-  border: 1px solid #bbb;
-}
-.cl-table .subhead th {
-  font-weight: 600;
-  font-size: .75rem;
-  color: #666;
-  background: #f0f0f0;
-  padding: 4px 8px;
-}
-.cl-table td {
-  vertical-align: top;
-  border: 1px solid #bbb;
-  padding: 0;
-}
-.cl-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  border-bottom: 1px solid #eee;
-  min-height: 26px;
-  cursor: pointer;
-}
-.cl-item:last-child { border-bottom: none; }
-.cl-item.optional { background: #fef9c3; }
-.cl-item.checked label { text-decoration: line-through; color: #bbb; }
-.cl-item input[type=checkbox] { flex-shrink: 0; accent-color: #05bf85; cursor: pointer; }
-.cl-item label { cursor: pointer; line-height: 1.3; }
 
+.cl-card {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.09);
+  background: #fff;
+}
+body.dark-theme .cl-card { background: #2d3a35; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+
+.cl-card-header {
+  font-weight: 700;
+  font-size: .82rem;
+  padding: 8px 12px;
+  letter-spacing: .01em;
+}
 .h-main  { background: #c6efce; color: #276221; }
 .h-bag   { background: #e2efda; color: #375623; }
-.h-large { background: #f2f2f2; color: #333;    }
+.h-large { background: #e8e8e8; color: #444;    }
 .h-small { background: #dce6f1; color: #17375e; }
 .h-vest  { background: #fce4d6; color: #843c0c; }
 .h-car   { background: #bdd7ee; color: #1f4e79; }
 
+.cl-items { padding: 4px 0; }
+
+.cl-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  font-size: .82rem;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  user-select: none;
+  transition: background .1s;
+}
+.cl-item:last-child { border-bottom: none; }
+.cl-item:hover { background: rgba(5,191,133,0.06); }
+.cl-item.optional { background: #fef9c3; }
+.cl-item.optional:hover { background: #fef08a; }
+.cl-item.checked { background: #f5f5f5; }
+.cl-item.checked span { text-decoration: line-through; color: #bbb; }
+body.dark-theme .cl-item { border-color: #3a4a44; }
+body.dark-theme .cl-item:hover { background: rgba(5,191,133,0.08); }
+body.dark-theme .cl-item.optional { background: #4a4218; }
+body.dark-theme .cl-item.checked { background: #242e2b; }
+body.dark-theme .cl-item.checked span { color: #5a6a65; }
+
+.cl-item input[type=checkbox] {
+  flex-shrink: 0;
+  width: 15px; height: 15px;
+  accent-color: #05bf85;
+  cursor: pointer;
+}
+
 @media (max-width: 900px) {
-  .cl-table-wrap { overflow-x: auto; }
-  .cl-table { min-width: 800px; }
+  .cl-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 500px) {
+  .cl-grid { grid-template-columns: 1fr; }
 }
 
 @media print {
   nav, header, footer, .cl-actions,
-  .site-header, .site-footer, .site-nav { display: none !important; }
+  .site-header, .site-footer { display: none !important; }
   body { background: #fff !important; }
   .checklist-page { padding: 0; }
-  .cl-table { font-size: .72rem; border-width: 1px; }
-  .cl-table th { padding: 4px 5px; }
-  .cl-item { min-height: 18px; padding: 2px 5px; }
-  .cl-item input[type=checkbox] { width: 10px; height: 10px; }
+  .cl-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .cl-card { box-shadow: none; border: 1px solid #ccc; }
+  .cl-item { font-size: .74rem; padding: 3px 10px; }
+  .cl-card-header { font-size: .76rem; padding: 5px 10px; }
 }
-
-body.dark-theme .cl-table,
-body.dark-theme .cl-table th,
-body.dark-theme .cl-table td { border-color: #444; }
-body.dark-theme .cl-table .subhead th { background: #242e2b; color: #7a8a85; }
-body.dark-theme .cl-item { border-color: #333; color: #d4cfc6; }
-body.dark-theme .cl-item.optional { background: #4a4218; }
-body.dark-theme .cl-item.checked label { color: #5a6a65; }
 </style>
 
 <div class="checklist-page">
+
   <div class="cl-actions">
     <button class="cl-btn" onclick="window.print()">Print</button>
-    <button class="cl-btn secondary" onclick="uncheckAll()">Reset</button>
-    <span class="cl-note">Yellow = optional &nbsp;|&nbsp; Checks persist between visits</span>
+    <button class="cl-btn sec" onclick="uncheckAll()">Reset All</button>
+    <span class="cl-note">Yellow = optional &nbsp;&nbsp;Checks are saved between visits</span>
   </div>
 
-  <div class="cl-table-wrap">
-  <table class="cl-table">
-    <thead>
-      <tr>
-        <th class="h-main">Main Bin (M)</th>
-        <th class="h-bag">Bag (B)</th>
-        <th colspan="2" class="h-large">Large Bin (L1 &amp; L2)</th>
-        <th colspan="2" class="h-small">Small Bin (S1 &amp; S2)</th>
-        <th class="h-vest">Fishing Vest</th>
-        <th class="h-car">Car</th>
-      </tr>
-      <tr class="subhead">
-        <th></th>
-        <th></th>
-        <th>Lower</th>
-        <th>Top</th>
-        <th>Lower</th>
-        <th>Top</th>
-        <th></th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
+  <div class="cl-grid">
 
-        <!-- Main Bin -->
-        <td>
-          {% assign main_items = "Rope,Extra Tent Stakes,Tent,Pillow,Bed Blanket,Wader Repair Kit,Extra Waders,Rubber Mallet,Towels" | split: "," %}
-          {% for item in main_items %}
-          <div class="cl-item" onclick="toggleItem(this)">
-            <input type="checkbox" onchange="saveState()">
-            <label>{{ item }}</label>
-          </div>
-          {% endfor %}
-        </td>
+    <!-- Main Bin -->
+    <div class="cl-card">
+      <div class="cl-card-header h-main">Main Bin (M)</div>
+      <div class="cl-items">
+        <div class="cl-item"><input type="checkbox"><span>Rope</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Extra Tent Stakes</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Tent</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Pillow</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Bed Blanket</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Wader Repair Kit</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Extra Waders</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Rubber Mallet</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Towels</span></div>
+      </div>
+    </div>
 
-        <!-- Bag -->
-        <td>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Underwear (4)</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Socks (4×4)</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Shirts (4)</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Pants 2</label></div>
-          <div class="cl-item optional" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Swim Suit</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Shower Bag</label></div>
-          <div class="cl-item optional" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Wet Wipes</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Med Kit</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Belt</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Headlamp</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Sleeping Pad</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Blow Up Pillow</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Air Pump</label></div>
-        </td>
+    <!-- Bag -->
+    <div class="cl-card">
+      <div class="cl-card-header h-bag">Bag (B)</div>
+      <div class="cl-items">
+        <div class="cl-item"><input type="checkbox"><span>Underwear (4)</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Socks (4×4)</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Shirts (4)</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Pants 2</span></div>
+        <div class="cl-item optional"><input type="checkbox"><span>Swim Suit</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Shower Bag</span></div>
+        <div class="cl-item optional"><input type="checkbox"><span>Wet Wipes</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Med Kit</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Belt</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Headlamp</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Sleeping Pad</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Blow Up Pillow</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Air Pump</span></div>
+      </div>
+    </div>
 
-        <!-- Large Bin — Lower -->
-        <td>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Grill</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Propane</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Lighter</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Spatula</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Avocado Oil</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Salt</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Pepper</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Plates (2)</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Cheese Knife</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Small Hand Towel</label></div>
-        </td>
+    <!-- Fishing Vest -->
+    <div class="cl-card">
+      <div class="cl-card-header h-vest">Fishing Vest</div>
+      <div class="cl-items">
+        <div class="cl-item"><input type="checkbox"><span>Pliers</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Hook Sharpener</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Scissors for braid</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Stringer</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Spinner box</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Net</span></div>
+      </div>
+    </div>
 
-        <!-- Large Bin — Top -->
-        <td>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Food</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Sandwich Bags 8</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Freezer Bags (4)</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Plates</label></div>
-        </td>
+    <!-- Car -->
+    <div class="cl-card">
+      <div class="cl-card-header h-car">Car</div>
+      <div class="cl-items">
+        <div class="cl-item"><input type="checkbox"><span>Water Temp Reader</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Fishing Pole</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Reel</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Extra Pole</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Extra Reel</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Extra Net</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Waders</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Wading Boots</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Fishing Kit</span></div>
+        <div class="cl-item optional"><input type="checkbox"><span>100 DEET Spray</span></div>
+        <div class="cl-item optional"><input type="checkbox"><span>Bug Spray</span></div>
+      </div>
+    </div>
 
-        <!-- Small Bin — Lower -->
-        <td>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Plates</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>JetBoil</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Grocery Bags 4</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Trash Bags (2)</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>2F, 2S, Silverware</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Toilet Paper</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Cheese Knife</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Fillet Knife</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Hand Soap</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Paper Towels</label></div>
-          <div class="cl-item optional" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Sunscreen</label></div>
-        </td>
+    <!-- Large Bin Lower -->
+    <div class="cl-card">
+      <div class="cl-card-header h-large">Large Bin (L1 &amp; L2) — Lower</div>
+      <div class="cl-items">
+        <div class="cl-item"><input type="checkbox"><span>Grill</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Propane</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Lighter</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Spatula</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Avocado Oil</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Salt</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Pepper</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Plates (2)</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Cheese Knife</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Small Hand Towel</span></div>
+      </div>
+    </div>
 
-        <!-- Small Bin — Top -->
-        <td>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Coffee</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Coffee Filters (6) 2a</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Funnels (2)</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Kettle</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Coffee Cup</label></div>
-        </td>
+    <!-- Large Bin Top -->
+    <div class="cl-card">
+      <div class="cl-card-header h-large">Large Bin (L1 &amp; L2) — Top</div>
+      <div class="cl-items">
+        <div class="cl-item"><input type="checkbox"><span>Food</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Sandwich Bags 8</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Freezer Bags (4)</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Plates</span></div>
+      </div>
+    </div>
 
-        <!-- Fishing Vest -->
-        <td>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Pliers</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Hook Sharpener</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Scissors for braid</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Stringer</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Spinner box</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Net</label></div>
-        </td>
+    <!-- Small Bin Lower -->
+    <div class="cl-card">
+      <div class="cl-card-header h-small">Small Bin (S1 &amp; S2) — Lower</div>
+      <div class="cl-items">
+        <div class="cl-item"><input type="checkbox"><span>Plates</span></div>
+        <div class="cl-item"><input type="checkbox"><span>JetBoil</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Grocery Bags 4</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Trash Bags (2)</span></div>
+        <div class="cl-item"><input type="checkbox"><span>2F, 2S, Silverware</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Toilet Paper</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Cheese Knife</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Fillet Knife</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Hand Soap</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Paper Towels</span></div>
+        <div class="cl-item optional"><input type="checkbox"><span>Sunscreen</span></div>
+      </div>
+    </div>
 
-        <!-- Car -->
-        <td>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Water Temp Reader</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Fishing Pole</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Reel</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Extra Pole</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Extra Reel</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Extra Net</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Waders</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Wading Boots</label></div>
-          <div class="cl-item" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Fishing Kit</label></div>
-          <div class="cl-item optional" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>100 DEET Spray</label></div>
-          <div class="cl-item optional" onclick="toggleItem(this)"><input type="checkbox" onchange="saveState()"><label>Bug Spray</label></div>
-        </td>
+    <!-- Small Bin Top -->
+    <div class="cl-card">
+      <div class="cl-card-header h-small">Small Bin (S1 &amp; S2) — Top</div>
+      <div class="cl-items">
+        <div class="cl-item"><input type="checkbox"><span>Coffee</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Coffee Filters (6) 2a</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Funnels (2)</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Kettle</span></div>
+        <div class="cl-item"><input type="checkbox"><span>Coffee Cup</span></div>
+      </div>
+    </div>
 
-      </tr>
-    </tbody>
-  </table>
   </div>
 </div>
 
 <script>
-function toggleItem(el) {
-  if (event.target.tagName === 'INPUT') return;
-  const cb = el.querySelector('input[type=checkbox]');
-  cb.checked = !cb.checked;
-  el.classList.toggle('checked', cb.checked);
-  saveState();
-}
+const STORE_KEY = 'checklist-v3';
 
-function saveState() {
-  const items = document.querySelectorAll('.cl-item');
-  const state = Array.from(items).map(el => el.querySelector('input').checked);
-  localStorage.setItem('checklist-v2', JSON.stringify(state));
-}
+document.querySelectorAll('.cl-item').forEach(item => {
+  item.addEventListener('click', e => {
+    if (e.target.tagName === 'INPUT') return;
+    const cb = item.querySelector('input');
+    cb.checked = !cb.checked;
+    item.classList.toggle('checked', cb.checked);
+    save();
+  });
+  item.querySelector('input').addEventListener('change', function() {
+    item.classList.toggle('checked', this.checked);
+    save();
+  });
+});
 
-function loadState() {
-  try {
-    const state = JSON.parse(localStorage.getItem('checklist-v2') || '[]');
-    const items = document.querySelectorAll('.cl-item');
-    items.forEach((el, i) => {
-      if (state[i]) {
-        el.querySelector('input').checked = true;
-        el.classList.add('checked');
-      }
-    });
-  } catch {}
+function save() {
+  const state = Array.from(document.querySelectorAll('.cl-item input')).map(cb => cb.checked);
+  localStorage.setItem(STORE_KEY, JSON.stringify(state));
 }
 
 function uncheckAll() {
-  document.querySelectorAll('.cl-item').forEach(el => {
-    el.querySelector('input').checked = false;
-    el.classList.remove('checked');
+  document.querySelectorAll('.cl-item').forEach(item => {
+    item.querySelector('input').checked = false;
+    item.classList.remove('checked');
   });
-  localStorage.removeItem('checklist-v2');
+  localStorage.removeItem(STORE_KEY);
 }
 
-document.addEventListener('DOMContentLoaded', loadState);
+(function load() {
+  try {
+    const state = JSON.parse(localStorage.getItem(STORE_KEY) || '[]');
+    document.querySelectorAll('.cl-item').forEach((item, i) => {
+      if (state[i]) {
+        item.querySelector('input').checked = true;
+        item.classList.add('checked');
+      }
+    });
+  } catch {}
+})();
 </script>
