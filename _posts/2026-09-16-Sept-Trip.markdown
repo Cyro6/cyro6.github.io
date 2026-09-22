@@ -1,0 +1,57 @@
+---
+images:
+  - /assets/images/20260917_120221.jpg
+  - /assets/images/20260917_120359.jpg
+  - /assets/images/20260917_183058.jpg
+  - /assets/images/20260917_183118.jpg
+  - /assets/images/20260918_064446.jpg
+summary: "Jack and I were originally going to head out on Friday but there ended up being a lot of rain in the forecast so we moved it back a day. Ended up only really fishing for a single day due to that rain. I did manage a new PB for Brooke Trout landing a 16.5 inch Brooke Trout."
+
+campsite:
+  name: 4 Season Park
+  url: https://maps.app.goo.gl/vgJT8wdxrjvzXKuH8
+  lat: 44.3573245
+  lng: -91.4175961
+
+cost:
+  items:
+    - name: Gas
+      amount: 0
+    - name: Grocery
+      amount: 60
+    - name: Campsite
+      amount: 0
+
+days:
+  - day: Day 1
+    date: September 16, 2026
+    weather: Scattered showers really early in the morning, the day was clear but the streams only got more muddy over night.
+    spots:
+      - name: Pigeon Creek
+        url: https://maps.app.goo.gl/2ZhDdMjjjkmiK6xo9
+        notes: Hit up the exact same spot I went to with Beau in June. Managed 8 fish or so with one incredible 16.5" Brooke Trout.
+        lat: 44.3952855
+        lng: -91.2533815
+  - day: Day 2
+    date: September 17, 2026
+    weather: Flood Watch
+    spots:
+      - name: Trempealeau River
+        url: https://maps.app.goo.gl/i812MNKGtDnZdC8z5
+        notes: This is the second time I have fished here. With elevated water levels and it raining this was really tough to navigate, especially with Jack along. We fished for just over an hour and managed one 12" Brook.
+        lat: 44.3850144
+        lng: -91.010473
+memes:
+  - "When you squeeze the lemon, you get the juice."
+
+thumbnail: /assets/images/20260917_183058.jpg
+
+layout: post
+title: September Trip with Jack
+date: 2026-09-16
+youtube:
+  - title: September 2026 Part 1
+    url: https://youtu.be/Vux8flHRljM
+---
+# September 2026
+
