@@ -115,7 +115,26 @@ body.dark-theme .weather-page {
 .dc-press-ok   { background: #7a8a85; color: #fff; }
 .chart-wrap { position: relative; height: 220px; }
 #wx-status { font-size: .82rem; color: var(--text-secondary); margin: 8px 0; }
-#wx-map { height: 180px; border-radius: 8px; overflow: hidden; margin-top: 10px; display: none; }
+.wx-body {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 16px;
+    align-items: start;
+}
+.wx-body-charts { min-width: 0; }
+#wx-map {
+    height: 300px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px var(--shadow-color);
+    display: none;
+    position: sticky;
+    top: 16px;
+}
+@media (max-width: 800px) {
+    .wx-body { grid-template-columns: 1fr; }
+    #wx-map { height: 220px; position: static; order: 99; }
+}
 </style>
 
 <div class="weather-page">
@@ -127,30 +146,29 @@ body.dark-theme .weather-page {
         <option value="">— pick a campsite —</option>
       </select>
     </div>
-    <div>
-      <label>&nbsp;</label>
-      <button class="wx-btn" onclick="loadWeather()">Load Weather</button>
-    </div>
   </div>
 
-  <div id="wx-map"></div>
   <div id="wx-status"></div>
 
   <div id="wx-content" style="display:none">
     <div class="day-cards" id="day-cards"></div>
 
-    <div class="wx-section">
-      <h3>Barometric Pressure — 7-Day Hourly (hPa)</h3>
-      <div class="chart-wrap">
-        <canvas id="pressure-chart"></canvas>
+    <div class="wx-body">
+      <div class="wx-body-charts">
+        <div class="wx-section">
+          <h3>Barometric Pressure — 7-Day Hourly (hPa)</h3>
+          <div class="chart-wrap">
+            <canvas id="pressure-chart"></canvas>
+          </div>
+        </div>
+        <div class="wx-section">
+          <h3>Precipitation — 7-Day Hourly (in)</h3>
+          <div class="chart-wrap">
+            <canvas id="precip-chart"></canvas>
+          </div>
+        </div>
       </div>
-    </div>
-
-    <div class="wx-section">
-      <h3>Precipitation — 7-Day Hourly (in)</h3>
-      <div class="chart-wrap">
-        <canvas id="precip-chart"></canvas>
-      </div>
+      <div id="wx-map"></div>
     </div>
   </div>
 
@@ -168,6 +186,7 @@ let wxMap = null;
 let wxMarker = null;
 let selectedLat = null;
 let selectedLon = null;
+const weatherCache = new Map();
 
 // ── Mini map ──────────────────────────────────────────────────────────────────
 function initMap() {
@@ -179,16 +198,18 @@ function showMapAt(lat, lon, name) {
   const mapEl = document.getElementById('wx-map');
   mapEl.style.display = 'block';
   if (!wxMap) initMap();
-  wxMap.invalidateSize();
-  wxMap.setView([lat, lon], 13);
-  if (wxMarker) wxMarker.remove();
-  wxMarker = L.circleMarker([lat, lon], {
-    radius: 10,
-    color: '#05bf85',
-    fillColor: '#05bf85',
-    fillOpacity: 0.9,
-    weight: 2,
-  }).addTo(wxMap).bindPopup(name).openPopup();
+  setTimeout(() => {
+    wxMap.invalidateSize();
+    wxMap.setView([lat, lon], 13);
+    if (wxMarker) wxMarker.remove();
+    wxMarker = L.circleMarker([lat, lon], {
+      radius: 10,
+      color: '#05bf85',
+      fillColor: '#05bf85',
+      fillOpacity: 0.9,
+      weight: 2,
+    }).addTo(wxMap).bindPopup(name).openPopup();
+  }, 50);
 }
 
 // ── Populate campsite dropdown ────────────────────────────────────────────────
@@ -219,7 +240,7 @@ function onCampsiteChange() {
   const [lat, lon] = val.split(',').map(s => parseFloat(s.trim()));
   selectedLat = lat;
   selectedLon = lon;
-  showMapAt(lat, lon, sel.options[sel.selectedIndex].text);
+  loadWeather();
 }
 
 function setStatus(msg) {
@@ -231,6 +252,22 @@ async function loadWeather() {
   const lat = selectedLat;
   const lon = selectedLon;
   if (lat == null || isNaN(lat)) { setStatus('Pick a campsite first.'); return; }
+
+  const sel  = document.getElementById('wx-campsite');
+  const name = sel.options[sel.selectedIndex]?.text || '';
+  const key  = `${lat.toFixed(4)},${lon.toFixed(4)}`;
+
+  showMapAt(lat, lon, name);
+
+  if (weatherCache.has(key)) {
+    const data = weatherCache.get(key);
+    renderDayCards(data);
+    renderPressureChart(data);
+    renderPrecipChart(data);
+    document.getElementById('wx-content').style.display = 'block';
+    setStatus('');
+    return;
+  }
 
   setStatus('Loading…');
   document.getElementById('wx-content').style.display = 'none';
@@ -247,6 +284,7 @@ async function loadWeather() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
 
+    weatherCache.set(key, data);
     renderDayCards(data);
     renderPressureChart(data);
     renderPrecipChart(data);
