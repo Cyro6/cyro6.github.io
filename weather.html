@@ -468,5 +468,37 @@ function renderPrecipChart(data) {
   });
 }
 
-document.addEventListener('DOMContentLoaded', initCampsites);
+{% assign last_camp = nil %}
+{% for post in site.posts %}
+  {% if post.campsite.lat and post.campsite.lat != "" %}
+    {% unless last_camp %}{% assign last_camp = post %}{% endunless %}
+  {% endif %}
+{% endfor %}
+{% if last_camp %}
+const AUTO_CAMPSITE = {
+  name: {{ last_camp.campsite.name | jsonify }},
+  lat:  {{ last_camp.campsite.lat }},
+  lon:  {{ last_camp.campsite.lng }},
+};
+{% else %}
+const AUTO_CAMPSITE = null;
+{% endif %}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await initCampsites();
+  if (!AUTO_CAMPSITE) return;
+  selectedLat = AUTO_CAMPSITE.lat;
+  selectedLon = AUTO_CAMPSITE.lon;
+  // Try to select matching campsite in dropdown by proximity
+  const sel = document.getElementById('wx-campsite');
+  for (const opt of sel.options) {
+    if (!opt.value) continue;
+    const [lat, lon] = opt.value.split(',').map(s => parseFloat(s.trim()));
+    if (Math.abs(lat - AUTO_CAMPSITE.lat) < 0.01 && Math.abs(lon - AUTO_CAMPSITE.lon) < 0.01) {
+      sel.value = opt.value;
+      break;
+    }
+  }
+  loadWeather();
+});
 </script>
