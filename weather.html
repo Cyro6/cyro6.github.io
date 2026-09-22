@@ -195,10 +195,10 @@ function initMap() {
 }
 
 function showMapAt(lat, lon, name) {
-  const mapEl = document.getElementById('wx-map');
-  mapEl.style.display = 'block';
+  document.getElementById('wx-map').style.display = 'block';
   if (!wxMap) initMap();
-  setTimeout(() => {
+  // Defer until after parent container is visible so Leaflet can measure size
+  requestAnimationFrame(() => {
     wxMap.invalidateSize();
     wxMap.setView([lat, lon], 13);
     if (wxMarker) wxMarker.remove();
@@ -209,7 +209,7 @@ function showMapAt(lat, lon, name) {
       fillOpacity: 0.9,
       weight: 2,
     }).addTo(wxMap).bindPopup(name).openPopup();
-  }, 50);
+  });
 }
 
 // ── Populate campsite dropdown ────────────────────────────────────────────────
@@ -290,6 +290,7 @@ async function loadWeather() {
     renderPrecipChart(data);
 
     document.getElementById('wx-content').style.display = 'block';
+    if (wxMap) requestAnimationFrame(() => wxMap.invalidateSize());
     setStatus('');
   } catch (e) {
     setStatus(`Error: ${e.message}`);
