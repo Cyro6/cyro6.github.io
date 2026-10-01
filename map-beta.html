@@ -748,15 +748,19 @@ function fmtDate(d) {
 // ── Map init ──────────────────────────────────────────────────────────────────
 
 const isDark  = document.body.classList.contains('dark-theme');
-const tileUrl = isDark
-  ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-  : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+const tileShade = isDark ? 'Dark' : 'Light';
+const tileUrl = `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_${tileShade}_Gray_Base/MapServer/tile/{z}/{y}/{x}`;
+const tileRefUrl = `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_${tileShade}_Gray_Reference/MapServer/tile/{z}/{y}/{x}`;
+const tileOpts = { maxNativeZoom: 16, maxZoom: 18 };
+function streetLayer() {
+  return L.layerGroup([
+    L.tileLayer(tileUrl, { ...tileOpts, attribution: '&copy; <a href="https://www.esri.com/">Esri</a>, HERE, Garmin, &copy; OpenStreetMap contributors' }),
+    L.tileLayer(tileRefUrl, tileOpts)
+  ]);
+}
 
 const map = L.map('stream-map', { zoomControl: false });
-let baseLayer = L.tileLayer(tileUrl, {
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
-  maxZoom: 18
-}).addTo(map);
+let baseLayer = streetLayer().addTo(map);
 
 // ── Offline cache control ─────────────────────────────────────────────────────
 
@@ -828,10 +832,7 @@ function setBaseMap(mode) {
       maxZoom: 19
     }).addTo(map);
   } else {
-    baseLayer = L.tileLayer(tileUrl, {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
-      maxZoom: 18
-    }).addTo(map);
+    baseLayer = streetLayer().addTo(map);
   }
 }
 

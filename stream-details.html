@@ -1365,12 +1365,11 @@ body.dark-theme .sd-page {
 
         const isDark = document.body.classList.contains('dark-theme');
         sdMap = L.map('sd-stream-map', { zoomControl: true, attributionControl: false });
-        L.tileLayer(
-            isDark
-                ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-                : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-            { subdomains: 'abcd', maxZoom: 19 }
-        ).addTo(sdMap);
+        const shade = isDark ? 'Dark' : 'Light';
+        ['Base', 'Reference'].forEach(kind => L.tileLayer(
+            `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_${shade}_Gray_${kind}/MapServer/tile/{z}/{y}/{x}`,
+            { maxNativeZoom: 16, maxZoom: 19 }
+        ).addTo(sdMap));
 
         sdMap.setView([43.5, -90.5], 10);
         const bounds = L.latLngBounds();
